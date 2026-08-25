@@ -353,21 +353,38 @@ python main.py
 ---
 
 ### ☁️ Option 3: Free 24/7 Cloud Deployment (Railway / Render / Koyeb - No VPS Required)
-You can run GhostGram 24/7 completely for free on cloud hosting platforms without owning a VPS:
+You can run GhostGram 24/7 completely free on cloud platforms without keeping your PC on or buying a VPS.
 
-#### A. Deploying on [Railway.app](https://railway.app):
-1. **First-time Auth**: Run `python login.py` on your computer once to generate your Telegram session file (`teleagent_session.session`).
-2. Fork this repository on GitHub and connect it to Railway as a **New Service > GitHub Repo**.
-3. In your Railway service dashboard, go to **Variables** and add your `.env` variables (`API_ID`, `API_HASH`, `PHONE_NUMBER`, `OWNER_ID`, `OWNER_NAME`, `GEMINI_API_KEYS`, etc.).
-4. Set the **Start Command** to `python main.py` (or Railway will automatically build using the included `Dockerfile`).
-5. Your agent is now live 24/7 in the cloud!
+#### 🔑 Step 1: Generate your Session String (One-Time)
+Because cloud servers are headless and cannot interactively prompt for Telegram SMS codes during startup, generate your `SESSION_STRING` once on your computer:
+1. Run `python login.py` on your computer (or double-click `run.bat`).
+2. Log in with your phone number and Telegram verification code.
+3. The script will output a **`SESSION_STRING`** (a long string starting with `1Ap...`). Copy it!
 
-#### B. Deploying on [Render.com](https://render.com):
-1. Connect your repository to Render as a **Background Worker**.
-2. Select **Docker** or **Python 3** environment.
-3. Add your environment variables under the **Environment** tab.
-4. Set **Start Command** to `python main.py`.
-5. Click **Deploy**!
+---
+
+#### 🚀 Step 2: Deploy to [Railway.app](https://railway.app) (Recommended)
+1. Fork or push this repository to your GitHub account.
+2. Go to [Railway.app](https://railway.app) $\rightarrow$ Click **New Project** $\rightarrow$ **Deploy from GitHub repo** $\rightarrow$ Select `GhostGram`.
+3. In Railway, open the service $\rightarrow$ go to the **Variables** tab and add:
+   - `API_ID`: Your Telegram API ID
+   - `API_HASH`: Your Telegram API Hash
+   - `PHONE_NUMBER`: Your Telegram Phone Number
+   - `SESSION_STRING`: Paste the session string from Step 1
+   - `GEMINI_API_KEYS`: Your Google Gemini API Key(s)
+   - `OWNER_ID`: Your numeric Telegram ID
+   - `OWNER_NAME`: Your name
+   - `OWNER_BIO`: Your bio/profession
+4. Railway will automatically build using the included `Dockerfile` and start GhostGram 24/7!
+
+---
+
+#### 🚀 Step 3: Or Deploy to [Render.com](https://render.com)
+1. Go to [Render.com](https://render.com) $\rightarrow$ Click **New +** $\rightarrow$ **Background Worker**.
+2. Connect your GitHub repository.
+3. Choose **Docker** (or **Python 3** with Build: `pip install -r requirements.txt` and Start: `python main.py`).
+4. In the **Environment Variables** tab, add your variables including `SESSION_STRING`.
+5. Click **Create Background Worker**. GhostGram is now running 24/7 in the cloud!
 
 ---
 

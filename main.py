@@ -3,6 +3,7 @@ import re
 import json
 from datetime import datetime, timezone
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 from telethon.errors import MessageIdInvalidError, FloodWaitError
 from config import Config
 from text import Text
@@ -16,7 +17,8 @@ from typing_helper import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
 import random
 
-client = TelegramClient(Config.SESSION_NAME, Config.API_ID, Config.API_HASH)
+session_target = StringSession(Config.SESSION_STRING) if Config.SESSION_STRING else Config.SESSION_NAME
+client = TelegramClient(session_target, Config.API_ID, Config.API_HASH)
 my_info = None
 
 def is_owner(event) -> bool:

@@ -28,12 +28,22 @@ def main():
         # client.start() automatically connects, checks auth, and only prompts for code if needed
         client.start(phone=phone)
         me = client.loop.run_until_complete(client.get_me())
+        
+        # Export StringSession for cloud platforms
+        from telethon.sessions import StringSession
+        string_session = StringSession.save(client.session)
+
         print("\n" + "=" * 50)
         print("✅ SUCCESS! Logged in as:")
         print(f"  • Name: {me.first_name} {me.last_name or ''}")
         print(f"  • Username: @{me.username or 'No username'}")
         print(f"  • User ID: {me.id}")
-        print("=" * 50 + "\n")
+        print("=" * 50)
+        print("\n☁️ FOR CLOUD HOSTING (Railway / Render / Koyeb):")
+        print("Copy and paste this SESSION_STRING into your Cloud Environment Variables:")
+        print("-" * 50)
+        print(f"SESSION_STRING={string_session}")
+        print("-" * 50 + "\n")
     except Exception as e:
         print(f"\n❌ Login failed: {e}")
         sys.exit(1)
