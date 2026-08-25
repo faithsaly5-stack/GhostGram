@@ -14,13 +14,20 @@
 </p>
 
 <p align="center">
+  <a href="README.md"><b>English</b></a> •
+  <a href="README_FA.md"><b>فارسی</b></a> •
+  <a href="README_ZH.md"><b>中文 (简体)</b></a> •
+  <a href="README_RU.md"><b>Русский</b></a> •
+  <a href="README_ES.md"><b>Español</b></a>
+</p>
+
+<p align="center">
   <a href="#-core-features"><b>✨ Features</b></a> •
   <a href="#-stealth-command-matrix"><b>🎮 Commands</b></a> •
   <a href="#-dual-ai-modes--multi-persona-engine"><b>🎭 Personas</b></a> •
   <a href="#-human-like-simulation-engine"><b>⚡ Simulation</b></a> •
   <a href="#-dual-tier-memory-architecture"><b>🧠 Memory</b></a> •
-  <a href="#-quick-start--installation"><b>🚀 Quick Start</b></a> •
-  <a href="README_FA.md"><b>🇮🇷 نسخه فارسی (روح‌گرام)</b></a>
+  <a href="#-quick-start--installation"><b>🚀 Quick Start</b></a>
 </p>
 
 ---

@@ -14,13 +14,20 @@
 </p>
 
 <p align="center">
+  <a href="README.md"><b>English</b></a> •
+  <a href="README_FA.md"><b>فارسی</b></a> •
+  <a href="README_ZH.md"><b>中文 (简体)</b></a> •
+  <a href="README_RU.md"><b>Русский</b></a> •
+  <a href="README_ES.md"><b>Español</b></a>
+</p>
+
+<p align="center">
   <a href="#-قابلیت‌های-برجسته"><b>✨ قابلیت‌ها</b></a> •
   <a href="#-راهنمای-کدهای-رمزی-و-مخفی-stealth-codes"><b>🎮 دستورات</b></a> •
   <a href="#-حالت‌های-اصلی-هوش-مصنوعی-و-سیستم-پرسونای-پویا"><b>🎭 پرسونای پویا</b></a> •
   <a href="#-شبیه‌ساز-رفتار-انسانی-human-like-simulation"><b>⚡ رفتار انسانی</b></a> •
   <a href="#-معماری-حافظه-دو-لایه-dual-tier-memory"><b>🧠 حافظه</b></a> •
-  <a href="#-راه‌اندازی-و-نصب-سریع"><b>🚀 نصب سریع</b></a> •
-  <a href="README.md"><b>🌐 English Version (GhostGram)</b></a>
+  <a href="#-راه‌اندازی-و-نصب-سریع"><b>🚀 نصب سریع</b></a>
 </p>
 
 ---
