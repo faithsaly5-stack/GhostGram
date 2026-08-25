@@ -53,16 +53,15 @@ class AssistantManager:
             print(f"⚠️ Error saving Assistant state: {e}")
 
     def is_active_for_chat(self, chat_id: int, is_private: bool = True) -> bool:
-        """
-        Checks if Assistant mode is active.
-        Strictly applies ONLY to 1-on-1 private DMs (never in groups/channels).
-        """
+        """Checks if Assistant mode is active and not muted in this chat."""
+        if not self.dm_enabled:
+            return False
         if not is_private:
             return False
         chat_id = int(chat_id)
         if chat_id in self.muted_chats:
             return False
-        return self.dm_enabled
+        return True
 
     def mute_chat(self, chat_id: int):
         """Mutes/stops Assistant ONLY in this chat so the owner can talk, while keeping other DMs active."""
@@ -84,9 +83,17 @@ class AssistantManager:
     def deactivate_global(self):
         """Globally disables Assistant mode across all DMs."""
         self.dm_enabled = False
+        self.dm_enabled = False
         self.muted_chats.clear()
         self.save_state()
         return True
+
+    def factory_reset(self):
+        """Globally disables the assistant and un-mutes all chats."""
+        self.dm_enabled = False
+        self.muted_chats.clear()
+        self.save_state()
+        print("♻️ Assistant Manager has been factory reset.")
 
 
 

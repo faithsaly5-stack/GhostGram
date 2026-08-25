@@ -77,6 +77,15 @@ class MemoryManager:
         self.save_state()
         return True
 
+    def factory_reset(self):
+        """Globally clears all memory (short-term and long-term) for all chats."""
+        self.reset_cutoffs.clear()
+        self.long_term_memories.clear()
+        self.message_counts.clear()
+        self.last_summarized_msg_ids.clear()
+        self.save_state()
+        print("♻️ Memory Manager has been factory reset.")
+
     def get_cutoff_timestamp(self, chat_id: int) -> float:
         return self.reset_cutoffs.get(int(chat_id), 0.0)
 

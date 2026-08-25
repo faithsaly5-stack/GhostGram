@@ -204,6 +204,25 @@ async def handle_reset_memory(event):
         pass
     print(f"🧠 Short-term memory RESET for chat {chat_id}")
 
+async def handle_factory_reset(event):
+    from api_tracker import api_tracker
+    api_tracker.factory_reset()
+    memory_manager.factory_reset()
+    pal_manager.factory_reset()
+    assistant_manager.factory_reset()
+    
+    try:
+        await event.delete()
+    except Exception:
+        pass
+        
+    msg = await event.respond("♻️ **سیستم با موفقیت ریست کارخانه شد!**\n\n✅ وضعیت تمام کلیدهای API صفر شد.\n✅ تمام چت‌های فعال غیرفعال شدند.\n✅ حافظه‌های بلندمدت و کوتاه‌مدت تمام گروه‌ها پاک شد.")
+    await asyncio.sleep(5)
+    try:
+        await msg.delete()
+    except Exception:
+        pass
+
 async def handle_purge(event, limit=None):
     chat_id = event.chat_id
     trigger_id = event.id
@@ -403,6 +422,11 @@ async def outgoing_command_dispatcher(event):
     if m_ast_off:
         scope = m_ast_off.group(1)
         await handle_assistant_off(event, is_all=(scope == "all"))
+        return
+
+    # 12. FACTORY RESET (222)
+    if norm_lower == "222":
+        await handle_factory_reset(event)
         return
 
 # ==========================================================

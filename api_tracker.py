@@ -173,5 +173,16 @@ class APIUsageTracker:
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
             print(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled for this session.")
 
+    def factory_reset(self):
+        """Globally resets all API keys, quotas, rate limits, and bans."""
+        with self._lock:
+            self.usage_data.clear()
+            self.invalid_keys.clear()
+            self.rpm_timestamps.clear()
+            self.cooldowns.clear()
+            self.consecutive_failures.clear()
+            self._save()
+            print("♻️ API Tracker has been factory reset.")
+
 # Global singleton instance
 api_tracker = APIUsageTracker()

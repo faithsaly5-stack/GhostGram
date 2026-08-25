@@ -112,6 +112,13 @@ class PalManager:
         self.save_state()
         return count
 
+    def factory_reset(self):
+        """Globally clears all Pal and Auto-Engage configurations."""
+        self.active_chats.clear()
+        self.auto_engage_chats.clear()
+        self.save_state()
+        print("♻️ Pal Manager has been factory reset.")
+
     def get_active_count(self) -> int:
         return len(self.active_chats)
         
