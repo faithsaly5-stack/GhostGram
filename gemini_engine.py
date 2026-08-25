@@ -131,9 +131,10 @@ class GeminiEngine:
                 return self.clean_prompt(raw_text)
 
             except asyncio.TimeoutError:
-                # Force immediate 25s cascade instead of waiting for 5 failures
-                api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
-                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Forcing immediate cascade to next model...")
+                # Force immediate GLOBAL cascade for this model across all keys
+                for k in self.keys:
+                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120)
+                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Forcing immediate GLOBAL cascade to next model for 2 minutes...")
                 continue
 
             except Exception as e:
@@ -165,9 +166,10 @@ class GeminiEngine:
                     print(f"❌ NOT FOUND (404): Model '{model_to_use}' is invalid or deprecated! Disabling model for this key.")
                     api_tracker.record_daily_exhausted(api_key, model_to_use) # Effectively disables it for the day
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
-                    # Force immediate 25s cascade instead of waiting for 5 failures
-                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
-                    print(f"⚠️ Gemini Network Error on {model_to_use} (503/Timeout). Forcing immediate cascade to next model...")
+                    # Force immediate GLOBAL cascade for this model across all keys
+                    for k in self.keys:
+                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120)
+                    print(f"⚠️ Gemini Network Error on {model_to_use} (503/Timeout). Forcing immediate GLOBAL cascade to next model for 2 minutes...")
                 else:
                     # 4. Unknown Errors (Catch-All)
                     api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)

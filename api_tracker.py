@@ -3,17 +3,31 @@ import os
 import time
 import threading
 from datetime import datetime, timezone
+from dotenv import load_dotenv
 
-MODELS_CONFIG = [
-    {"name": "gemini-3.7-flash", "rpm": 5, "rpd": 20},
-    {"name": "gemini-3.6-flash", "rpm": 5, "rpd": 20},
-    {"name": "gemini-3.5-flash", "rpm": 5, "rpd": 20},
-    {"name": "gemini-3.0-flash", "rpm": 5, "rpd": 20},
-    {"name": "gemini-2.5-flash", "rpm": 5, "rpd": 20},
-    {"name": "gemini-3.5-flash-lite", "rpm": 15, "rpd": 500},
-    {"name": "gemini-3.1-flash-lite", "rpm": 15, "rpd": 500},
-    {"name": "gemini-2.5-flash-lite", "rpm": 10, "rpd": 20},
-]
+load_dotenv()
+
+MODELS_CONFIG = []
+models_env = os.environ.get("GEMINI_MODELS", "")
+
+# Support multiline format with newlines or single-line with commas
+raw_lines = models_env.replace(',', '\n').split('\n')
+for line in raw_lines:
+    line = line.strip()
+    if not line or line.startswith('#'):
+        continue
+    parts = line.split(':')
+    if len(parts) >= 3:
+        MODELS_CONFIG.append({
+            "name": parts[0].strip(),
+            "rpm": int(parts[1].strip()),
+            "rpd": int(parts[2].strip())
+        })
+
+if not MODELS_CONFIG:
+    print("❌ CRITICAL ERROR: No models defined in GEMINI_MODELS inside .env! Please check your .env file.")
+    import sys
+    sys.exit(1)
 
 class APIUsageTracker:
     def __init__(self, filename="api_usage.json"):
