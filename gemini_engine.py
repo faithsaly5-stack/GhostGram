@@ -47,7 +47,7 @@ class GeminiEngine:
             
             # Strict Allowlist: Keep ONLY English, Persian/Arabic block, Numbers, Spaces, and basic Punctuation.
             # All weird control characters and unsupported languages are safely replaced with a space.
-            allowed_pattern = re.compile(r'[^a-zA-Z0-9\u0600-\u06FF\s\.,!؟،؛:;\'"()\[\]{}<>_\-+=*&%$#@|\\/]+')
+            allowed_pattern = re.compile(r'[^a-zA-Z0-9\u0600-\u06FF\s\.,!\?؟،؛:;\'"()\[\]{}<>_\-+=*&%$#@|\\/~^`]+')
             clean_text = allowed_pattern.sub(' ', clean_text)
             
             clean_text = re.sub(r'[ \t]+', ' ', clean_text)
@@ -97,7 +97,6 @@ class GeminiEngine:
 
             cfg = types.GenerateContentConfig(
                 system_instruction=safe_sys_prompt,
-                thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
             )
             if is_json:
