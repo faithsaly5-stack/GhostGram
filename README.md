@@ -444,8 +444,8 @@ OWNER_INTERESTS=Music, Tech, Literature / موسیقی، تکنولوژی و ک�
 # =================================================================
 # 🧠 GEMINI API CONFIGURATION (https://aistudio.google.com)
 # =================================================================
-GEMINI_API_KEYS=AIzaSyA...Key1,AIzaSyB...Key2
-MODEL_NAME=gemini-3.5-flash-lite
+GEMINI_API_KEYS=your_key_1,your_key_2
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 SESSION_NAME=ghostgram_session
 
 # =================================================================

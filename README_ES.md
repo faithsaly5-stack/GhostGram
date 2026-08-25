@@ -226,8 +226,8 @@ PHONE_NUMBER=+1234567890
 SESSION_NAME=teleagent_session
 # SESSION_STRING= (opcional, para Railway / Render)
 
-GEMINI_API_KEYS=AIzaSyA_Key1,AIzaSyB_Key2
-MODEL_NAME=gemini-3.5-flash-lite
+GEMINI_API_KEYS=your_key_1,your_key_2
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 
 OWNER_ID=123456789
 OWNER_NAME=TuNombre

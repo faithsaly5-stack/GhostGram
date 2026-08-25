@@ -234,8 +234,8 @@ SESSION_NAME=teleagent_session
 # ==========================================
 # 🧠 GOOGLE GEMINI API 密钥 (支持多 Key 轮询)
 # ==========================================
-GEMINI_API_KEYS=AIzaSyA_Key1,AIzaSyB_Key2
-MODEL_NAME=gemini-3.5-flash-lite
+GEMINI_API_KEYS=your_key_1,your_key_2
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 
 # ==========================================
 # 👤 用户身份与人设动态插值参数

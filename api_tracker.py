@@ -136,10 +136,13 @@ class APIUsageTracker:
         with self._lock:
             start_idx = 0
             if start_model:
-                for i, cfg in enumerate(MODELS_CONFIG):
-                    if cfg["name"] == start_model:
-                        start_idx = i
-                        break
+                if start_model == "CHEAPEST" and MODELS_CONFIG:
+                    start_idx = len(MODELS_CONFIG) - 1
+                else:
+                    for i, cfg in enumerate(MODELS_CONFIG):
+                        if cfg["name"] == start_model:
+                            start_idx = i
+                            break
                         
             for cfg in MODELS_CONFIG[start_idx:]:
                 model_name = cfg["name"]

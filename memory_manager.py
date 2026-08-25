@@ -274,7 +274,7 @@ class MemoryManager:
                 new_summary = await gemini.get_response(
                     prompt, 
                     "تو یک سیستم فشرده‌ساز و حافظه‌نگار هوشمند هستی. خروجی فقط نکات فشرده بدون ایموجی.", 
-                    start_model="gemini-3.5-flash-lite"
+                    start_model="CHEAPEST"
                 )
                 if new_summary and new_summary != Text.ERROR:
                     new_summary = new_summary.strip()
@@ -285,7 +285,7 @@ class MemoryManager:
                         compacted = await gemini.get_response(
                             compress_prompt, 
                             "فشرده‌ساز بدون ایموجی.", 
-                            start_model="gemini-3.5-flash-lite"
+                            start_model="CHEAPEST"
                         )
                         if compacted and compacted != Text.ERROR:
                             new_summary = compacted.strip()
