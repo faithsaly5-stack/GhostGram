@@ -133,6 +133,10 @@ class GeminiEngine:
                     clean_text = re.sub(r'<[^>]+>', '', clean_text)
                     diacritics_pattern = re.compile(r'[\u064B-\u065F\u0670\u0617-\u061A\u06D6-\u06ED]')
                     clean_text = diacritics_pattern.sub('', clean_text)
+                    
+                    # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
+                    clean_text = clean_text.replace('\u200c', ' ')
+                    
                     clean_text = re.sub(r'[ \t]+', ' ', clean_text)
                     clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
                     return clean_text
