@@ -359,13 +359,14 @@ async def handle_custom_ask(event, user_instruction=""):
     )
     
     input_chat = await event.get_input_chat()
-    async with ContinuousTyping(client, input_chat):
-        response = await get_response(prompt_input, persona_manager.get_prompt("normal"))
-        if response and response != Text.ERROR:
-            human_typing_time = calculate_human_typing_delay(response)
-            await asyncio.sleep(human_typing_time)
-            await client.send_message(input_chat, response, reply_to=reply_to_id)
-            print(f"⚡ Handled 111 in chat {chat_id}")
+    async with global_ai_lock:
+        async with ContinuousTyping(client, input_chat):
+            response = await get_response(prompt_input, persona_manager.get_prompt("normal"))
+            if response and response != Text.ERROR:
+                human_typing_time = calculate_human_typing_delay(response)
+                await asyncio.sleep(human_typing_time)
+                await client.send_message(input_chat, response, reply_to=reply_to_id)
+                print(f"⚡ Handled 111 in chat {chat_id}")
 
 # ==========================================================
 # 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
@@ -501,13 +502,12 @@ async def global_memory_tracker(event):
     memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 # Concurrency management to prevent API spam and overlapping replies
-chat_locks = {}
+# Changed to a GLOBAL lock per user request to process ALL messages strictly sequentially one by one across the entire bot
+global_ai_lock = asyncio.Lock()
 chat_latest_msg = {}
 
 def get_chat_lock(chat_id):
-    if chat_id not in chat_locks:
-        chat_locks[chat_id] = asyncio.Lock()
-    return chat_locks[chat_id]
+    return global_ai_lock
 
 @client.on(events.NewMessage(incoming=True))
 async def incoming_message_handler(event):
@@ -798,12 +798,13 @@ async def auto_engage_loop():
 
                                 human_typing_time = calculate_human_typing_delay(reply_text)
                                 input_chat = await client.get_input_entity(chat_id)
-                                async with ContinuousTyping(client, input_chat):
-                                    await asyncio.sleep(human_typing_time)
-                                    if not pal_manager.is_auto_engage_active(chat_id):
-                                        continue
-                                    await client.send_message(input_chat, reply_text, reply_to=target_id)
-                                    print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
+                                async with global_ai_lock:
+                                    async with ContinuousTyping(client, input_chat):
+                                        await asyncio.sleep(human_typing_time)
+                                        if not pal_manager.is_auto_engage_active(chat_id):
+                                            continue
+                                        await client.send_message(input_chat, reply_text, reply_to=target_id)
+                                        print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
                     except json.JSONDecodeError:
                         pass # Ignore if AI failed to output valid JSON
                         
