@@ -139,14 +139,17 @@ class APIUsageTracker:
             print(f"⏳ Key {key_preview} reached RPM limit. Cooling down for {cooldown_seconds}s...")
             self.cooldowns[api_key] = (time.time() + cooldown_seconds, "RATE_LIMIT")
 
-    def record_network_error(self, api_key: str):
-        """Handles transient network errors or timeouts gracefully."""
+    def record_network_error(self, api_key: str, is_unknown: bool = False):
+        """Handles transient network errors, timeouts, or unknown Google API errors."""
         with self._lock:
             fails = self.consecutive_failures.get(api_key, 0) + 1
             self.consecutive_failures[api_key] = fails
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
 
-            if fails >= 5:
+            if fails >= 10 and is_unknown:
+                print(f"🛑 Key {key_preview} had 10 consecutive unknown errors. Quarantining for 5 minutes (Possible geographic/model block).")
+                self.cooldowns[api_key] = (time.time() + 300, "QUARANTINE_UNKNOWN_ERROR")
+            elif fails >= 5:
                 # Brief 30-second rest if multiple consecutive network timeouts occur
                 print(f"⚠️ Key {key_preview} had {fails} consecutive network errors. Resting for 30s.")
                 self.cooldowns[api_key] = (time.time() + 30, "NETWORK_FAILURES")

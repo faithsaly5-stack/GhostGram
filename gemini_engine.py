@@ -142,6 +142,18 @@ class GeminiEngine:
                 except Exception as e:
                     err_str = str(e).lower()
 
+                    # 1. Fatal Safety/Policy Blocks (No retry possible for this specific prompt)
+                    if "safety" in err_str or "blocked" in err_str or "content_restriction" in err_str or "finish_reason: safety" in err_str:
+                        print(f"🛑 SAFETY BLOCK: The prompt violated Google's safety/content policies.")
+                        return Text.ERROR
+                        
+                    # 2. Fatal Geographic / Policy Bans
+                    if "unsupported user location" in err_str or "location is not supported" in err_str:
+                        print(f"🌍 GEO-RESTRICTION: Google Gemini is blocked in this server's region!")
+                        api_tracker.record_invalid_key(api_key)
+                        continue
+
+                    # 3. Standard API Errors
                     if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
                         if "per day" in err_str or "daily" in err_str:
                             api_tracker.record_daily_exhausted(api_key)
@@ -151,9 +163,13 @@ class GeminiEngine:
                             api_tracker.record_rate_limit(api_key, cooldown_seconds=cd)
                     elif "api_key_invalid" in err_str or "permission_denied" in err_str or "400" in err_str or "403" in err_str:
                         api_tracker.record_invalid_key(api_key)
+                    elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
+                        api_tracker.record_network_error(api_key, is_unknown=False)
+                        print(f"⚠️ Gemini Network Error: {e}")
                     else:
-                        api_tracker.record_network_error(api_key)
-                        print(f"⚠️ Gemini/Network Notice ({type(e).__name__}): {e}")
+                        # 4. Unknown Errors (Catch-All)
+                        api_tracker.record_network_error(api_key, is_unknown=True)
+                        print(f"⚠️ Unknown Gemini Error ({type(e).__name__}): {e}")
                     continue
 
             # If all keys are permanently dead (fake/revoked 400/403) or daily exhausted
