@@ -18,13 +18,8 @@ class GeminiEngine:
         self._clients = {}
         self._client_lock = threading.Lock()
         
-        # Primary configured model + reliable fallback models in order of performance
-        base_models = [Config.MODEL_NAME, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
-        # Deduplicate while preserving priority order
-        self.models = []
-        for m in base_models:
-            if m and m not in self.models:
-                self.models.append(m)
+        # We strictly use the user's selected model ONLY, no fallbacks.
+        self.model = Config.MODEL_NAME
         
         # Round-Robin Pointer
         self.current_key_idx = 0
@@ -50,11 +45,6 @@ class GeminiEngine:
                 key = self.keys[self.current_key_idx]
                 if api_tracker.is_key_available(key):
                     return key
-            # If all keys are in cooldown but not permanently dead, return the current key anyway for single-key setups
-            if len(self.keys) <= 2:
-                for key in self.keys:
-                    if key not in api_tracker.invalid_keys and not api_tracker.is_key_daily_exhausted(key):
-                        return key
             return None
 
     def _are_all_keys_dead_or_exhausted(self) -> bool:
@@ -97,8 +87,7 @@ class GeminiEngine:
         max_cycles = 8
 
         for cycle in range(max_cycles):
-            # Model cascade: try primary model first, fallback to robust secondary models if needed
-            model_to_use = self.models[min(cycle, len(self.models) - 1)]
+            model_to_use = self.model
 
             cfg = types.GenerateContentConfig(
                 system_instruction=safe_sys_prompt,
@@ -174,9 +163,9 @@ class GeminiEngine:
 
             # If keys are just in temporary cooldown or rate limit, backoff and keep trying!
             if cycle < max_cycles - 1:
-                # Progressive adaptive backoff: 3s, 6s, 9s, 12s... capped at 15s
-                wait_sec = min(15.0, max(3.0, (cycle + 1) * 3.0))
-                print(f"⏳ Persistent Backoff: Waiting {wait_sec:.0f}s before retry cycle {cycle + 2}/{max_cycles} (Model: {self.models[min(cycle + 1, len(self.models) - 1)]})...")
+                # Use api_tracker to know exactly when the next key will be free (capped at 15s)
+                wait_sec = min(15.0, max(2.0, api_tracker.get_next_cooldown_wait(self.keys)))
+                print(f"⏳ Persistent Backoff: Waiting {wait_sec:.1f}s before retry cycle {cycle + 2}/{max_cycles} (Model: {self.model})...")
                 await asyncio.sleep(wait_sec)
 
         print("⚠️ All persistent retry cycles exhausted. Dropping message.")
