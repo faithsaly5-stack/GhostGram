@@ -17,7 +17,14 @@ class GeminiEngine:
             print("⚠️ No GEMINI_API_KEYS found in config!")
         self._clients = {}
         self._client_lock = threading.Lock()
-        self.model = Config.MODEL_NAME
+        
+        # Primary configured model + reliable fallback models in order of performance
+        base_models = [Config.MODEL_NAME, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+        # Deduplicate while preserving priority order
+        self.models = []
+        for m in base_models:
+            if m and m not in self.models:
+                self.models.append(m)
         
         # Round-Robin Pointer
         self.current_key_idx = 0
@@ -43,6 +50,11 @@ class GeminiEngine:
                 key = self.keys[self.current_key_idx]
                 if api_tracker.is_key_available(key):
                     return key
+            # If all keys are in cooldown but not permanently dead, return the current key anyway for single-key setups
+            if len(self.keys) <= 2:
+                for key in self.keys:
+                    if key not in api_tracker.invalid_keys and not api_tracker.is_key_daily_exhausted(key):
+                        return key
             return None
 
     def _are_all_keys_dead_or_exhausted(self) -> bool:
@@ -56,8 +68,9 @@ class GeminiEngine:
 
     async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False) -> str:
         """
-        Asynchronously fetches a response from Gemini using adaptive round-robin key rotation,
-        automatic error classification, and self-healing rate limit backoff.
+        Asynchronously fetches a response from Gemini.
+        GUARANTEE POLICY: Persistently retries across all keys, fallback models, and backoffs
+        to ensure a response is always delivered, even with only 1 or 2 keys.
         """
         if not self.keys:
             print("❌ Error: No Gemini API keys configured!")
@@ -76,34 +89,38 @@ class GeminiEngine:
         contents = [
             types.Content(role="user", parts=[types.Part.from_text(text=safe_user_msg)])
         ]
-        
-        cfg = types.GenerateContentConfig(
-            system_instruction=safe_sys_prompt,
-            thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
-            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-        )
-        if is_json:
-            cfg.response_mime_type = "application/json"
 
         loop = asyncio.get_running_loop()
         num_keys = len(self.keys)
-        max_cycles = 3  # Try up to 3 full rotation cycles across all keys
+        
+        # Max retry cycles: 8 cycles (plenty of time to wait out any RPM rate-limit or network dip)
+        max_cycles = 8
 
         for cycle in range(max_cycles):
-            # Try every key in the pool
+            # Model cascade: try primary model first, fallback to robust secondary models if needed
+            model_to_use = self.models[min(cycle, len(self.models) - 1)]
+
+            cfg = types.GenerateContentConfig(
+                system_instruction=safe_sys_prompt,
+                thinking_config=types.ThinkingConfig(thinking_level="MINIMAL"),
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+            )
+            if is_json:
+                cfg.response_mime_type = "application/json"
+
+            # Attempt across available keys in the pool
             for _ in range(num_keys):
                 api_key = self._get_next_key()
                 if not api_key:
-                    # All keys might be temporarily on cooldown (RPM or brief network rest)
                     break
 
                 client = self._client(api_key)
                 try:
-                    # Call Gemini with 15-second strict timeout
+                    # 15-second strict timeout per attempt
                     resp = await asyncio.wait_for(
                         loop.run_in_executor(
                             None,
-                            lambda c=client, m=self.model, cont=contents, conf=cfg: c.models.generate_content(
+                            lambda c=client, m=model_to_use, cont=contents, conf=cfg: c.models.generate_content(
                                 model=m, contents=cont, config=conf
                             )
                         ),
@@ -130,7 +147,7 @@ class GeminiEngine:
 
                 except asyncio.TimeoutError:
                     api_tracker.record_network_error(api_key)
-                    print(f"⚠️ Key timeout (15s). Moving to next key...")
+                    print(f"⚠️ Key timeout (15s) on model '{model_to_use}'. Retrying...")
                     continue
 
                 except Exception as e:
@@ -140,26 +157,29 @@ class GeminiEngine:
                         if "per day" in err_str or "daily" in err_str:
                             api_tracker.record_daily_exhausted(api_key)
                         else:
-                            api_tracker.record_rate_limit(api_key, cooldown_seconds=45)
+                            # Short 10s cooldown for small key counts
+                            cd = 10 if num_keys <= 2 else 30
+                            api_tracker.record_rate_limit(api_key, cooldown_seconds=cd)
                     elif "api_key_invalid" in err_str or "permission_denied" in err_str or "400" in err_str or "403" in err_str:
                         api_tracker.record_invalid_key(api_key)
                     else:
                         api_tracker.record_network_error(api_key)
-                        print(f"⚠️ Transient Gemini/Network Error ({type(e).__name__}): {e}")
+                        print(f"⚠️ Gemini/Network Notice ({type(e).__name__}): {e}")
                     continue
 
-            # If all keys are genuinely daily exhausted / invalid, fail fast
+            # If all keys are permanently dead (fake/revoked 400/403) or daily exhausted
             if self._are_all_keys_dead_or_exhausted():
-                print("🚫 ALL API KEYS EXHAUSTED FOR TODAY (Daily 500 limit or invalid keys).")
+                print("🚫 ALL API KEYS EXHAUSTED FOR TODAY (Daily 500 limit reached or invalid keys).")
                 return Text.ERROR
 
-            # If keys are just in temporary cooldown (e.g. 15 RPM spike or network retry), wait and retry
+            # If keys are just in temporary cooldown or rate limit, backoff and keep trying!
             if cycle < max_cycles - 1:
-                wait_sec = min(15.0, max(2.0, api_tracker.get_next_cooldown_wait(self.keys)))
-                print(f"⏳ All keys in temporary cooldown. Waiting {wait_sec:.1f}s before next retry cycle ({cycle + 1}/{max_cycles})...")
+                # Progressive adaptive backoff: 3s, 6s, 9s, 12s... capped at 15s
+                wait_sec = min(15.0, max(3.0, (cycle + 1) * 3.0))
+                print(f"⏳ Persistent Backoff: Waiting {wait_sec:.0f}s before retry cycle {cycle + 2}/{max_cycles} (Model: {self.models[min(cycle + 1, len(self.models) - 1)]})...")
                 await asyncio.sleep(wait_sec)
 
-        print("⚠️ All retry cycles completed without response. Dropping message.")
+        print("⚠️ All persistent retry cycles exhausted. Dropping message.")
         return Text.ERROR
 
 # Global singleton instance

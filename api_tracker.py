@@ -106,7 +106,7 @@ class APIUsageTracker:
                     rem = 60 - (now - oldest)
                     if rem > 0:
                         waits.append(rem)
-            return min(waits) if waits else 5.0
+            return min(waits) if waits else 4.0
 
     def record_success(self, api_key: str):
         """Records a successful request, updates RPM and daily usage."""
@@ -132,11 +132,11 @@ class APIUsageTracker:
             self.usage_data[api_key] = key_data
             self._save()
 
-    def record_rate_limit(self, api_key: str, cooldown_seconds: int = 45):
-        """Temporary 429 / 15 RPM cooldown (NOT a permanent ban)."""
+    def record_rate_limit(self, api_key: str, cooldown_seconds: int = 15):
+        """Temporary 429 / 15 RPM cooldown (Fast self-healing for 1-2 key setups)."""
         with self._lock:
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"⏳ Key {key_preview} reached 15 RPM rate limit. Cooling down for {cooldown_seconds}s...")
+            print(f"⏳ Key {key_preview} reached RPM limit. Cooling down for {cooldown_seconds}s...")
             self.cooldowns[api_key] = (time.time() + cooldown_seconds, "RATE_LIMIT")
 
     def record_network_error(self, api_key: str):
@@ -146,13 +146,13 @@ class APIUsageTracker:
             self.consecutive_failures[api_key] = fails
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
 
-            if fails >= 4:
-                # Put on a gentle 60-second rest if multiple consecutive network timeouts occur
-                print(f"⚠️ Key {key_preview} had {fails} consecutive network errors. Resting for 60s.")
-                self.cooldowns[api_key] = (time.time() + 60, "NETWORK_FAILURES")
+            if fails >= 5:
+                # Brief 30-second rest if multiple consecutive network timeouts occur
+                print(f"⚠️ Key {key_preview} had {fails} consecutive network errors. Resting for 30s.")
+                self.cooldowns[api_key] = (time.time() + 30, "NETWORK_FAILURES")
             else:
-                # Brief 5-second pause to let network recover
-                self.cooldowns[api_key] = (time.time() + 5, "TRANSIENT_RETRY")
+                # Brief 3-second pause to let network recover
+                self.cooldowns[api_key] = (time.time() + 3, "TRANSIENT_RETRY")
 
     def record_daily_exhausted(self, api_key: str):
         """Marks key as daily exhausted (500 requests reached)."""
