@@ -104,6 +104,9 @@ class GeminiEngine:
 
             client = self._client(api_key)
             try:
+                import time
+                start_time = time.time()
+                
                 # 25-second strict timeout per attempt
                 resp = await asyncio.wait_for(
                     loop.run_in_executor(
@@ -114,6 +117,9 @@ class GeminiEngine:
                     ),
                     timeout=25.0
                 )
+                
+                elapsed_time = time.time() - start_time
+                print(f"⏱️ Gemini API Latency on {model_to_use}: {elapsed_time:.2f}s")
 
                 # Success! Record usage and return formatted text
                 api_tracker.record_success(api_key, model_to_use)
@@ -125,8 +131,9 @@ class GeminiEngine:
                 return self.clean_prompt(raw_text)
 
             except asyncio.TimeoutError:
-                api_tracker.record_network_error(api_key, model_to_use)
-                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Cascading...")
+                # Force immediate 25s cascade instead of waiting for 5 failures
+                api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
+                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Forcing immediate cascade to next model...")
                 continue
 
             except Exception as e:
@@ -158,8 +165,9 @@ class GeminiEngine:
                     print(f"❌ NOT FOUND (404): Model '{model_to_use}' is invalid or deprecated! Disabling model for this key.")
                     api_tracker.record_daily_exhausted(api_key, model_to_use) # Effectively disables it for the day
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
-                    api_tracker.record_network_error(api_key, model_to_use, is_unknown=False)
-                    print(f"⚠️ Gemini Network Error on {model_to_use}: {e}")
+                    # Force immediate 25s cascade instead of waiting for 5 failures
+                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
+                    print(f"⚠️ Gemini Network Error on {model_to_use} (503/Timeout). Forcing immediate cascade to next model...")
                 else:
                     # 4. Unknown Errors (Catch-All)
                     api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)
