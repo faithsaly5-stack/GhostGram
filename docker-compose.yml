@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  ghostgram:
+    build: .
+    container_name: ghostgram
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1

@@ -1,19 +1,67 @@
-class Text:
-    HELP = """
-**TeleAgent Help**
+from config import Config
 
-Use the following commands:
-- `!ask <question>`: Ask the AI a question. The bot will edit your message with the answer.
-- `!help`: Show this help message.
+class Text:
+    HELP = f"""
+🕶️ **کدهای مخفی و رمزی TeleAgent (مخصوص {Config.OWNER_NAME})** 🕶️
+
+این کدها کاملاً مخفی (Stealth) هستند؛ یعنی به محض ارسال، خودبه‌خود پاک می‌شوند تا هیچ‌کس متوجه نشود:
+
+🔮 **کدهای جادویی رفیق (PAL):**
+• `777` : **روشن کردن رفیق** (پاسخ خودکار با لحن عادی {Config.OWNER_NAME})
+• `777 <حالت>` : روشن کردن با حالت خاص. حالت‌های موجود:
+    - `lust` (عاشقانه/عرفانی)
+    - `lust afghani` (عاشقانه با لهجه افغانستانی)
+    - `tajik` (تاجیکی)
+    - `angry` (عصبی و بی‌اعصاب)
+    - `philosophical` (فلسفی و عمیق)
+    - `sarcastic` (طعنه‌زن و تیکه‌دار)
+    - `depressed` (افسرده و ناامید)
+    - `drunk` (مست و بی‌فیلتر)
+    - `academic` (علمی و فرمال)
+    - `tehrani` (بچه تهرون)
+    - `poetic` (شاعرانه و دراماتیک)
+• `000` : **خاموش کردن رفیق** (غیرفعال‌سازی در همین چت)
+• `000 all` : **خاموش کردن رفیق در کل چت‌ها** (غیرفعال‌سازی سراسری)
+
+🕵️ **کدهای جادویی تعامل خودکار (AUTO ENGAGE):**
+• `777 engage` یا `777 engage 20` : **تعامل خودکار (Lurker)** (هر ۲۰ دقیقه یا زمان دلخواه، چت را بررسی و ورود هوشمندانه می‌کند)
+• `777 engage off` : **خاموش کردن تعامل خودکار** در گروه فعلی
+• `777 engage off all` : **خاموش کردن تعامل خودکار در تمام گروه‌ها**
+
+🤖 **کدهای جادویی دستیار شخصی (ASSISTANT):**
+• `666` : **روشن کردن دستیار شخصی (سراسری)** (پاسخ خودکار در تمام پیوی‌های فعلی و آینده + معرفی سایت)
+• `444` : **توقف دستیار فقط در این چت** (سایر پیوی‌ها فعال می‌مانند)
+• `444 کل` : **خاموش کردن دستیار در تمام چت‌ها**
+
+🛠 **کدهای ابزاری:**
+• `333` : **ریست حافظه** (فراموش کردن پیام‌های قبلی و شروع مجدد حافظه)
+• `999` : **پاکسازی روح (Ghost Purge)** (تمام پیام‌های ارسالی شما در این چت فوراً و بدون ردپا حذف می‌شوند)
+• `999 20` : حذف ۲۰ پیام آخر ارسالی شما در این چت
+• `111` (روی ریپلای): **پاسخ هوشمند سفارشی** به پیام ریپلای شده
+• `111 <دستور>` (روی ریپلای): پاسخ هوشمند طبق دستور شما (مثلاً `111 بگو فردا میام`)
+• `555` : بررسی وضعیت فعال بودن رفیق و دستیار شخصی
+• `888` : نمایش این راهنما
+
+*(همچنین دستورات متنی مثل `!دستیار روشن`، `!دستیار خاموش`، `!رفیق روشن`، `!خاموش`، `!ریست`، `!پاکسازی` و `!بگو` همچنان کار می‌کنند)*
 """
-    PROCESSING = "Thinking..."
-    ERROR = "An error occurred. Please try again later."
+    PAL_ACTIVATED = "🤖 **حالت رفیق برای این چت فعال شد.**\nاز این پس پیام‌های دریافتی به صورت خودکار، با شبیه‌سازی تایپ و لحن طبیعی پاسخ داده می‌شوند."
+    PAL_DEACTIVATED = "💤 **حالت رفیق برای این چت غیرفعال شد.**"
+    PAL_STATUS_ACTIVE = "🟢 **وضعیت رفیق:** در این چت **فعال** است."
+    PAL_STATUS_INACTIVE = "⚪ **وضعیت رفیق:** در این چت **غیرفعال** است."
+    
+    ASSISTANT_STATUS_ACTIVE = "🟢 **وضعیت دستیار شخصی:** برای پیوی‌ها و چت‌های منتخب **فعال** است."
+    ASSISTANT_STATUS_INACTIVE = "⚪ **وضعیت دستیار شخصی:** **غیرفعال** است."
+
+    
+    PURGE_START = "🧹 **در حال پاکسازی پیام‌های شما...**"
+    PURGE_DONE = "✅ تعداد `{count}` پیام ارسالی شما با موفقیت از این گفتگو حذف شد."
+    PURGE_NONE = "ℹ️ پیامی از شما برای حذف در این گفتگو پیدا نشد."
+    
+    PROCESSING = "در حال تفکر..."
+    ERROR = "خطایی رخ داد. لطفا دوباره تلاش کنید."
     ERROR_PREFIX = "Error: "
-    CONTEXT_TEMPLATE = "Conversation History:\n{history_text}\n\nTarget Message (Reply to this):\n{target_text}\n\nUser Instruction/Draft: {user_text}"
     CHAIN_TEMPLATE = "[{time}] {sender}: {message}"
-    NO_TEXT = "[Media/No Text]"
-    UNKNOWN_SENDER = "Unknown"
-    ME_LABEL = "Me (Marcel)"
-    AUTO_QUERY = "Analyze the conversation above and provide a relevant, natural response as Me (Marcel)."
-    ASK_USAGE_ERROR = "Please provide a question or reply to a message to use !ask."
-    AI_FOOTER = "\n\nAnswered by Marcel's AI Assistant with love."
+    NO_TEXT = "[رسانه / بدون متن]"
+    UNKNOWN_SENDER = "مخاطب"
+    ME_LABEL = f"من ({Config.OWNER_NAME})" if Config.OWNER_NAME else "من"
+    AI_FOOTER = ""

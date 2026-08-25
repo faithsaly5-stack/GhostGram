@@ -25,3 +25,15 @@ env/
 .vscode/
 *.swp
 *.bak
+
+# TeleAgent Specific
+apis.txt
+*.json
+teleagent_deploy.zip
+teleagent_deploy_config.json
+*.zip
+
+# Publisher Scripts (Private)
+publish.py
+publish_github.bat
+prepare_github.bat
