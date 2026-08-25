@@ -366,7 +366,6 @@ async def handle_custom_ask(event, user_instruction=""):
             await asyncio.sleep(human_typing_time)
             await client.send_message(input_chat, response, reply_to=reply_to_id)
             print(f"⚡ Handled 111 in chat {chat_id}")
-            memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_info.id if my_info else Config.OWNER_ID)
 
 # ==========================================================
 # 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
@@ -390,6 +389,16 @@ async def outgoing_command_dispatcher(event):
     # 2. STATUS (555)
     if norm_lower == "555":
         await handle_status(event)
+        return
+
+    # 3. API STATS (101)
+    if norm_lower == "101":
+        from api_tracker import api_tracker
+        stats_text = api_tracker.get_stats_report()
+        try:
+            await event.edit(stats_text)
+        except Exception:
+            await event.respond(stats_text)
         return
 
     # 3. RESET MEMORY (333)
@@ -468,6 +477,28 @@ async def outgoing_command_dispatcher(event):
 # ==========================================================
 # 🚀 INCOMING: پردازش پیام‌های دریافتی (PAL & ASSISTANT MODES)
 # ==========================================================
+
+@client.on(events.NewMessage())
+async def global_memory_tracker(event):
+    """Tracks every incoming and outgoing message in active chats for accurate long-term summarization."""
+    if not event.text:
+        return
+        
+    chat_id = event.chat_id
+    
+    # Only track if the chat is actively monitored (Pal, Engage, or Assistant)
+    is_tracked = (
+        pal_manager.is_active(chat_id) or 
+        pal_manager.is_auto_engage_active(chat_id) or 
+        assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private)
+    )
+    if not is_tracked:
+        return
+        
+    global my_info
+    my_id = my_info.id if my_info else Config.OWNER_ID
+    
+    memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 # Concurrency management to prevent API spam and overlapping replies
 chat_locks = {}
@@ -630,8 +661,6 @@ async def incoming_message_handler(event):
                 else:
                     print(f"✅ Assistant replied politely in chat {chat_id}")
                     
-                # Record message for rolling long-term memory summary check
-                memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 
 auto_engage_schedule = {} # dict: chat_id -> (next_engage_timestamp, configured_duration_minutes)
@@ -693,6 +722,11 @@ async def auto_engage_loop():
                     latest_msgs = await client.get_messages(chat_id, limit=1)
                     if not latest_msgs:
                         continue
+                    
+                    # Prevent auto-engaging if the very last message in the chat was sent by me
+                    if latest_msgs[0].out or latest_msgs[0].sender_id == my_id:
+                        continue
+                        
                     last_msg_time = latest_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                     # A chat is dead if no one spoke in 30 mins OR 1.5x the configured duration
                     dead_threshold = max(30 * 60, duration_minutes * 60 * 1.5)
@@ -770,7 +804,6 @@ async def auto_engage_loop():
                                         continue
                                     await client.send_message(input_chat, reply_text, reply_to=target_id)
                                     print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
-                                    memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
                     except json.JSONDecodeError:
                         pass # Ignore if AI failed to output valid JSON
                         

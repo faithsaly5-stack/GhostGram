@@ -17,13 +17,6 @@ class GeminiEngine:
             print("⚠️ No GEMINI_API_KEYS found in config!")
         self._clients = {}
         self._client_lock = threading.Lock()
-        
-        # We strictly use the user's selected model ONLY, no fallbacks.
-        self.model = Config.MODEL_NAME
-        
-        # Round-Robin Pointer
-        self.current_key_idx = 0
-        self._idx_lock = threading.Lock()
 
     def _client(self, api_key: str):
         """Returns a cached genai.Client instance for the specified API key."""
@@ -34,33 +27,11 @@ class GeminiEngine:
                 self._clients[api_key] = c
             return c
 
-    def _get_next_key(self) -> str:
-        """Returns the next available API key in round-robin fashion."""
-        if not self.keys:
-            return None
-        with self._idx_lock:
-            num_keys = len(self.keys)
-            for _ in range(num_keys):
-                self.current_key_idx = (self.current_key_idx + 1) % num_keys
-                key = self.keys[self.current_key_idx]
-                if api_tracker.is_key_available(key):
-                    return key
-            return None
-
-    def _are_all_keys_dead_or_exhausted(self) -> bool:
-        """Checks if all configured keys are permanently invalid or hit the daily 500 cap."""
-        if not self.keys:
-            return True
-        for k in self.keys:
-            if not api_tracker.is_key_daily_exhausted(k) and k not in api_tracker.invalid_keys:
-                return False
-        return True
-
-    async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False) -> str:
+    async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False, start_model: str = None) -> str:
         """
         Asynchronously fetches a response from Gemini.
-        GUARANTEE POLICY: Persistently retries across all keys, fallback models, and backoffs
-        to ensure a response is always delivered, even with only 1 or 2 keys.
+        GUARANTEE POLICY: Persistently cascades through the smartest available models
+        (or starting from start_model) and all available keys, respecting specific limits.
         """
         if not self.keys:
             print("❌ Error: No Gemini API keys configured!")
@@ -81,13 +52,18 @@ class GeminiEngine:
         ]
 
         loop = asyncio.get_running_loop()
-        num_keys = len(self.keys)
         
-        # Max retry cycles: 8 cycles (plenty of time to wait out any RPM rate-limit or network dip)
-        max_cycles = 8
+        # Give it up to 20 attempts to cascade through models or wait out cooldowns
+        max_attempts = 20
 
-        for cycle in range(max_cycles):
-            model_to_use = self.model
+        for attempt in range(max_attempts):
+            model_to_use, api_key = api_tracker.get_best_available_model(self.keys, start_model=start_model)
+            
+            if not api_key:
+                wait_sec = min(15.0, max(2.0, api_tracker.get_next_cooldown_wait(self.keys)))
+                print(f"⏳ All keys/models busy or exhausted. Waiting {wait_sec:.1f}s (Attempt {attempt + 1}/{max_attempts})...")
+                await asyncio.sleep(wait_sec)
+                continue
 
             cfg = types.GenerateContentConfig(
                 system_instruction=safe_sys_prompt,
@@ -97,107 +73,88 @@ class GeminiEngine:
             if is_json:
                 cfg.response_mime_type = "application/json"
 
-            # Attempt across available keys in the pool
-            for _ in range(num_keys):
-                api_key = self._get_next_key()
-                if not api_key:
-                    break
+            client = self._client(api_key)
+            try:
+                # 25-second strict timeout per attempt
+                resp = await asyncio.wait_for(
+                    loop.run_in_executor(
+                        None,
+                        lambda c=client, m=model_to_use, cont=contents, conf=cfg: c.models.generate_content(
+                            model=m, contents=cont, config=conf
+                        )
+                    ),
+                    timeout=25.0
+                )
 
-                client = self._client(api_key)
-                try:
-                    # 15-second strict timeout per attempt
-                    resp = await asyncio.wait_for(
-                        loop.run_in_executor(
-                            None,
-                            lambda c=client, m=model_to_use, cont=contents, conf=cfg: c.models.generate_content(
-                                model=m, contents=cont, config=conf
-                            )
-                        ),
-                        timeout=15.0
-                    )
+                # Success! Record usage and return formatted text
+                api_tracker.record_success(api_key, model_to_use)
+                raw_text = (resp.text or "").strip()
 
-                    # Success! Record usage and return formatted text
-                    api_tracker.record_success(api_key)
-                    raw_text = (resp.text or "").strip()
+                if is_json:
+                    return raw_text
 
-                    if is_json:
-                        return raw_text
+                # Post-processing: clean emoji, HTML, diacritics
+                emoji_pattern = re.compile(
+                    r'[\U00010000-\U0010ffff]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\ufe00-\ufe0f]',
+                    flags=re.UNICODE
+                )
+                clean_text = emoji_pattern.sub('', raw_text).strip()
+                clean_text = html.unescape(clean_text)
+                clean_text = re.sub(r'<[^>]+>', '', clean_text)
+                diacritics_pattern = re.compile(r'[\u064B-\u065F\u0670\u0617-\u061A\u06D6-\u06ED]')
+                clean_text = diacritics_pattern.sub('', clean_text)
+                
+                # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
+                clean_text = clean_text.replace('\u200c', ' ')
+                
+                clean_text = re.sub(r'[ \t]+', ' ', clean_text)
+                clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
+                return clean_text
 
-                    # Post-processing: clean emoji, HTML, diacritics
-                    emoji_pattern = re.compile(
-                        r'[\U00010000-\U0010ffff]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\ufe00-\ufe0f]',
-                        flags=re.UNICODE
-                    )
-                    clean_text = emoji_pattern.sub('', raw_text).strip()
-                    clean_text = html.unescape(clean_text)
-                    clean_text = re.sub(r'<[^>]+>', '', clean_text)
-                    diacritics_pattern = re.compile(r'[\u064B-\u065F\u0670\u0617-\u061A\u06D6-\u06ED]')
-                    clean_text = diacritics_pattern.sub('', clean_text)
+            except asyncio.TimeoutError:
+                api_tracker.record_network_error(api_key, model_to_use)
+                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Cascading...")
+                continue
+
+            except Exception as e:
+                err_str = str(e).lower()
+
+                # 1. Fatal Safety/Policy Blocks (No retry possible for this specific prompt)
+                if "safety" in err_str or "blocked" in err_str or "content_restriction" in err_str or "finish_reason: safety" in err_str:
+                    print(f"🛑 SAFETY BLOCK: The prompt violated Google's safety/content policies.")
+                    return Text.ERROR
                     
-                    # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
-                    clean_text = clean_text.replace('\u200c', ' ')
-                    
-                    clean_text = re.sub(r'[ \t]+', ' ', clean_text)
-                    clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
-                    return clean_text
-
-                except asyncio.TimeoutError:
-                    api_tracker.record_network_error(api_key)
-                    print(f"⚠️ Key timeout (15s) on model '{model_to_use}'. Retrying...")
+                # 2. Fatal Geographic / Policy Bans
+                if "unsupported user location" in err_str or "location is not supported" in err_str:
+                    print(f"🌍 GEO-RESTRICTION: Google Gemini is blocked in this server's region!")
+                    api_tracker.record_invalid_key(api_key)
                     continue
 
-                except Exception as e:
-                    err_str = str(e).lower()
-
-                    # 1. Fatal Safety/Policy Blocks (No retry possible for this specific prompt)
-                    if "safety" in err_str or "blocked" in err_str or "content_restriction" in err_str or "finish_reason: safety" in err_str:
-                        print(f"🛑 SAFETY BLOCK: The prompt violated Google's safety/content policies.")
-                        return Text.ERROR
-                        
-                    # 2. Fatal Geographic / Policy Bans
-                    if "unsupported user location" in err_str or "location is not supported" in err_str:
-                        print(f"🌍 GEO-RESTRICTION: Google Gemini is blocked in this server's region!")
-                        api_tracker.record_invalid_key(api_key)
-                        continue
-
-                    # 3. Standard API Errors
-                    if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
-                        if "per day" in err_str or "daily" in err_str:
-                            api_tracker.record_daily_exhausted(api_key)
-                        else:
-                            # Short 10s cooldown for small key counts
-                            cd = 10 if num_keys <= 2 else 30
-                            api_tracker.record_rate_limit(api_key, cooldown_seconds=cd)
-                    elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
-                        api_tracker.record_invalid_key(api_key)
-                    elif "400" in err_str:
-                        print(f"❌ BAD REQUEST (400): The prompt was rejected by Google (Payload too large, malformed, or safety block).")
-                        return Text.ERROR
-                    elif "404" in err_str:
-                        print(f"❌ NOT FOUND (404): The configured model name '{model_to_use}' is invalid or deprecated!")
-                        return Text.ERROR
-                    elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
-                        api_tracker.record_network_error(api_key, is_unknown=False)
-                        print(f"⚠️ Gemini Network Error: {e}")
+                # 3. Standard API Errors
+                if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
+                    if "per day" in err_str or "daily" in err_str:
+                        api_tracker.record_daily_exhausted(api_key, model_to_use)
                     else:
-                        # 4. Unknown Errors (Catch-All)
-                        api_tracker.record_network_error(api_key, is_unknown=True)
-                        print(f"⚠️ Unknown Gemini Error ({type(e).__name__}): {e}")
-                    continue
+                        api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
+                elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
+                    api_tracker.record_invalid_key(api_key)
+                elif "400" in err_str:
+                    print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt was rejected by Google.")
+                    # It might be a model specific format error, we can treat it as a network error to fallback
+                    api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)
+                elif "404" in err_str:
+                    print(f"❌ NOT FOUND (404): Model '{model_to_use}' is invalid or deprecated! Disabling model for this key.")
+                    api_tracker.record_daily_exhausted(api_key, model_to_use) # Effectively disables it for the day
+                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
+                    api_tracker.record_network_error(api_key, model_to_use, is_unknown=False)
+                    print(f"⚠️ Gemini Network Error on {model_to_use}: {e}")
+                else:
+                    # 4. Unknown Errors (Catch-All)
+                    api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)
+                    print(f"⚠️ Unknown Gemini Error on {model_to_use} ({type(e).__name__}): {e}")
+                continue
 
-            # If all keys are permanently dead (fake/revoked 400/403) or daily exhausted
-            if self._are_all_keys_dead_or_exhausted():
-                print("🚫 ALL API KEYS EXHAUSTED FOR TODAY (Daily 500 limit reached or invalid keys).")
-                return Text.ERROR
-
-            # If keys are just in temporary cooldown or rate limit, backoff and keep trying!
-            if cycle < max_cycles - 1:
-                # Use api_tracker to know exactly when the next key will be free (capped at 15s)
-                wait_sec = min(15.0, max(2.0, api_tracker.get_next_cooldown_wait(self.keys)))
-                print(f"⏳ Persistent Backoff: Waiting {wait_sec:.1f}s before retry cycle {cycle + 2}/{max_cycles} (Model: {self.model})...")
-                await asyncio.sleep(wait_sec)
-
-        print("⚠️ All persistent retry cycles exhausted. Dropping message.")
+        print("⚠️ All persistent retry cycles exhausted across all cascading models. Dropping message.")
         return Text.ERROR
 
 # Global singleton instance

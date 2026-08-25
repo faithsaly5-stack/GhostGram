@@ -202,7 +202,7 @@ class MemoryManager:
                 cutoff_ts = self.get_cutoff_timestamp(chat_id)
                 last_watermark = self.last_summarized_msg_ids.get(chat_id, 0)
                 
-                # Fetch up to 100 messages since last watermark (catches up if a previous summary failed)
+                # Fetch up to 100 messages since last watermark. If bot was offline, older messages are intentionally dropped.
                 fetched_msgs = []
                 iter_kwargs = {"limit": 100}
                 if last_watermark > 0:
@@ -221,12 +221,19 @@ class MemoryManager:
                     print(f"ℹ️ No new unsummarized messages for chat {chat_id}.")
                     return
                 
-                # Update watermark to the newest message ID fetched
-                newest_msg_id = max(m.id for m in fetched_msgs)
+                # Sliding Window: Keep the 30 newest messages untouched in short-term memory
+                if len(fetched_msgs) <= self.memory_limit:
+                    print(f"ℹ️ Not enough messages to summarize (sliding window of {self.memory_limit}).")
+                    return
+                
+                msgs_to_summarize = fetched_msgs[self.memory_limit:]
+                
+                # Update watermark to the newest message ID that is ACTUALLY being summarized
+                newest_msg_id = max(m.id for m in msgs_to_summarize)
                 
                 # Format fetched messages
                 formatted_lines = []
-                for msg in reversed(fetched_msgs):
+                for msg in reversed(msgs_to_summarize):
                     sender = await msg.get_sender()
                     name = await format_sender_fn(sender, my_id)
                     time_str = msg.date.strftime("%H:%M")
@@ -264,14 +271,22 @@ class MemoryManager:
 ۳. خروجی باید کاملاً بدون ایموجی، بدون مقدمه و بدون هیچ توضیح اضافی باشد.
 """
 
-                new_summary = await gemini.get_response(prompt, "تو یک سیستم فشرده‌ساز و حافظه‌نگار هوشمند هستی. خروجی فقط نکات فشرده بدون ایموجی.")
+                new_summary = await gemini.get_response(
+                    prompt, 
+                    "تو یک سیستم فشرده‌ساز و حافظه‌نگار هوشمند هستی. خروجی فقط نکات فشرده بدون ایموجی.", 
+                    start_model="gemini-3.5-flash-lite"
+                )
                 if new_summary and new_summary != Text.ERROR:
                     new_summary = new_summary.strip()
                     
                     # Check if it exceeds max size; if so, do a secondary compression pass
                     if len(new_summary) > self.max_ltm_chars:
                         compress_prompt = f"متن زیر را به صورت فوق‌العاده فشرده در حداکثر ۳ خط بازنویسی کن تا حجم بسیار کمی بگیرد:\n{new_summary}"
-                        compacted = await gemini.get_response(compress_prompt, "فشرده‌ساز بدون ایموجی.")
+                        compacted = await gemini.get_response(
+                            compress_prompt, 
+                            "فشرده‌ساز بدون ایموجی.", 
+                            start_model="gemini-3.5-flash-lite"
+                        )
                         if compacted and compacted != Text.ERROR:
                             new_summary = compacted.strip()
                             

@@ -4,31 +4,54 @@ import time
 import threading
 from datetime import datetime, timezone
 
+MODELS_CONFIG = [
+    {"name": "gemini-3.7-flash", "rpm": 5, "rpd": 20},
+    {"name": "gemini-3.6-flash", "rpm": 5, "rpd": 20},
+    {"name": "gemini-3.5-flash", "rpm": 5, "rpd": 20},
+    {"name": "gemini-3.0-flash", "rpm": 5, "rpd": 20},
+    {"name": "gemini-2.5-flash", "rpm": 5, "rpd": 20},
+    {"name": "gemini-3.5-flash-lite", "rpm": 15, "rpd": 500},
+    {"name": "gemini-3.1-flash-lite", "rpm": 15, "rpd": 500},
+    {"name": "gemini-2.5-flash-lite", "rpm": 10, "rpd": 20},
+]
+
 class APIUsageTracker:
     def __init__(self, filename="api_usage.json"):
         self.filename = filename
-        self.daily_limit = 495  # Google free tier daily cap is 500 requests per key
-        self.rpm_limit = 15     # Google free tier rate limit is 15 requests per minute
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         
         # Persistent daily count
         self.usage_data = self._load()
         
         # In-memory tracking
-        # cooldowns: api_key -> (timestamp_until, reason_str)
+        # cooldowns: api_key -> {model_name -> (timestamp_until, reason_str)}
         self.cooldowns = {}
-        # consecutive transient failures: api_key -> int
+        # consecutive transient failures: api_key -> {model_name -> int}
         self.consecutive_failures = {}
-        # RPM timestamps: api_key -> list of float timestamps (last 60s)
+        # RPM timestamps: api_key -> {model_name -> list of float timestamps (last 60s)}
         self.rpm_timestamps = {}
         # Permanently invalid keys (400/403 bad keys): set of api_keys
         self.invalid_keys = set()
+        
+    def _init_key_model_dicts(self, api_key: str):
+        if api_key not in self.cooldowns:
+            self.cooldowns[api_key] = {}
+        if api_key not in self.consecutive_failures:
+            self.consecutive_failures[api_key] = {}
+        if api_key not in self.rpm_timestamps:
+            self.rpm_timestamps[api_key] = {}
 
     def _load(self):
         if os.path.exists(self.filename):
             try:
                 with open(self.filename, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    # Migration from old schema {"date": "...", "count": N}
+                    today = self._get_today_str()
+                    for key, val in data.items():
+                        if "count" in val and "models" not in val:
+                            data[key] = {"date": today, "models": {}}
+                    return data
             except Exception:
                 pass
         return {}
@@ -42,30 +65,41 @@ class APIUsageTracker:
 
     def _get_today_str(self):
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+    def get_model_config(self, model_name: str) -> dict:
+        for cfg in MODELS_CONFIG:
+            if cfg["name"] == model_name:
+                return cfg
+        return None
 
-    def is_key_available(self, api_key: str) -> bool:
-        """Checks if a key is ready for immediate execution."""
+    def is_model_key_available(self, api_key: str, model_name: str) -> bool:
+        """Checks if a specific key and model combination is ready for immediate execution."""
         with self._lock:
             if api_key in self.invalid_keys:
                 return False
+                
+            cfg = self.get_model_config(model_name)
+            if not cfg:
+                return False # Unknown model
 
+            self._init_key_model_dicts(api_key)
             now = time.time()
 
             # 1. Cooldown check
-            if api_key in self.cooldowns:
-                exp_time, reason = self.cooldowns[api_key]
+            if model_name in self.cooldowns[api_key]:
+                exp_time, reason = self.cooldowns[api_key][model_name]
                 if now < exp_time:
                     return False
                 else:
                     # Cooldown expired naturally
-                    del self.cooldowns[api_key]
-                    self.consecutive_failures[api_key] = 0
+                    del self.cooldowns[api_key][model_name]
+                    self.consecutive_failures[api_key][model_name] = 0
 
             # 2. RPM check (last 60 seconds)
-            if api_key in self.rpm_timestamps:
-                recent = [ts for ts in self.rpm_timestamps[api_key] if now - ts < 60]
-                self.rpm_timestamps[api_key] = recent
-                if len(recent) >= self.rpm_limit:
+            if model_name in self.rpm_timestamps[api_key]:
+                recent = [ts for ts in self.rpm_timestamps[api_key][model_name] if now - ts < 60]
+                self.rpm_timestamps[api_key][model_name] = recent
+                if len(recent) >= cfg["rpm"]:
                     return False
 
             # 3. Daily Limit check
@@ -73,105 +107,159 @@ class APIUsageTracker:
             key_data = self.usage_data.get(api_key, {})
             if key_data.get("date") != today:
                 return True
+                
+            models_data = key_data.get("models", {})
+            return models_data.get(model_name, 0) < cfg["rpd"]
+            
+    def get_best_available_model(self, api_keys: list[str], start_model: str = None):
+        """
+        Iterates through the sorted MODELS_CONFIG (smartest first).
+        If start_model is specified, skips smarter models and starts from that one.
+        For each model, checks all API keys.
+        Returns the first (model_name, api_key) that is available.
+        Returns (None, None) if completely exhausted/rate-limited.
+        """
+        with self._lock:
+            start_idx = 0
+            if start_model:
+                for i, cfg in enumerate(MODELS_CONFIG):
+                    if cfg["name"] == start_model:
+                        start_idx = i
+                        break
+                        
+            for cfg in MODELS_CONFIG[start_idx:]:
+                model_name = cfg["name"]
+                for key in api_keys:
+                    if self.is_model_key_available(key, model_name):
+                        # Optimistic RPM Booking: Claim the slot instantly to prevent concurrent 'thundering herd' 429s
+                        import time
+                        now = time.time()
+                        if model_name not in self.rpm_timestamps[key]:
+                            self.rpm_timestamps[key][model_name] = []
+                        self.rpm_timestamps[key][model_name].append(now)
+                        return model_name, key
+            return None, None
 
-            return key_data.get("count", 0) < self.daily_limit
-
-    def is_key_daily_exhausted(self, api_key: str) -> bool:
-        """Checks if key reached its hard daily 500 requests limit."""
+    def is_key_daily_exhausted(self, api_key: str, model_name: str) -> bool:
+        """Checks if key reached its hard daily requests limit for a specific model."""
         with self._lock:
             if api_key in self.invalid_keys:
                 return True
+                
+            cfg = self.get_model_config(model_name)
+            if not cfg:
+                return True
+                
             today = self._get_today_str()
             key_data = self.usage_data.get(api_key, {})
             if key_data.get("date") == today:
-                return key_data.get("count", 0) >= self.daily_limit
+                models_data = key_data.get("models", {})
+                return models_data.get(model_name, 0) >= cfg["rpd"]
             return False
 
     def get_next_cooldown_wait(self, keys: list[str]) -> float:
-        """Returns the minimum seconds to wait for the next key to recover from cooldown."""
+        """Returns the minimum seconds to wait for ANY key+model combo to recover from cooldown."""
         with self._lock:
             now = time.time()
             waits = []
+            
             for k in keys:
                 if k in self.invalid_keys:
                     continue
-                if self.is_key_daily_exhausted(k):
-                    continue
-                if k in self.cooldowns:
-                    rem = self.cooldowns[k][0] - now
-                    if rem > 0:
-                        waits.append(rem)
-                elif k in self.rpm_timestamps and len(self.rpm_timestamps[k]) >= self.rpm_limit:
-                    oldest = min(self.rpm_timestamps[k])
-                    rem = 60 - (now - oldest)
-                    if rem > 0:
-                        waits.append(rem)
+                self._init_key_model_dicts(k)
+                    
+                for cfg in MODELS_CONFIG:
+                    model_name = cfg["name"]
+                    
+                    if self.is_key_daily_exhausted(k, model_name):
+                        continue
+                        
+                    if model_name in self.cooldowns[k]:
+                        rem = self.cooldowns[k][model_name][0] - now
+                        if rem > 0:
+                            waits.append(rem)
+                    elif model_name in self.rpm_timestamps[k] and len(self.rpm_timestamps[k][model_name]) >= cfg["rpm"]:
+                        oldest = min(self.rpm_timestamps[k][model_name])
+                        rem = 60 - (now - oldest)
+                        if rem > 0:
+                            waits.append(rem)
+            
             return min(waits) if waits else 4.0
 
-    def record_success(self, api_key: str):
-        """Records a successful request, updates RPM and daily usage."""
+    def record_success(self, api_key: str, model_name: str):
+        """Records a successful request, updates RPM and daily usage for the model."""
         with self._lock:
+            self._init_key_model_dicts(api_key)
             now = time.time()
-            self.consecutive_failures[api_key] = 0
-            if api_key in self.cooldowns:
-                del self.cooldowns[api_key]
-
-            # Update RPM
-            if api_key not in self.rpm_timestamps:
-                self.rpm_timestamps[api_key] = []
-            self.rpm_timestamps[api_key].append(now)
+            self.consecutive_failures[api_key][model_name] = 0
+            if model_name in self.cooldowns[api_key]:
+                del self.cooldowns[api_key][model_name]
 
             # Update Daily persistent count
             today = self._get_today_str()
             key_data = self.usage_data.get(api_key, {})
             if key_data.get("date") != today:
-                key_data = {"date": today, "count": 1}
+                key_data = {"date": today, "models": {model_name: 1}}
             else:
-                key_data["count"] = key_data.get("count", 0) + 1
+                models_data = key_data.get("models", {})
+                models_data[model_name] = models_data.get(model_name, 0) + 1
+                key_data["models"] = models_data
 
             self.usage_data[api_key] = key_data
             self._save()
 
-    def record_rate_limit(self, api_key: str, cooldown_seconds: int = 15):
-        """Temporary 429 / 15 RPM cooldown (Fast self-healing for 1-2 key setups)."""
+    def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = 25):
+        """Temporary 429 / RPM cooldown for a specific model on this key."""
         with self._lock:
+            self._init_key_model_dicts(api_key)
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"⏳ Key {key_preview} reached RPM limit. Cooling down for {cooldown_seconds}s...")
-            self.cooldowns[api_key] = (time.time() + cooldown_seconds, "RATE_LIMIT")
+            print(f"⏳ Key {key_preview} reached RPM limit on {model_name}. Cooling down for {cooldown_seconds}s...")
+            self.cooldowns[api_key][model_name] = (time.time() + cooldown_seconds, "RATE_LIMIT")
 
-    def record_network_error(self, api_key: str, is_unknown: bool = False):
-        """Handles transient network errors, timeouts, or unknown Google API errors."""
+    def record_network_error(self, api_key: str, model_name: str, is_unknown: bool = False):
+        """Handles transient network errors, timeouts, or unknown Google API errors per model."""
         with self._lock:
-            fails = self.consecutive_failures.get(api_key, 0) + 1
-            self.consecutive_failures[api_key] = fails
+            self._init_key_model_dicts(api_key)
+            fails = self.consecutive_failures[api_key].get(model_name, 0) + 1
+            self.consecutive_failures[api_key][model_name] = fails
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
 
             if fails >= 10 and is_unknown:
-                print(f"🛑 Key {key_preview} had 10 consecutive unknown errors. Quarantining for 5 minutes (Possible geographic/model block).")
-                self.cooldowns[api_key] = (time.time() + 300, "QUARANTINE_UNKNOWN_ERROR")
+                print(f"🛑 Key {key_preview} had 10 consecutive unknown errors on {model_name}. Quarantining this model for 5 minutes.")
+                self.cooldowns[api_key][model_name] = (time.time() + 300, "QUARANTINE_UNKNOWN_ERROR")
             elif fails >= 5:
-                # Brief 30-second rest if multiple consecutive network timeouts occur
-                print(f"⚠️ Key {key_preview} had {fails} consecutive network errors. Resting for 30s.")
-                self.cooldowns[api_key] = (time.time() + 30, "NETWORK_FAILURES")
+                print(f"⚠️ Key {key_preview} had {fails} consecutive network errors on {model_name}. Resting this model for 30s.")
+                self.cooldowns[api_key][model_name] = (time.time() + 30, "NETWORK_FAILURES")
             else:
-                # Brief 3-second pause to let network recover
-                self.cooldowns[api_key] = (time.time() + 3, "TRANSIENT_RETRY")
+                self.cooldowns[api_key][model_name] = (time.time() + 3, "TRANSIENT_RETRY")
 
-    def record_daily_exhausted(self, api_key: str):
-        """Marks key as daily exhausted (500 requests reached)."""
+    def record_daily_exhausted(self, api_key: str, model_name: str):
+        """Marks key as daily exhausted for a specific model."""
         with self._lock:
+            self._init_key_model_dicts(api_key)
+            cfg = self.get_model_config(model_name)
+            limit = cfg["rpd"] if cfg else 0
+            
             today = self._get_today_str()
-            self.usage_data[api_key] = {"date": today, "count": self.daily_limit}
+            key_data = self.usage_data.get(api_key, {})
+            if key_data.get("date") != today:
+                key_data = {"date": today, "models": {}}
+            models_data = key_data.get("models", {})
+            models_data[model_name] = limit
+            key_data["models"] = models_data
+            
+            self.usage_data[api_key] = key_data
             self._save()
+            
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"🚫 Key {key_preview} reached daily quota. Pausing until tomorrow (UTC).")
+            print(f"🚫 Key {key_preview} reached daily quota on {model_name}. Pausing this model until tomorrow (UTC).")
 
     def record_invalid_key(self, api_key: str):
-        """Marks key as invalid (bad API key, 400/403)."""
+        """Marks key as entirely invalid (bad API key, 400/403). Applies globally to all models."""
         with self._lock:
             self.invalid_keys.add(api_key)
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled for this session.")
+            print(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled completely for this session.")
 
     def factory_reset(self):
         """Globally resets all API keys, quotas, rate limits, and bans."""
@@ -183,6 +271,54 @@ class APIUsageTracker:
             self.consecutive_failures.clear()
             self._save()
             print("♻️ API Tracker has been factory reset.")
+
+    def get_stats_report(self) -> str:
+        """Generates a human-readable Telegram report of all API keys and quotas."""
+        import time
+        with self._lock:
+            today = self._get_today_str()
+            report = ["📊 **گزارش لحظه‌ای وضعیت کلیدهای API (Gemini)**\n"]
+            
+            # Combine all known keys from usage_data, invalid_keys, and cooldowns
+            all_known_keys = set(self.usage_data.keys()).union(self.invalid_keys).union(self.cooldowns.keys())
+            
+            if not all_known_keys:
+                return report[0] + "ℹ️ هیچ کلیدی هنوز استفاده نشده است."
+                
+            for key in all_known_keys:
+                key_preview = f"`{key[:6]}...{key[-4:]}`" if len(key) > 10 else f"`{key}`"
+                if key in self.invalid_keys:
+                    report.append(f"❌ {key_preview}: **مسدود / نامعتبر (403)**")
+                    continue
+                    
+                report.append(f"🔑 {key_preview}:")
+                data = self.usage_data.get(key, {})
+                has_usage_today = False
+                
+                if data.get("date") == today:
+                    models_data = data.get("models", {})
+                    if models_data:
+                        has_usage_today = True
+                        for model, count in models_data.items():
+                            cfg = self.get_model_config(model)
+                            limit = cfg["rpd"] if cfg else "?"
+                            
+                            status = "✅ آزاد"
+                            if cfg and count >= cfg["rpd"]:
+                                status = "🚫 سهمیه روزانه پر شده"
+                            elif model in self.cooldowns.get(key, {}):
+                                exp_time, reason = self.cooldowns[key][model]
+                                rem = int(exp_time - time.time())
+                                if rem > 0:
+                                    status = f"⏳ استراحت موقت ({rem}s)"
+                            
+                            report.append(f"   ├ 🤖 `{model}`: {count} / {limit}  ({status})")
+                
+                if not has_usage_today:
+                    report.append(f"   └ 🟢 کاملاً آزاد (بدون مصرف امروز)")
+            
+            report.append("\n💡 *سهمیه‌ها هر روز ساعت 00:00 به وقت UTC ریست می‌شوند.*")
+            return "\n".join(report)
 
 # Global singleton instance
 api_tracker = APIUsageTracker()
