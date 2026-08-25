@@ -222,12 +222,13 @@ class APIUsageTracker:
             self.usage_data[api_key] = key_data
             self._save()
 
-    def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = 25):
+    def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = 25, quiet: bool = False):
         """Temporary 429 / RPM cooldown for a specific model on this key."""
         with self._lock:
             self._init_key_model_dicts(api_key)
-            key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"⏳ Key {key_preview} reached RPM limit on {model_name}. Cooling down for {cooldown_seconds}s...")
+            if not quiet:
+                key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
+                print(f"⏳ Key {key_preview} reached RPM limit on {model_name}. Cooling down for {cooldown_seconds}s...")
             self.cooldowns[api_key][model_name] = (time.time() + cooldown_seconds, "RATE_LIMIT")
 
     def record_network_error(self, api_key: str, model_name: str, is_unknown: bool = False):

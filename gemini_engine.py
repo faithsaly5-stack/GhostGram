@@ -133,7 +133,7 @@ class GeminiEngine:
             except asyncio.TimeoutError:
                 # Force immediate GLOBAL cascade for this model across all keys
                 for k in self.keys:
-                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120)
+                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120, quiet=True)
                 print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Forcing immediate GLOBAL cascade to next model for 2 minutes...")
                 continue
 
@@ -168,7 +168,7 @@ class GeminiEngine:
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
                     # Force immediate GLOBAL cascade for this model across all keys
                     for k in self.keys:
-                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120)
+                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120, quiet=True)
                     print(f"⚠️ Gemini Network Error on {model_to_use} (503/Timeout). Forcing immediate GLOBAL cascade to next model for 2 minutes...")
                 else:
                     # 4. Unknown Errors (Catch-All)
