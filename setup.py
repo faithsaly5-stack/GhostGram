@@ -90,23 +90,32 @@ SSH_PORT={ssh_port}
     print("✅ .env saved successfully!\n")
 
     print("=" * 60)
-    print("🎭 HOW PERSONAS WORK")
+    print("🔐 TELEGRAM AUTHENTICATION")
     print("=" * 60)
-    print("TeleAgent can take on ANY personality you want!")
+    do_login = input("Would you like to log in to Telegram right now? (Y/n): ").strip().lower()
+    if do_login != 'n':
+        import login
+        login.main()
+
+    print("=" * 60)
+    print("🎭 HOW PERSONAS WORK (777 Mode)")
+    print("=" * 60)
+    print("GhostGram can take on ANY personality you want!")
     print("1. Go into the 'personas/' folder.")
     print("2. Create a new text file (e.g. 'hacker.txt').")
     print("3. Write the personality instructions inside the text file.")
-    print("4. When you chat with your bot, type: /mode hacker")
-    print("\nIt's that simple! We've included some examples to get you started.\n")
+    print("4. When you chat in Telegram, activate it anytime with: 777 hacker")
+    print("\nIncluded Personas: normal, academic, angry, sarcastic, poetic, drunk, tehrani, etc.\n")
 
     print("=" * 60)
-    print("🚀 YOU ARE READY TO DEPLOY!")
+    print("🚀 HOW TO RUN GHOSTGRAM")
     print("=" * 60)
-    print("To launch your bot on your VPS, simply double-click:")
-    print("👉 deploy.bat")
-    print("\nEnjoy your new autonomous assistant!")
+    print("• Local Run (Windows): Simply double-click 'run.bat'")
+    print("• Local Run (Terminal): Run 'python main.py'")
+    print("• 24/7 VPS Deployment: Double-click 'deploy.bat'")
+    print("=" * 60 + "\n")
     
-    input("\nPress Enter to exit setup...")
+    input("Press Enter to exit setup...")
 
 if __name__ == "__main__":
     try:
