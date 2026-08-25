@@ -333,7 +333,7 @@ async def outgoing_command_dispatcher(event):
     if not raw_text.strip():
         return
         
-    norm = normalize_digits(raw_text)
+    norm = normalize_digits(raw_text).strip()
     norm_lower = norm.lower()
 
     # 1. HELP (888)

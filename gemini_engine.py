@@ -120,6 +120,9 @@ class GeminiEngine:
                     api_tracker.record_success(api_key)
                     raw_text = (resp.text or "").strip()
 
+                    if is_json:
+                        return raw_text
+
                     # Post-processing: clean emoji, HTML, diacritics
                     emoji_pattern = re.compile(
                         r'[\U00010000-\U0010ffff]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\ufe00-\ufe0f]',
