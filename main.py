@@ -74,75 +74,54 @@ async def get_reply_chain(message):
     
     return list(reversed(chain))
 
-# ==========================================================
-# 📜 COMMAND: راهنما / HELP (888)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^888$'))
-async def help_handler(event):
-    if not is_owner(event):
-        return
-    await event.edit(Text.HELP)
+def normalize_digits(text: str) -> str:
+    """Normalizes Persian/Arabic digits, ZWNJ, and whitespace to standard ASCII format."""
+    if not text:
+        return ""
+    mapping = {
+        '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+        '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+        '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+        '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+    }
+    cleaned = text.replace('\u200c', ' ').replace('\u00a0', ' ')
+    for char, digit in mapping.items():
+        cleaned = cleaned.replace(char, digit)
+    return re.sub(r'\s+', ' ', cleaned).strip()
 
 # ==========================================================
-# 🤖 COMMAND: روشن کردن رفیق (PAL ON / 777)
+# 🎮 OUTGOING COMMAND HANDLERS
 # ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^777(?:\s+(?!engage\b)(.+))?$'))
-async def pal_on_handler(event):
-    if not is_owner(event):
-        return
-        
-    mode_arg = event.pattern_match.group(1)
-    if mode_arg:
-        mode = mode_arg.strip().lower()
-    else:
-        mode = "normal"
-        
+
+async def handle_help(event):
+    await event.edit(Text.HELP)
+
+async def handle_pal_on(event, mode="normal"):
     chat_id = event.chat_id
     pal_manager.activate(chat_id, mode=mode)
-    
-    # Instant stealth delete
     try:
         await event.delete()
     except Exception:
         pass
     print(f"🔮 Stealth Pal ({mode.upper()} Mode) ACTIVATED for chat {chat_id}")
 
-# ==========================================================
-# 💤 COMMAND: خاموش کردن رفیق (PAL OFF / 000)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^000(?:\s+(all))?$'))
-async def pal_off_handler(event):
-    if not is_owner(event):
-        return
-    
-    scope_arg = event.pattern_match.group(1)
-    if scope_arg == "all":
+async def handle_pal_off(event, is_all=False):
+    if is_all:
         count = pal_manager.deactivate_all()
         print(f"💤 Stealth Pal DEACTIVATED globally for all {count} chats")
     else:
         chat_id = event.chat_id
         pal_manager.deactivate(chat_id)
         print(f"💤 Stealth Pal DEACTIVATED for chat {chat_id}")
-        
-    # Instant stealth delete
     try:
         await event.delete()
     except Exception:
         pass
 
-# ==========================================================
-# 🕵️ COMMAND: پراکنش / تعامل خودکار (AUTO ENGAGE ON / 777 engage)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^777\s+engage(?:\s+(\d+))?$'))
-async def auto_engage_on_handler(event):
-    if not is_owner(event):
-        return
-    
+async def handle_auto_engage_on(event, duration=20):
     chat_id = event.chat_id
-    duration = int(event.pattern_match.group(1)) if event.pattern_match.group(1) else 20
     if duration < 1:
         duration = 1
-    
     pal_manager.activate_auto_engage(chat_id, duration)
     try:
         await event.delete()
@@ -150,35 +129,20 @@ async def auto_engage_on_handler(event):
         pass
     print(f"🕵️ Auto-Engage (Lurker) ACTIVATED for chat {chat_id} with duration {duration}m")
 
-# ==========================================================
-# 🛑 COMMAND: خاموش کردن تعامل (AUTO ENGAGE OFF / 777 engage off)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^777\s+engage\s+off(?:\s+(all))?$'))
-async def auto_engage_off_handler(event):
-    if not is_owner(event):
-        return
-        
-    scope = event.pattern_match.group(1)
-    if scope == "all":
+async def handle_auto_engage_off(event, is_all=False):
+    if is_all:
         count = pal_manager.deactivate_all_engages()
         print(f"🛑 Auto-Engage DEACTIVATED globally for all {count} chats")
     else:
         chat_id = event.chat_id
         pal_manager.deactivate_auto_engage(chat_id)
         print(f"🛑 Auto-Engage (Lurker) DEACTIVATED for chat {chat_id}")
-        
     try:
         await event.delete()
     except Exception:
         pass
 
-# ==========================================================
-# 💼 COMMAND: روشن کردن دستیار شخصی (ASSISTANT ON / 666)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^666$'))
-async def assistant_on_handler(event):
-    if not is_owner(event):
-        return
+async def handle_assistant_on(event):
     chat_id = event.chat_id
     assistant_manager.activate_global(chat_id=chat_id)
     try:
@@ -187,38 +151,20 @@ async def assistant_on_handler(event):
         pass
     print(f"💼 Universal Assistant Mode ACTIVATED for all DMs (un-muted {chat_id})")
 
-
-# ==========================================================
-# 🛑 COMMAND: خاموش کردن یا توقف دستیار شخصی (ASSISTANT OFF / 444)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^444(?:\s+(all))?$'))
-async def assistant_off_handler(event):
-    if not is_owner(event):
-        return
+async def handle_assistant_off(event, is_all=False):
     chat_id = event.chat_id
-    scope_arg = event.pattern_match.group(1)
-    
-    if scope_arg == "all":
+    if is_all:
         assistant_manager.deactivate_global()
         print(f"🛑 Universal Assistant Mode DEACTIVATED globally for all DMs")
     else:
-        # Default behavior: Stop assistant ONLY in this specific chat
         assistant_manager.mute_chat(chat_id)
         print(f"🤫 Assistant MUTED only in chat {chat_id} (All other DMs remain active)")
-        
     try:
         await event.delete()
     except Exception:
         pass
 
-# ==========================================================
-# 📊 COMMAND: وضعیت (STATUS / 555)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^555$'))
-async def status_handler(event):
-    if not is_owner(event):
-        return
-    
+async def handle_status(event):
     is_pal = pal_manager.is_active(event.chat_id)
     is_engage = pal_manager.is_auto_engage_active(event.chat_id)
     pal_count = pal_manager.get_active_count()
@@ -249,38 +195,17 @@ async def status_handler(event):
     except Exception:
         pass
 
-
-
-
-# ==========================================================
-# 🧠 COMMAND: ریست حافظه کوتاه‌مدت (RESET MEMORY / 333)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^333$'))
-async def reset_memory_handler(event):
-    if not is_owner(event):
-        return
+async def handle_reset_memory(event):
     chat_id = event.chat_id
     memory_manager.reset_chat_memory(chat_id)
-    # Instant stealth delete
     try:
         await event.delete()
     except Exception:
         pass
     print(f"🧠 Short-term memory RESET for chat {chat_id}")
 
-# ==========================================================
-# 🧹 COMMAND: پاکسازی پیام‌های من (GHOST PURGE / 999)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^999(?:\s+(\d+))?$'))
-async def purge_handler(event):
-    if not is_owner(event):
-        return
-    
-    limit_arg = event.pattern_match.group(1)
-    limit = int(limit_arg) if limit_arg else None
+async def handle_purge(event, limit=None):
     chat_id = event.chat_id
-    
-    # Instant delete trigger message for stealth
     trigger_id = event.id
     try:
         await event.delete()
@@ -295,14 +220,12 @@ async def purge_handler(event):
     
     try:
         input_chat = await event.get_input_chat()
-        # If no limit specified, limit is None (searches entire history without cap)
         search_limit = limit
         
         async for msg in client.iter_messages(input_chat, limit=search_limit):
             if msg.id == trigger_id:
                 continue
             
-            # Check if message is sent by me (supporting all chat and supergroup types)
             is_mine = False
             if msg.out:
                 is_mine = True
@@ -314,7 +237,6 @@ async def purge_handler(event):
             if is_mine:
                 message_ids.append(msg.id)
             
-            # Delete in batches of 50
             if len(message_ids) >= 50:
                 try:
                     await client.delete_messages(input_chat, message_ids, revoke=True)
@@ -323,8 +245,7 @@ async def purge_handler(event):
                     await asyncio.sleep(e.seconds + 1)
                     await client.delete_messages(input_chat, message_ids, revoke=True)
                     deleted_count += len(message_ids)
-                except Exception as ex:
-                    # If batch failed (e.g. contains message older than 48h in non-admin group), try individually
+                except Exception:
                     for mid in message_ids:
                         try:
                             await client.delete_messages(input_chat, [mid], revoke=True)
@@ -334,7 +255,6 @@ async def purge_handler(event):
                 message_ids = []
                 await asyncio.sleep(0.2)
         
-        # Delete remaining messages
         if message_ids:
             try:
                 await client.delete_messages(input_chat, message_ids, revoke=True)
@@ -343,7 +263,7 @@ async def purge_handler(event):
                 await asyncio.sleep(e.seconds + 1)
                 await client.delete_messages(input_chat, message_ids, revoke=True)
                 deleted_count += len(message_ids)
-            except Exception as ex:
+            except Exception:
                 for mid in message_ids:
                     try:
                         await client.delete_messages(input_chat, [mid], revoke=True)
@@ -355,19 +275,10 @@ async def purge_handler(event):
     except Exception as e:
         print(f"⚠️ Purge error in chat {chat_id}: {e}")
 
-# ==========================================================
-# 💬 COMMAND: پاسخ هوشمند سفارشی (SMART SPEAK / 111)
-# ==========================================================
-@client.on(events.NewMessage(outgoing=True, pattern=r'^111(?:\s+(.*))?$'))
-async def custom_ask_handler(event):
-    if not is_owner(event):
-        return
-    
-    user_instruction = (event.pattern_match.group(1) or "").strip()
+async def handle_custom_ask(event, user_instruction=""):
     reply_to_id = event.reply_to_msg_id
     chat_id = event.chat_id
     
-    # Delete the command message instantly to keep it stealth
     try:
         await event.delete()
     except Exception:
@@ -408,9 +319,91 @@ async def custom_ask_handler(event):
             human_typing_time = calculate_human_typing_delay(response)
             await asyncio.sleep(human_typing_time)
             await client.send_message(input_chat, response, reply_to=reply_to_id)
-            print(f"⚡ Handled 111 / !بگو in chat {chat_id}")
-            # Record message for rolling long-term memory summary check
+            print(f"⚡ Handled 111 in chat {chat_id}")
             memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_info.id if my_info else Config.OWNER_ID)
+
+# ==========================================================
+# 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
+# ==========================================================
+@client.on(events.NewMessage(outgoing=True))
+async def outgoing_command_dispatcher(event):
+    if not is_owner(event):
+        return
+    raw_text = event.text or ""
+    if not raw_text.strip():
+        return
+        
+    norm = normalize_digits(raw_text)
+    norm_lower = norm.lower()
+
+    # 1. HELP (888)
+    if norm_lower == "888":
+        await handle_help(event)
+        return
+
+    # 2. STATUS (555)
+    if norm_lower == "555":
+        await handle_status(event)
+        return
+
+    # 3. RESET MEMORY (333)
+    if norm_lower == "333":
+        await handle_reset_memory(event)
+        return
+
+    # 4. GHOST PURGE (999 [limit])
+    m_purge = re.match(r'^999(?:\s+(\d+))?$', norm_lower)
+    if m_purge:
+        limit = int(m_purge.group(1)) if m_purge.group(1) else None
+        await handle_purge(event, limit)
+        return
+
+    # 5. CUSTOM ASK (111 <prompt>)
+    m_ask = re.match(r'^111(?:\s+(.*))?$', norm, re.DOTALL)
+    if m_ask:
+        user_inst = (m_ask.group(1) or "").strip()
+        await handle_custom_ask(event, user_inst)
+        return
+
+    # 6. AUTO ENGAGE OFF (777 engage off [all])
+    m_eng_off = re.match(r'^777\s+engage\s+off(?:\s+(all))?$', norm_lower)
+    if m_eng_off:
+        scope = m_eng_off.group(1)
+        await handle_auto_engage_off(event, is_all=(scope == "all"))
+        return
+
+    # 7. AUTO ENGAGE ON (777 engage [duration])
+    m_eng_on = re.match(r'^777\s+engage(?:\s+(\d+))?$', norm_lower)
+    if m_eng_on:
+        duration = int(m_eng_on.group(1)) if m_eng_on.group(1) else 20
+        await handle_auto_engage_on(event, duration)
+        return
+
+    # 8. PAL OFF (000 [all])
+    m_pal_off = re.match(r'^000(?:\s+(all))?$', norm_lower)
+    if m_pal_off:
+        scope = m_pal_off.group(1)
+        await handle_pal_off(event, is_all=(scope == "all"))
+        return
+
+    # 9. PAL ON (777 [persona])
+    m_pal_on = re.match(r'^777(?:\s+(.+))?$', norm_lower)
+    if m_pal_on:
+        mode = m_pal_on.group(1).strip() if m_pal_on.group(1) else "normal"
+        await handle_pal_on(event, mode)
+        return
+
+    # 10. ASSISTANT ON (666)
+    if norm_lower == "666":
+        await handle_assistant_on(event)
+        return
+
+    # 11. ASSISTANT OFF (444 [all])
+    m_ast_off = re.match(r'^444(?:\s+(all))?$', norm_lower)
+    if m_ast_off:
+        scope = m_ast_off.group(1)
+        await handle_assistant_off(event, is_all=(scope == "all"))
+        return
 
 # ==========================================================
 # 🚀 INCOMING: پردازش پیام‌های دریافتی (PAL & ASSISTANT MODES)
@@ -489,11 +482,23 @@ async def incoming_message_handler(event):
     reading_delay = min(base_reading_time, 8.0) # max 8 seconds reading time
     await asyncio.sleep(random.uniform(reading_delay, reading_delay + 1.0))
     
+    # Check if mode was turned off while we were sleeping
+    if mode == "pal" and not pal_manager.is_active(chat_id):
+        return
+    if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
+        return
+
     lock = get_chat_lock(chat_id)
     async with lock:
         # If a newer message arrived from this chat while we were waiting/processing,
         # skip this event. The newer event's handler will process the combined history!
         if chat_latest_msg.get(chat_id, 0) > event.id:
+            return
+
+        # Double check after obtaining lock
+        if mode == "pal" and not pal_manager.is_active(chat_id):
+            return
+        if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
             return
 
         input_chat = await event.get_input_chat()
@@ -540,10 +545,24 @@ async def incoming_message_handler(event):
             
             response = await get_response(prompt_input, system_prompt)
             
+            # Re-verify mode wasn't disabled during AI generation
+            if mode == "pal" and not pal_manager.is_active(chat_id):
+                print(f"🛑 Dropped reply for chat {chat_id} (Pal was deactivated via 000)")
+                return
+            if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
+                print(f"🛑 Dropped reply for chat {chat_id} (Assistant was muted/deactivated)")
+                return
+
             if response and response != Text.ERROR:
                 human_typing_time = calculate_human_typing_delay(response)
                 await asyncio.sleep(human_typing_time)
                 
+                # Final check before actual message dispatch
+                if mode == "pal" and not pal_manager.is_active(chat_id):
+                    return
+                if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
+                    return
+
                 reply_target = event.id if (event.is_group or event.is_channel) else None
                 await client.send_message(input_chat, response, reply_to=reply_target)
                 if mode == "pal":
@@ -571,6 +590,11 @@ async def auto_engage_loop():
             my_id = my_info.id
             now_ts = datetime.now(timezone.utc).timestamp()
             
+            # Clean up obsolete schedules
+            for chat_id in list(auto_engage_schedule.keys()):
+                if chat_id not in pal_manager.auto_engage_chats:
+                    del auto_engage_schedule[chat_id]
+
             # Iterate through configured auto-engage chats and their durations
             for chat_id, duration_minutes in list(pal_manager.auto_engage_chats.items()):
                 schedule_data = auto_engage_schedule.get(chat_id)
@@ -593,6 +617,10 @@ async def auto_engage_loop():
                 auto_engage_schedule[chat_id] = (now_ts + next_delay, duration_minutes)
                 
                 try:
+                    # Verify auto-engage is still active
+                    if not pal_manager.is_auto_engage_active(chat_id):
+                        continue
+
                     # Check if I have sent a message recently to avoid talking too much
                     recent_my_msgs = await client.get_messages(chat_id, limit=30, from_user="me")
                     if recent_my_msgs:
@@ -611,6 +639,9 @@ async def auto_engage_loop():
                     if now_ts - last_msg_time > dead_threshold:
                         continue # Chat is dead, don't randomly talk to nobody.
                     
+                    if not pal_manager.is_auto_engage_active(chat_id):
+                        continue
+
                     history_text = await get_recent_chat_history(chat_id, limit=30, include_id=True)
                     now_persian = get_current_persian_datetime()
                     ltm = memory_manager.get_long_term_summary(chat_id)
@@ -666,10 +697,17 @@ async def auto_engage_loop():
                                     except Exception:
                                         pass
                                 
+                                # Final check before sending auto engage message
+                                if not pal_manager.is_auto_engage_active(chat_id):
+                                    print(f"🛑 Dropped auto-engage in chat {chat_id} (Deactivated via 777 engage off)")
+                                    continue
+
                                 human_typing_time = calculate_human_typing_delay(reply_text)
                                 input_chat = await client.get_input_entity(chat_id)
                                 async with ContinuousTyping(client, input_chat):
                                     await asyncio.sleep(human_typing_time)
+                                    if not pal_manager.is_auto_engage_active(chat_id):
+                                        continue
                                     await client.send_message(input_chat, reply_text, reply_to=target_id)
                                     print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
                                     memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
