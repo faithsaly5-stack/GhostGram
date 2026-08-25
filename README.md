@@ -311,71 +311,89 @@ Need to erase your presence? Send `999`:
 
 ## 🚀 Quick Start & Installation
 
-### Option A: 1-Click Interactive Setup Wizard (Windows)
-If you are on Windows, simply double-click `setup.bat`. The wizard will prompt you for your Telegram API credentials and Gemini keys, generate your `.env` file, and prepare your project.
+Choose whichever method best fits your setup:
 
-```powershell
-# Double-click setup.bat or run:
-python setup.py
-```
+### 🌟 Option 1: 1-Click Local Run on Windows (No VPS Needed, Zero Coding)
+If you just want to run GhostGram on your own PC without buying a server or touching code:
+
+1. Download or clone this repository.
+2. Double-click **`run.bat`** (or `setup.bat`).
+3. An interactive setup wizard will guide you through entering your Telegram API credentials, Gemini keys, and your name/bio, and will log into Telegram automatically.
+4. **That's it!** Whenever you want GhostGram running, just double-click **`run.bat`**.
 
 ---
 
-### Option B: Manual / Local Installation
+### 💻 Option 2: Local CLI Installation (Windows / macOS / Linux / Termux)
 
 ```bash
-# 1. Clone repository
+# 1. Clone the repository
 git clone https://github.com/faithsaly5-stack/GhostGram.git
 cd GhostGram
 
-# 2. Create virtual environment
+# 2. Create and activate a virtual environment
 python -m venv venv
-
-# 3. Activate virtual environment
 # Windows:
 venv\Scripts\activate
-# Linux/macOS:
+# Linux / macOS:
 source venv/bin/activate
 
-# 4. Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 5. Configure environment
-cp .env.example .env
+# 4. Run interactive setup wizard (or copy .env.example to .env and edit manually)
+python setup.py
 
-# 6. Authenticate with Telegram
+# 5. Authenticate with Telegram (if not already done in setup)
 python login.py
 
-# 7. Start GhostGram
+# 6. Start GhostGram!
 python main.py
 ```
 
 ---
 
-### Option C: Docker & Docker Compose
+### ☁️ Option 3: Free 24/7 Cloud Deployment (Railway / Render / Koyeb - No VPS Required)
+You can run GhostGram 24/7 completely for free on cloud hosting platforms without owning a VPS:
 
-```bash
-# Build and run container in detached mode
-docker compose up -d --build
+#### A. Deploying on [Railway.app](https://railway.app):
+1. **First-time Auth**: Run `python login.py` on your computer once to generate your Telegram session file (`teleagent_session.session`).
+2. Fork this repository on GitHub and connect it to Railway as a **New Service > GitHub Repo**.
+3. In your Railway service dashboard, go to **Variables** and add your `.env` variables (`API_ID`, `API_HASH`, `PHONE_NUMBER`, `OWNER_ID`, `OWNER_NAME`, `GEMINI_API_KEYS`, etc.).
+4. Set the **Start Command** to `python main.py` (or Railway will automatically build using the included `Dockerfile`).
+5. Your agent is now live 24/7 in the cloud!
 
-# View real-time logs
-docker compose logs -f
-```
+#### B. Deploying on [Render.com](https://render.com):
+1. Connect your repository to Render as a **Background Worker**.
+2. Select **Docker** or **Python 3** environment.
+3. Add your environment variables under the **Environment** tab.
+4. Set **Start Command** to `python main.py`.
+5. Click **Deploy**!
 
 ---
 
-### Option D: 1-Click 24/7 Linux VPS Deployment
+### 🖥️ Option 4: 1-Click 24/7 Linux VPS Deployment
+If you own a Linux VPS and want a background `systemd` service with automatic restarts on server reboot:
 
-GhostGram includes automated deployment scripts (`deploy.bat` for Windows and `deploy.sh` for Linux) that bundle your project, upload it over SSH/SCP, install dependencies, and configure a persistent `systemd` service.
-
-1. In `.env`, set your VPS IP and SSH user:
+1. In your local `.env`, configure your server connection:
    ```env
-   VPS_IP=123.45.67.89
+   VPS_IP=your.vps.ip.here
    SSH_USER=root
    SSH_PORT=22
    ```
-2. Double-click `deploy.bat`.
-3. The script bundles your project, deploys it to `/opt/ghostgram`, enables `ghostgram.service`, and streams live logs.
+2. Double-click **`deploy.bat`** (on Windows) or run `./deploy.sh` (on Linux).
+3. The script automatically compresses the project, uploads it via SCP, creates a Python venv on the server, installs requirements, sets up a persistent `systemd` service, and streams live logs.
+
+---
+
+### 🐳 Option 5: Docker & Docker Compose
+
+```bash
+# Build and start container in background
+docker compose up -d --build
+
+# View live streaming logs
+docker compose logs -f
+```
 
 ---
 
