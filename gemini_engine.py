@@ -161,8 +161,14 @@ class GeminiEngine:
                             # Short 10s cooldown for small key counts
                             cd = 10 if num_keys <= 2 else 30
                             api_tracker.record_rate_limit(api_key, cooldown_seconds=cd)
-                    elif "api_key_invalid" in err_str or "permission_denied" in err_str or "400" in err_str or "403" in err_str:
+                    elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
                         api_tracker.record_invalid_key(api_key)
+                    elif "400" in err_str:
+                        print(f"❌ BAD REQUEST (400): The prompt was rejected by Google (Payload too large, malformed, or safety block).")
+                        return Text.ERROR
+                    elif "404" in err_str:
+                        print(f"❌ NOT FOUND (404): The configured model name '{model_to_use}' is invalid or deprecated!")
+                        return Text.ERROR
                     elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
                         api_tracker.record_network_error(api_key, is_unknown=False)
                         print(f"⚠️ Gemini Network Error: {e}")
