@@ -27,6 +27,36 @@ class GeminiEngine:
                 self._clients[api_key] = c
             return c
 
+    def clean_prompt(self, raw_text: str) -> str:
+        if not raw_text:
+            return ""
+        try:
+            import html
+            import re
+            import emoji
+            
+            # Demojize first: Converts emojis to text (e.g. 😂 -> :face_with_tears_of_joy:)
+            # This preserves their emotional meaning before the strict allowlist strips weird unicode.
+            clean_text = emoji.demojize(raw_text)
+            
+            clean_text = html.unescape(clean_text)
+            clean_text = re.sub(r'<[^>]+>', '', clean_text)
+            
+            # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
+            clean_text = clean_text.replace('\u200c', ' ')
+            
+            # Strict Allowlist: Keep ONLY English, Persian/Arabic block, Numbers, Spaces, and basic Punctuation.
+            # All weird control characters and unsupported languages are safely replaced with a space.
+            allowed_pattern = re.compile(r'[^a-zA-Z0-9\u0600-\u06FF\s\.,!؟،؛:;\'"()\[\]{}<>_\-+=*&%$#@|\\/]+')
+            clean_text = allowed_pattern.sub(' ', clean_text)
+            
+            clean_text = re.sub(r'[ \t]+', ' ', clean_text)
+            clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
+            return clean_text
+        except Exception as e:
+            print(f"⚠️ Text cleaning error: {e}")
+            return raw_text
+
     async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False, start_model: str = None) -> str:
         """
         Asynchronously fetches a response from Gemini.
@@ -93,23 +123,7 @@ class GeminiEngine:
                 if is_json:
                     return raw_text
 
-                # Post-processing: clean emoji, HTML, diacritics
-                emoji_pattern = re.compile(
-                    r'[\U00010000-\U0010ffff]|[\u2600-\u27bf]|[\u2300-\u23ff]|[\u2b50-\u2b55]|[\ufe00-\ufe0f]',
-                    flags=re.UNICODE
-                )
-                clean_text = emoji_pattern.sub('', raw_text).strip()
-                clean_text = html.unescape(clean_text)
-                clean_text = re.sub(r'<[^>]+>', '', clean_text)
-                diacritics_pattern = re.compile(r'[\u064B-\u065F\u0670\u0617-\u061A\u06D6-\u06ED]')
-                clean_text = diacritics_pattern.sub('', clean_text)
-                
-                # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
-                clean_text = clean_text.replace('\u200c', ' ')
-                
-                clean_text = re.sub(r'[ \t]+', ' ', clean_text)
-                clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
-                return clean_text
+                return self.clean_prompt(raw_text)
 
             except asyncio.TimeoutError:
                 api_tracker.record_network_error(api_key, model_to_use)
@@ -139,9 +153,8 @@ class GeminiEngine:
                 elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
                     api_tracker.record_invalid_key(api_key)
                 elif "400" in err_str:
-                    print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt was rejected by Google.")
-                    # It might be a model specific format error, we can treat it as a network error to fallback
-                    api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)
+                    print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt is fundamentally flawed or rejected by Google. Aborting to save keys!\n🔍 Reason: {e}")
+                    return Text.ERROR
                 elif "404" in err_str:
                     print(f"❌ NOT FOUND (404): Model '{model_to_use}' is invalid or deprecated! Disabling model for this key.")
                     api_tracker.record_daily_exhausted(api_key, model_to_use) # Effectively disables it for the day

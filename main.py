@@ -262,13 +262,22 @@ async def handle_purge(event, limit=None):
     my_id = my_info.id if my_info else (await client.get_me()).id
     
     deleted_count = 0
-    message_ids = []
     
     try:
         input_chat = await event.get_input_chat()
         search_limit = limit
         
+        msg_scan_count = 0
+        delete_streak_count = 0
+        
         async for msg in client.iter_messages(input_chat, limit=search_limit):
+            msg_scan_count += 1
+            
+            # Simulate human scrolling / reading through chat history
+            if msg_scan_count % 25 == 0:
+                import random
+                await asyncio.sleep(random.uniform(0.5, 1.8))
+                
             if msg.id == trigger_id:
                 continue
             
@@ -281,43 +290,34 @@ async def handle_purge(event, limit=None):
                 is_mine = True
             
             if is_mine:
-                message_ids.append(msg.id)
-            
-            if len(message_ids) >= 50:
+                # Human-like deletion: Delete ONE by ONE
                 try:
-                    await client.delete_messages(input_chat, message_ids, revoke=True)
-                    deleted_count += len(message_ids)
+                    await client.delete_messages(input_chat, [msg.id], revoke=True)
+                    deleted_count += 1
+                    delete_streak_count += 1
+                    
+                    # 1. Normal human tap delay
+                    import random
+                    await asyncio.sleep(random.uniform(1.2, 3.8))
+                    
+                    # 2. Human fatigue / distraction break
+                    if delete_streak_count >= random.randint(7, 15):
+                        print(f"🧘‍♂️ Human Purge: Taking a short break after {delete_streak_count} deletes...")
+                        await asyncio.sleep(random.uniform(4.5, 9.5))
+                        delete_streak_count = 0
+                    
                 except FloodWaitError as e:
-                    await asyncio.sleep(e.seconds + 1)
-                    await client.delete_messages(input_chat, message_ids, revoke=True)
-                    deleted_count += len(message_ids)
-                except Exception:
-                    for mid in message_ids:
-                        try:
-                            await client.delete_messages(input_chat, [mid], revoke=True)
-                            deleted_count += 1
-                        except Exception:
-                            pass
-                message_ids = []
-                await asyncio.sleep(0.2)
-        
-        if message_ids:
-            try:
-                await client.delete_messages(input_chat, message_ids, revoke=True)
-                deleted_count += len(message_ids)
-            except FloodWaitError as e:
-                await asyncio.sleep(e.seconds + 1)
-                await client.delete_messages(input_chat, message_ids, revoke=True)
-                deleted_count += len(message_ids)
-            except Exception:
-                for mid in message_ids:
+                    print(f"⏳ FloodWait in Purge. Sleeping for {e.seconds}s...")
+                    await asyncio.sleep(e.seconds + random.uniform(3.0, 7.0))
                     try:
-                        await client.delete_messages(input_chat, [mid], revoke=True)
+                        await client.delete_messages(input_chat, [msg.id], revoke=True)
                         deleted_count += 1
                     except Exception:
                         pass
+                except Exception:
+                    pass
             
-        print(f"🧹 Stealth Purged {deleted_count} messages from chat {chat_id}")
+        print(f"🧹 Stealth Purged {deleted_count} messages (Ultra-Human Mode) from chat {chat_id}")
     except Exception as e:
         print(f"⚠️ Purge error in chat {chat_id}: {e}")
 
