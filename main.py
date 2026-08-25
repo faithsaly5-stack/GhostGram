@@ -118,6 +118,33 @@ async def handle_pal_off(event, is_all=False):
     except Exception:
         pass
 
+async def calculate_dynamic_engage_duration(client, chat_id: int) -> int:
+    """Calculates the best auto-engage duration based on chat speed (targeting ~5% bot presence)."""
+    try:
+        messages = await client.get_messages(chat_id, limit=50)
+        if len(messages) < 10:
+            return 20 # Fallback if there are too few messages
+            
+        oldest_msg = messages[-1]
+        newest_msg = messages[0]
+        
+        timespan_seconds = (newest_msg.date - oldest_msg.date).total_seconds()
+        timespan_minutes = timespan_seconds / 60.0
+        
+        if timespan_minutes <= 0:
+            return 2
+            
+        mins_per_msg = timespan_minutes / len(messages)
+        
+        # Target: 1 bot message for every 20 human messages (5% presence)
+        target_duration = int(mins_per_msg * 20)
+        
+        # Clamp between 2 and 120 minutes
+        return max(2, min(target_duration, 120))
+    except Exception as e:
+        print(f"⚠️ Error calculating dynamic duration for {chat_id}: {e}")
+        return 20 # Safe fallback
+
 async def handle_auto_engage_on(event, duration=20):
     chat_id = event.chat_id
     if duration < 1:
@@ -391,10 +418,19 @@ async def outgoing_command_dispatcher(event):
         await handle_auto_engage_off(event, is_all=(scope == "all"))
         return
 
-    # 7. AUTO ENGAGE ON (777 engage [duration])
-    m_eng_on = re.match(r'^777\s+engage(?:\s+(\d+))?$', norm_lower)
+    # 7. AUTO ENGAGE ON (777 engage [duration|auto])
+    m_eng_on = re.match(r'^777\s+engage(?:\s+(auto|\d+))?$', norm_lower)
     if m_eng_on:
-        duration = int(m_eng_on.group(1)) if m_eng_on.group(1) else 20
+        val = m_eng_on.group(1)
+        if not val or val == "auto":
+            msg = await event.respond("⏳ در حال سنجش سرعت چت برای تنظیم هوشمند زمان تعامل...")
+            duration = await calculate_dynamic_engage_duration(client, event.chat_id)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+        else:
+            duration = int(val)
         await handle_auto_engage_on(event, duration)
         return
 
