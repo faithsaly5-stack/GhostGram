@@ -829,7 +829,9 @@ def main():
     print("=" * 50)
     print(f"👻 GhostGram (روح‌گرام) is ONLINE & READY!")
     print(f"👤 Logged in as: {my_info.first_name} (@{my_info.username}) [ID: {my_info.id}]")
-    print(f"🧠 Model: {Config.MODEL_NAME}")
+    from api_tracker import MODELS_CONFIG
+    top_model = MODELS_CONFIG[0]['name'] if MODELS_CONFIG else "Unknown"
+    print(f"🧠 Primary Model: {top_model} (Auto-Cascading enabled)")
     print(f"📱 Active Pal Chats (777): {pal_manager.get_active_count()}")
     print(f"🕵️ Auto-Engage Chats (777 engage): {pal_manager.get_auto_engage_count()}")
     print(f"💼 Assistant Mode (666): {'ON (All DMs)' if assistant_manager.dm_enabled else 'OFF'}")

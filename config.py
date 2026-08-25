@@ -21,7 +21,6 @@ class Config:
         return keys
 
     GEMINI_API_KEYS = _load_keys()
-    MODEL_NAME = os.getenv("MODEL_NAME", "gemini-3.5-flash-lite")
     SESSION_NAME = os.getenv("SESSION_NAME", "teleagent_session")
     SESSION_STRING = os.getenv("SESSION_STRING", "")
     OWNER_ID = int(os.getenv("OWNER_ID") or 0)
