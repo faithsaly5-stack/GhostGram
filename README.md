@@ -151,33 +151,32 @@ Add custom `.txt` files to `personas/` to unlock instant runtime personality swi
 ### 🌟 Option 1: 1-Click Local Run on Windows (No VPS Needed, Zero Coding)
 
 1. Download or clone this repository.
-2. Double-click **`setup.bat`** to create a profile.
-3. **Setup Wizard**: It will ask for your profile name (leave blank for the default bot). It then asks for your API keys.
-4. **Login**: Type `Y` to log into Telegram right in the terminal. Your `SESSION_STRING` will be permanently injected into your profile's `.env` file!
-5. **Start the Bot**: Double-click **`run.bat`** to start your bot. If you have multiple profiles, type **`all`** to launch them all concurrently in the same terminal!
+2. Double-click **`run.bat`**.
+3. **Smart Launcher**: The launcher asks for a profile name (press Enter for `default`). If it's your first time, it automatically triggers the Setup Wizard to collect your API keys, logs you into Telegram, saves your `SESSION_STRING` securely inside `profiles/default/.env`, and launches your bot!
+4. **Run All Bots**: To start multiple bots simultaneously, just double-click `run.bat` again and type **`all`**.
 
 ---
 
-### ☁️ Option 2: Free 24/7 Cloud Deployment (Railway / Render / Koyeb - No VPS Required)
+### ☁️ Option 2: Free 24/7 Cloud Deployment (Railway / Render - No VPS Required)
 
 Because GhostGram writes your entire Telegram Session (`SESSION_STRING`) directly into your `.env` file, deploying to the cloud is 100% frictionless. You don't need to mount SQLite database volumes!
 
-1. Set up your bot locally using `run.bat` on your PC first (this generates your `SESSION_STRING` inside your `.env` file).
-2. Go to [Railway.app](https://railway.app) $\rightarrow$ **New Project** $\rightarrow$ **Deploy from GitHub repo**.
-3. In Railway, open the Variables tab and copy-paste every line from your `.env` file directly into Railway's variable editor.
-4. Railway will automatically detect **Cloud Mode**, see your variables, and boot your bot flawlessly 24/7!
+1. First, double-click `run.bat` on your PC and complete the setup to generate your `SESSION_STRING`.
+2. Open your generated configuration file (e.g. `profiles/default/.env`) and copy all of its text.
+3. Go to [Railway.app](https://railway.app) $\rightarrow$ **New Project** $\rightarrow$ **Deploy from GitHub repo**.
+4. In Railway, open the Variables tab and paste everything you copied. Railway will automatically detect **Cloud Mode** and boot your bot 24/7!
 
 ---
 
 ### 🖥️ Option 3: 1-Click 24/7 Linux VPS Deployment
 
-If you own a Linux VPS and want a background `systemd` service for all your bots simultaneously:
+If you own a Linux VPS and want a permanent 24/7 background `systemd` service for all your bots simultaneously:
 
-1. Use **`setup.bat`** to create as many fully functional bot profiles as you want locally. Ensure you logged into Telegram for each of them so they have a `SESSION_STRING`.
+1. Run **`run.bat`** on your PC as many times as you want to create multiple functional bot profiles (e.g., `work`, `test`).
 2. Double-click **`deploy.bat`** on Windows.
-3. It will launch the **VPS Setup Wizard** to ask for your VPS IP Address and save it centrally to `profiles/default/.env`.
-4. The deployment engine automatically packages your source code and all your `profiles/`, uploads them securely over SSH, builds a Python virtual environment on your VPS, and registers a permanent systemd service!
-5. **Auto-Sync**: Anytime you add, delete, or modify bot profiles on your PC, simply double-click `deploy.bat` again and it will instantly mirror those changes to your VPS.
+3. The deployment script will ask for your VPS IP address and SSH credentials (saving them centrally in your default profile).
+4. **Magic Deployment**: It instantly packages your source code and all your `profiles/`, uploads them securely over SSH, builds a Python virtual environment on your VPS, and registers a permanent background system service!
+5. **Auto-Sync**: Anytime you add a new profile or change a persona, simply double-click `deploy.bat` again. It will magically sync your changes to the server in seconds!
 
 ---
 
