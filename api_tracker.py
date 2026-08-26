@@ -298,49 +298,54 @@ class APIUsageTracker:
             print("♻️ API Tracker has been factory reset.")
 
     def get_stats_report(self) -> str:
-        """Generates a human-readable Telegram report of all API keys and quotas."""
-        import time
+        """Generates a human-readable Telegram report of all API keys aggregated by model."""
         with self._lock:
             today = self._get_today_str()
-            report = ["📊 **گزارش لحظه‌ای وضعیت کلیدهای API (Gemini)**\n"]
             
-            # Combine all known keys from usage_data, invalid_keys, and cooldowns
             all_known_keys = set(self.usage_data.keys()).union(self.invalid_keys).union(self.cooldowns.keys())
             
             if not all_known_keys:
-                return report[0] + "ℹ️ هیچ کلیدی هنوز استفاده نشده است."
+                return "📊 **گزارش لحظه‌ای وضعیت API (Gemini)**\n\nℹ️ هیچ کلیدی هنوز استفاده نشده است."
                 
-            for key in all_known_keys:
-                key_preview = f"`{key[:6]}...{key[-4:]}`" if len(key) > 10 else f"`{key}`"
+            dead_keys = len(self.invalid_keys)
+            healthy_keys = len(all_known_keys) - dead_keys
+            
+            report = ["📊 **گزارش وضعیت API (Gemini)**\n"]
+            report.append(f"✅ کلیدهای سالم: {healthy_keys}")
+            
+            if dead_keys > 0:
+                dead_previews = [f"`{k[:6]}...`" if len(k) > 10 else f"`{k}`" for k in self.invalid_keys]
+                report.append(f"❌ کلیدهای مسدود (403): {dead_keys} ({', '.join(dead_previews)})")
+                
+            report.append("\n**گزارش مجموع مصرف امروز:**")
+            
+            # Aggregate usage by model
+            model_usage = {} # model_name -> count
+            model_keys_used = {} # model_name -> set of keys that used it today
+            
+            for key, data in self.usage_data.items():
                 if key in self.invalid_keys:
-                    report.append(f"❌ {key_preview}: **مسدود / نامعتبر (403)**")
                     continue
-                    
-                report.append(f"🔑 {key_preview}:")
-                data = self.usage_data.get(key, {})
-                has_usage_today = False
-                
                 if data.get("date") == today:
                     models_data = data.get("models", {})
-                    if models_data:
-                        has_usage_today = True
-                        for model, count in models_data.items():
-                            cfg = self.get_model_config(model)
-                            limit = cfg["rpd"] if cfg else "?"
-                            
-                            status = "✅ آزاد"
-                            if cfg and count >= cfg["rpd"]:
-                                status = "🚫 سهمیه روزانه پر شده"
-                            elif model in self.cooldowns.get(key, {}):
-                                exp_time, reason = self.cooldowns[key][model]
-                                rem = int(exp_time - time.time())
-                                if rem > 0:
-                                    status = f"⏳ استراحت موقت ({rem}s)"
-                            
-                            report.append(f"   ├ 🤖 `{model}`: {count} / {limit}  ({status})")
-                
-                if not has_usage_today:
-                    report.append(f"   └ 🟢 کاملاً آزاد (بدون مصرف امروز)")
+                    for model, count in models_data.items():
+                        model_usage[model] = model_usage.get(model, 0) + count
+                        if model not in model_keys_used:
+                            model_keys_used[model] = set()
+                        model_keys_used[model].add(key)
+                        
+            if not model_usage:
+                report.append("🟢 کاملاً آزاد (بدون مصرف امروز برای هیچ مدلی)")
+            else:
+                for cfg in MODELS_CONFIG:
+                    model = cfg["name"]
+                    if model in model_usage:
+                        used = model_usage[model]
+                        keys_used_count = len(model_keys_used[model])
+                        total_limit = cfg["rpd"] * healthy_keys if healthy_keys > 0 else 0
+                        
+                        report.append(f"🤖 `{model}`:")
+                        report.append(f"   └ مصرف: {used} / {total_limit} درخواست (توسط {keys_used_count} کلید)")
             
             report.append("\n💡 *سهمیه‌ها هر روز ساعت 00:00 به وقت UTC ریست می‌شوند.*")
             return "\n".join(report)
