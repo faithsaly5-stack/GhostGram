@@ -302,19 +302,20 @@ class APIUsageTracker:
         with self._lock:
             today = self._get_today_str()
             
-            all_known_keys = set(self.usage_data.keys()).union(self.invalid_keys).union(self.cooldowns.keys())
+            total_configured_keys = set(Config.GEMINI_API_KEYS)
+            dead_keys_in_config = self.invalid_keys.intersection(total_configured_keys)
             
-            if not all_known_keys:
-                return "📊 **گزارش لحظه‌ای وضعیت API (Gemini)**\n\nℹ️ هیچ کلیدی هنوز استفاده نشده است."
-                
-            dead_keys = len(self.invalid_keys)
-            healthy_keys = len(all_known_keys) - dead_keys
+            dead_keys = len(dead_keys_in_config)
+            healthy_keys = len(total_configured_keys) - dead_keys
+            
+            if len(total_configured_keys) == 0:
+                return "📊 **گزارش لحظه‌ای وضعیت API (Gemini)**\n\nℹ️ هیچ کلیدی در تنظیمات یافت نشد."
             
             report = ["📊 **گزارش وضعیت API (Gemini)**\n"]
-            report.append(f"✅ کلیدهای سالم: {healthy_keys}")
+            report.append(f"✅ کلیدهای سالم: {healthy_keys} از {len(total_configured_keys)}")
             
             if dead_keys > 0:
-                dead_previews = [f"`{k[:6]}...`" if len(k) > 10 else f"`{k}`" for k in self.invalid_keys]
+                dead_previews = [f"`{k[:6]}...`" if len(k) > 10 else f"`{k}`" for k in dead_keys_in_config]
                 report.append(f"❌ کلیدهای مسدود (403): {dead_keys} ({', '.join(dead_previews)})")
                 
             report.append("\n**گزارش مجموع مصرف امروز:**")
