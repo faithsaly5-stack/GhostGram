@@ -12,8 +12,7 @@ sudo systemctl stop teleagent.service 2>/dev/null || true
 
 # Extract files from /tmp to /opt/teleagent
 echo "📝 Extracting files to ${APP_DIR}..."
-# Clear old profiles directory to sync deletions perfectly
-sudo rm -rf "${APP_DIR}"/profiles/
+# -o overwrites existing files without prompting
 # -o overwrites existing files without prompting
 sudo unzip -o /tmp/teleagent_deploy.zip -d "${APP_DIR}"
 sudo chown -R $USER:$USER "${APP_DIR}"
