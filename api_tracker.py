@@ -135,7 +135,16 @@ class APIUsageTracker:
             start_idx = 0
             if start_model:
                 if start_model == "CHEAPEST" and MODELS_CONFIG:
-                    start_idx = len(MODELS_CONFIG) - 1
+                    # Cheap = Highest Daily Limit (RPD). If tied, highest RPM.
+                    best_idx = len(MODELS_CONFIG) - 1
+                    max_score = (-1, -1)
+                    for i, cfg in enumerate(MODELS_CONFIG):
+                        score = (cfg["rpd"], cfg["rpm"])
+                        # Using > means if there's a tie, we pick the FIRST one (upper = smarter)
+                        if score > max_score:
+                            max_score = score
+                            best_idx = i
+                    start_idx = best_idx
                 else:
                     for i, cfg in enumerate(MODELS_CONFIG):
                         if cfg["name"] == start_model:

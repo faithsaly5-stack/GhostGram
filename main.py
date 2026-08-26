@@ -26,10 +26,10 @@ def is_owner(event) -> bool:
     """Strict check to ensure commands only run for the owner (outgoing messages from this account)."""
     return bool(event and event.out)
 
-async def get_response(user_message: str, system_prompt: str = None, is_json: bool = False) -> str:
+async def get_response(user_message: str, system_prompt: str = None, is_json: bool = False, start_model: str = None) -> str:
     if system_prompt is None:
         system_prompt = persona_manager.get_prompt("normal")
-    return await gemini.get_response(user_message, system_prompt, is_json=is_json)
+    return await gemini.get_response(user_message, system_prompt, is_json=is_json, start_model=start_model)
 
 async def format_sender_name(sender, my_id: int) -> str:
     if not sender:
@@ -800,7 +800,11 @@ async def auto_engage_loop():
                         owner_name=Config.OWNER_NAME
                     )
                     
-                    response = await get_response(prompt_input, persona_manager.get_prompt("normal"), is_json=True)
+                    # Dynamically get the active persona instead of assuming 'normal'
+                    pal_variant = pal_manager.get_mode(chat_id)
+                    system_prompt = persona_manager.get_prompt(pal_variant)
+                    
+                    response = await get_response(prompt_input, system_prompt, is_json=True, start_model="CHEAPEST")
                     if not response or response == Text.ERROR:
                         continue
                         
