@@ -16,6 +16,8 @@ class PersonaManager:
             with open(os.path.join(self.dir_path, "normal.txt"), "w", encoding="utf-8") as f:
                 f.write("تو خودت «{owner_name}» هستی...")
 
+        self.personas.clear()
+        
         for file_path in glob.glob(os.path.join(self.dir_path, "*.txt")):
             filename = os.path.basename(file_path)
             persona_name = os.path.splitext(filename)[0].lower()
@@ -31,6 +33,7 @@ class PersonaManager:
 
     def get_prompt(self, command_name: str) -> str:
         """Returns the prompt for a given persona command name, falling back to 'normal' with dynamic identity variables."""
+        self.load_personas() # Dynamically reload to instantly catch new or edited persona files
         command_name = str(command_name).lower().strip()
         raw_prompt = self.personas.get(command_name, self.personas.get("normal", "تو خودت «{owner_name}» هستی..."))
         
@@ -47,6 +50,7 @@ class PersonaManager:
 
     def get_all_persona_names(self):
         """Returns a list of all registered persona commands."""
+        self.load_personas() # Ensure list is up to date
         return list(self.personas.keys())
 
 # Singleton instance

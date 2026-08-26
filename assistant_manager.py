@@ -7,7 +7,7 @@ from config import Config
 class AssistantManager:
     def __init__(self, state_file=Config.ASSISTANT_STATE_FILE):
         self.state_file = state_file
-        self.dm_enabled = True       # By default, when Assistant mode is on, handles all DMs
+        self.dm_enabled = False      # By default, Assistant mode is OFF
         self.active_chats = set()    # Specific group IDs where assistant is explicitly enabled
         self.muted_chats = set()     # Specific chat IDs where assistant is temporarily paused/muted by owner
         self._locks = {}
@@ -20,20 +20,20 @@ class AssistantManager:
                 with open(self.state_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, dict):
-                        self.dm_enabled = bool(data.get("dm_enabled", True))
+                        self.dm_enabled = bool(data.get("dm_enabled", False))
                         self.active_chats = set(data.get("active_chats", []))
                         self.muted_chats = set(data.get("muted_chats", []))
                     elif isinstance(data, list):
                         self.active_chats = set(data)
-                        self.dm_enabled = True
+                        self.dm_enabled = False
                         self.muted_chats = set()
             except Exception as e:
                 print(f"⚠️ Error loading Assistant state: {e}")
-                self.dm_enabled = True
+                self.dm_enabled = False
                 self.active_chats = set()
                 self.muted_chats = set()
         else:
-            self.dm_enabled = True
+            self.dm_enabled = False
             self.active_chats = set()
             self.muted_chats = set()
 
@@ -83,7 +83,6 @@ class AssistantManager:
     def deactivate_global(self):
         """Globally disables Assistant mode across all DMs."""
         self.dm_enabled = False
-        self.dm_enabled = False
         self.muted_chats.clear()
         self.save_state()
         return True
@@ -92,6 +91,7 @@ class AssistantManager:
         """Globally disables the assistant and un-mutes all chats."""
         self.dm_enabled = False
         self.muted_chats.clear()
+        self.active_chats.clear()
         self.save_state()
         print("♻️ Assistant Manager has been factory reset.")
 
