@@ -128,7 +128,8 @@ GhostGram natively supports running an unlimited number of completely distinct T
 | `444 all` | Global DMs | **Deactivate Assistant Globally** across all DMs. |
 | `111` (on reply) | Reply Target | **Smart Reply**: Generates an intelligent, natural response to the quoted message. |
 | `333` | Single Chat | **Reset Memory**: Clears short-term and long-term memory for this chat. |
-| `999` | Single Chat | **Ghost Purge All**: Deletes every message sent by you in this chat. |
+| `999 [limit]` | Single Chat | **Ghost Purge**: Deletes your messages (scans up to 3000 msgs). |
+| `998 [limit]` | Single Chat | **Smart Ghost Purge**: Faster, searches only your messages. |
 | `555` | Single Chat | **Live Status**: Displays an active status dashboard and auto-deletes. |
 
 ---

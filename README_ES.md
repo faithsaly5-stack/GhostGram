@@ -94,7 +94,8 @@
 | `111 <instrucción>` | Chat / Respuesta | **Respuesta puntual inteligente** según tu instrucción específica. |
 | `555` | Chat actual | **Panel de Estado** (informe breve que se borra en 4s). |
 | `333` | Chat actual | **Reinicia la memoria a corto plazo** de este chat. |
-| `999 [límite]` | Chat actual | **Ghost Purge** (elimina todos o los últimos N mensajes tuyos). |
+| `999 [límite]` | Chat actual | **Ghost Purge** (elimina tus mensajes, escanea hasta 3000). |
+| `998 [límite]` | Chat actual | **Smart Ghost Purge** (más rápido, solo busca tus mensajes). |
 | `888` | Chat actual | **Muestra el menú de ayuda**. |
 
 ---
