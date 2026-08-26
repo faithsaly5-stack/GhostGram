@@ -1,32 +1,27 @@
 <div align="center">
 
 # 👻 GhostGram PRO
-### *Next-Gen Autonomous AI Telegram Userbot & Stealth Companion*
+### *Next-Gen Autonomous AI Telegram Userbot & Multi-Bot Engine*
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/Telethon-MTProto%20v2-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telethon" />
   <img src="https://img.shields.io/badge/Google%20Gemini-Flash%202.0%20%26%201.5-8E75C2?style=for-the-badge&logo=googlegemini&logoColor=white" alt="Google Gemini" />
+  <img src="https://img.shields.io/badge/Zero--Effort-Multi--Bot%20Engine-FF6B6B?style=for-the-badge" alt="Multi-Bot Engine" />
   <img src="https://img.shields.io/badge/Docker-Ready%20%26%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/Systemd-24%2F7%20Background%20Service-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Systemd" />
-  <img src="https://img.shields.io/badge/Stealth-Zero%20Trace-000000?style=for-the-badge&logo=ghostery&logoColor=white" alt="Stealth Mode" />
   <img src="https://img.shields.io/badge/License-MIT-44CC11?style=for-the-badge" alt="License" />
 </p>
 
 <p align="center">
   <a href="README.md"><b>English</b></a> •
-  <a href="README_FA.md"><b>فارسی</b></a> •
-  <a href="README_ZH.md"><b>中文 (简体)</b></a> •
-  <a href="README_RU.md"><b>Русский</b></a> •
-  <a href="README_ES.md"><b>Español</b></a>
+  <a href="README_FA.md"><b>فارسی</b></a>
 </p>
 
 <p align="center">
   <a href="#-core-features"><b>✨ Features</b></a> •
+  <a href="#-zero-effort-multi-bot-engine"><b>🤖 Multi-Bot</b></a> •
   <a href="#-stealth-command-matrix"><b>🎮 Commands</b></a> •
   <a href="#-dual-ai-modes--multi-persona-engine"><b>🎭 Personas</b></a> •
-  <a href="#-human-like-simulation-engine"><b>⚡ Simulation</b></a> •
-  <a href="#-dual-tier-memory-architecture"><b>🧠 Memory</b></a> •
   <a href="#-quick-start--installation"><b>🚀 Quick Start</b></a>
 </p>
 
@@ -34,7 +29,7 @@
 
 <p align="center">
   <b>GhostGram</b> is a production-grade, stealth, autonomous Telegram userbot that bridges your personal account directly with <b>Google Gemini AI</b>.<br/>
-  It chats naturally in Persian or English, adopts dynamic swappable personalities, simulates realistic human reading & typing behavior, remembers long-term context, and executes self-destructing secret commands leaving zero trace.
+  With the brand-new <b>Zero-Effort Multi-Bot Engine</b>, you can now run an unlimited number of bots simultaneously from a single folder.
 </p>
 
 ---
@@ -45,24 +40,18 @@
 <summary><b>📑 Table of Contents (Click to explore)</b></summary>
 
 - [✨ Core Features](#-core-features)
+- [🤖 Zero-Effort Multi-Bot Engine](#-zero-effort-multi-bot-engine)
 - [🎮 Stealth Command Matrix](#-stealth-command-matrix)
 - [🏗️ System Architecture](#️-system-architecture)
 - [🎭 Dual AI Modes & Multi-Persona Engine](#-dual-ai-modes--multi-persona-engine)
-  - [1. Pal Mode (Autonomous Alter-Ego)](#1-pal-mode-autonomous-alter-ego)
-  - [2. Assistant Mode (24/7 Digital Secretary)](#2-assistant-mode-247-digital-secretary)
-  - [3. Auto-Engage / Lurker Mode](#3-auto-engage--lurker-mode)
-  - [4. Dynamic Persona Switching](#4-dynamic-persona-switching)
 - [⚡ Human-Like Simulation Engine](#-human-like-simulation-engine)
 - [🧬 Dual-Tier Memory Architecture](#-dual-tier-memory-architecture)
-- [🛡️ Enterprise Gemini Engine & Key Pool](#️-enterprise-gemini-engine--key-pool)
-- [🧹 Ghost Purge (Message Cleaner)](#-ghost-purge-message-cleaner)
 - [🚀 Quick Start & Installation](#-quick-start--installation)
-  - [Option A: 1-Click Interactive Setup Wizard (Windows)](#option-a-1-click-interactive-setup-wizard-windows)
-  - [Option B: Manual / Local Installation](#option-b-manual--local-installation)
-  - [Option C: Docker & Docker Compose](#option-c-docker--docker-compose)
-  - [Option D: 1-Click 24/7 Linux VPS Deployment](#option-d-1-click-247-linux-vps-deployment)
+  - [Option A: 1-Click Interactive Setup Wizard (Windows)](#-option-1-1-click-local-run-on-windows-no-vps-needed-zero-coding)
+  - [Option B: Free 24/7 Cloud Deployment (Railway)](#-option-2-free-247-cloud-deployment-railway--render--koyeb---no-vps-required)
+  - [Option C: 1-Click 24/7 Linux VPS Deployment](#️-option-3-1-click-247-linux-vps-deployment)
 - [⚙️ Configuration Reference (.env)](#️-configuration-reference-env)
-- [🔒 Security & Zero-Leak Export](#-security--zero-leak-export)
+- [🔒 Security](#-security)
 - [📄 License & Disclaimer](#-license--disclaimer)
 
 </details>
@@ -74,399 +63,147 @@
 <table>
   <tr>
     <td width="50%">
-      <h3>🕶️ Self-Destructing Stealth Codes</h3>
-      <p>Control the bot from any chat using 3-digit secret codes (<code>777</code>, <code>000</code>, <code>666</code>, <code>444</code>, <code>999</code>) that <b>immediately auto-delete</b> upon delivery, leaving zero trace to other members.</p>
+      <h3>🤖 Zero-Effort Multi-Bot Engine</h3>
+      <p>Run 1 or 100 bots concurrently! Just create a new <code>.env.botname</code> file, and the Master Launcher will instantly spin up a dedicated, isolated background process for it. If you delete the <code>.env</code> file, the automatic <b>Cleanup Engine</b> instantly hunts down and deletes all orphaned databases to keep your server clean.</p>
     </td>
     <td width="50%">
-      <h3>🤖 Dual Core AI Operating Modes</h3>
-      <p>Seamlessly toggle between <b>Pal Mode</b> (conversing informally in your tone/dialect) and <b>Assistant Mode</b> (acting as your polite 24/7 secretary for incoming private DMs).</p>
+      <h3>☁️ Single-File Cloud Portability</h3>
+      <p>Your Telegram Session is automatically converted into a <code>SESSION_STRING</code> and saved directly inside your <code>.env</code> file. You no longer need to copy SQLite <code>.session</code> databases! Deploy to Railway or VPS using just a single text file.</p>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <h3>🎭 Dynamic Multi-Persona Engine</h3>
-      <p>Load unlimited custom personas from <code>personas/*.txt</code> files and swap them on the fly (<code>777 lust</code>, <code>777 sarcastic</code>, <code>777 poetic</code>, <code>777 angry</code>) without restarting.</p>
+      <h3>🕶️ Self-Destructing Stealth Codes</h3>
+      <p>Control the bot from any chat using 3-digit secret codes (<code>777</code>, <code>000</code>, <code>666</code>, <code>444</code>) that <b>immediately auto-delete</b> upon delivery, leaving zero trace.</p>
     </td>
     <td width="50%">
-      <h3>🕵️ Autonomous Group Lurker (Auto-Engage)</h3>
-      <p>Periodically analyzes group discussions in the background via structured JSON output and naturally chimes into interesting debates at randomized human intervals.</p>
+      <h3>🎭 Dynamic Multi-Persona Engine</h3>
+      <p>Load unlimited custom personas from <code>personas/*.txt</code> files and swap them on the fly (<code>777 lust</code>, <code>777 sarcastic</code>, <code>777 poetic</code>) without restarting.</p>
     </td>
   </tr>
   <tr>
     <td width="50%">
       <h3>⚡ Ultra-Realistic Human Behavior</h3>
-      <p>Calculates reading delays based on text length + simulates realistic non-linear typing speed (CPM/WPM) with active Telegram typing actions. Automatically strips robotic AI giveaways (emojis & formatting).</p>
+      <p>Calculates reading delays based on text length + simulates realistic non-linear typing speed (CPM/WPM) with active Telegram typing actions.</p>
     </td>
     <td width="50%">
       <h3>🧠 Dual-Tier Rolling Memory</h3>
-      <p>Features a 30-message short-term rolling window with smart sentence-boundary truncation, plus an automatic background long-term memory compressor powered by Gemini.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <h3>🛡️ Enterprise Multi-Key Pool</h3>
-      <p>Round-robin rotation across unlimited Gemini API keys, daily quotas (490/key buffer), 15 RPM throttling, 3-strike circuit breaker, and strict 15s timeout protection.</p>
-    </td>
-    <td width="50%">
-      <h3>🧹 Ghost Purge (Message Cleaner)</h3>
-      <p>Instantly batch-deletes all messages sent by you in any chat or supergroup with built-in Telegram FloodWait recovery and zero traces.</p>
+      <p>Features a 30-message short-term rolling window plus an automatic background long-term memory compressor powered by Gemini.</p>
     </td>
   </tr>
 </table>
 
 ---
 
-## 🎮 Stealth Command Matrix
+## 🤖 Zero-Effort Multi-Bot Engine
 
-> [!IMPORTANT]
-> **Owner-Only Security**: All stealth codes are strictly restricted to your personal Telegram account (`event.out`). Any command you send **deletes itself immediately**, keeping your automation 100% invisible.
+Managing multiple Telegram bots (e.g., a Work bot, a Personal bot, and a Test bot) used to require complicated setups. **Not anymore.** GhostGram features a containerized architecture!
 
-```
-                  ┌─────────────────────────────────────────────────────────┐
-                  │               GhostGram Stealth Trigger Map             │
-                  └────────────────────────────┬────────────────────────────┘
-                                               │
-             ┌───────────────────┬─────────────┴─────┬───────────────────┐
-             ▼                   ▼                   ▼                   ▼
-      [ PAL ENGINE ]     [ AUTO-ENGAGE ]     [ ASSISTANT ]        [ UTILITIES ]
-      • 777 (Normal)     • 777 engage        • 666 (All DMs)      • 111 (Smart Reply)
-      • 777 <persona>    • 777 engage <min>  • 444 (Mute Chat)    • 333 (Reset Memory)
-      • 000 (Off Chat)   • 777 engage off    • 444 all (Off)      • 999 (Ghost Purge)
-      • 000 all (Off)    • 777 engage off all                     • 555 (Live Status)
-                                                                  • 888 (Help Menu)
-```
+1. **Add a Bot:** Double click `setup.bat` and enter a new profile name (e.g., `work`). It automatically creates an isolated folder at `profiles/work/`.
+2. **Remove a Bot:** Simply delete the `profiles/work/` folder!
+3. **Start All Bots:** Double-click `run.bat` and type `all` to run every bot profile simultaneously without conflicts!
 
-### 📋 Full Command Directory
-
-| Stealth Trigger | Text Alias | Scope | Action & Description |
-| :--- | :--- | :---: | :--- |
-| `777` | `!رفیق روشن` | Single Chat | **Activate Pal Mode** with default conversational persona. |
-| `777 <persona>` | `!حالت <name>` | Single Chat | **Activate Custom Persona** (e.g., `777 lust`, `777 sarcastic`, `777 poetic`). |
-| `000` | `!خاموش` | Single Chat | **Deactivate Pal Mode** for the current chat. |
-| `000 all` | `!خاموش کل` | Global | **Deactivate Pal Mode Globally** across all active chats. |
-| `777 engage` | `!پراکنش` | Group Chat | **Activate Auto-Engage Lurker** (evaluates group every 20 minutes). |
-| `777 engage <min>` | - | Group Chat | **Activate Auto-Engage with custom interval** (e.g., `777 engage 45`). |
-| `777 engage off` | `!پراکنش خاموش` | Group Chat | **Disable Auto-Engage** in current group. |
-| `777 engage off all` | - | Global | **Disable Auto-Engage Globally** across all groups. |
-| `666` | `!دستیار روشن` | Global DMs | **Activate Universal Assistant** for all incoming private messages. |
-| `444` | `!سکوت` | Single Chat | **Mute Assistant** in this specific chat only (other DMs remain active). |
-| `444 all` | `!دستیار خاموش` | Global DMs | **Deactivate Assistant Globally** across all DMs. |
-| `111` (on reply) | `!بگو` | Reply Target | **Smart Reply**: Generates an intelligent, natural response to the quoted message. |
-| `111 <prompt>` | - | Reply Target | **Directed Smart Reply**: Generates response following your instructions (e.g. `111 say I'm busy`). |
-| `333` | `!ریست` | Single Chat | **Reset Memory**: Clears short-term history and compressed long-term memory for this chat. |
-| `999` | `!پاکسازی` | Single Chat | **Ghost Purge All**: Deletes every message sent by you in this chat since the beginning of time. |
-| `999 <count>` | `!پاکسازی <تعداد>` | Single Chat | **Ghost Purge Last N**: Deletes your last `N` messages in this chat. |
-| `555` | `!وضعیت` | Single Chat | **Live Status**: Displays an active status dashboard and auto-deletes after 4 seconds. |
-| `888` | `!راهنما` | Single Chat | **Help Menu**: Edits current message to display the interactive help directory. |
+The **Master Launcher** handles everything:
+- **Complete Isolation**: Each bot lives inside its own folder in `profiles/` with its own `.env`, SQLite memory database, API usage trackers, and Telegram session files.
+- **Customization**: You can even have custom Personas just for specific bots by adding text files to `profiles/botname/personas/`!
 
 ---
 
-## 🏗️ System Architecture
+## 🎮 Stealth Command Matrix
 
-```mermaid
-flowchart TD
-    subgraph Telegram_Layer ["📱 Telegram MTProto Layer"]
-        A[Incoming Message / Event] --> B{Is Outgoing / Owner?}
-        B -- Yes --> C[Stealth Command Interceptor]
-        C -->|Delete Command Instantly| D[Execute Action: Purge / Mode / Status / Persona]
-        B -- No --> E{Is Sender a Bot?}
-        E -- Yes --> F[Drop Message - AI Loop Protection]
-        E -- No --> G{Routing Engine}
-    end
+> [!IMPORTANT]
+> **Owner-Only Security**: All stealth codes are strictly restricted to your personal Telegram account (`event.out`). Any command you send **deletes itself immediately**.
 
-    subgraph Decision_Engine ["🧠 Decision & Routing Engine"]
-        G -->|Pal Mode Active| H[Pal Handler: Select Persona]
-        G -->|Assistant Active & DM| I[Assistant Handler]
-        G -->|Group Chat Mention/Reply| H
-        G -->|Unmanaged Chat| J[Drop / Ignore]
-    end
-
-    subgraph Memory_Layer ["🧬 Dual-Tier Memory System"]
-        H --> K[Fetch Short-Term Rolling Memory - 30 Msgs]
-        I --> K
-        K --> L[Retrieve Long-Term Summary - memory_state.json]
-        L --> M[Inject Solar Hijri Date & Time Context]
-    end
-
-    subgraph AI_Cluster ["🛡️ Gemini Multi-Key Rotation Pool"]
-        M --> N[Simulate Reading Delay]
-        N --> O[Continuous 'typing...' Action State]
-        O --> P[Round-Robin Key Selector]
-        P --> Q[Check Daily Quota 490 & 15 RPM Limits]
-        Q --> R[15s Hard Timeout Gemini Query]
-        R --> S{Success?}
-        S -- No --> T[Trip Circuit Breaker & Rotate Next Key]
-        T --> P
-        S -- Yes --> U[Pre-Flight Text Sanitizer: Strip Emojis/Diacritics]
-    end
-
-    subgraph Dispatcher ["⚡ Human Output Dispatcher"]
-        U --> V[Calculate Non-Linear Typing Delay]
-        V --> W[Send Message to Telegram]
-        W --> X[Trigger Background Long-Term Summarizer]
-    end
-```
+| Stealth Trigger | Scope | Action & Description |
+| :--- | :---: | :--- |
+| `777` | Single Chat | **Activate Pal Mode** with default conversational persona. |
+| `777 <persona>` | Single Chat | **Activate Custom Persona** (e.g., `777 lust`, `777 sarcastic`). |
+| `000` | Single Chat | **Deactivate Pal Mode** for the current chat. |
+| `000 all` | Global | **Deactivate Pal Mode Globally** across all active chats. |
+| `777 engage` | Group Chat | **Activate Auto-Engage Lurker** (evaluates group every 20 minutes). |
+| `666` | Global DMs | **Activate Universal Assistant** for all incoming private messages. |
+| `444` | Single Chat | **Mute Assistant** in this specific chat only. |
+| `444 all` | Global DMs | **Deactivate Assistant Globally** across all DMs. |
+| `111` (on reply) | Reply Target | **Smart Reply**: Generates an intelligent, natural response to the quoted message. |
+| `333` | Single Chat | **Reset Memory**: Clears short-term and long-term memory for this chat. |
+| `999` | Single Chat | **Ghost Purge All**: Deletes every message sent by you in this chat. |
+| `555` | Single Chat | **Live Status**: Displays an active status dashboard and auto-deletes. |
 
 ---
 
 ## 🎭 Dual AI Modes & Multi-Persona Engine
 
 ### 1. Pal Mode (Autonomous Alter-Ego)
-When active (`777`), GhostGram assumes your identity. It learns your slang, avoids robotic emojis, references your shared conversation history, and responds naturally. In group chats, it stays silent until directly addressed or mentioned.
+When active (`777`), GhostGram assumes your identity. It learns your slang, avoids robotic emojis, references your shared conversation history, and responds naturally.
 
 ### 2. Assistant Mode (24/7 Digital Secretary)
-Activated globally with `666`, Assistant Mode turns your account into a polite personal secretary for all incoming DMs. It greets contacts, handles inquiries, takes messages, and tells them when you'll be available. You can mute specific conversations with `444`.
+Activated globally with `666`, Assistant Mode turns your account into a polite personal secretary for all incoming DMs. It greets contacts, handles inquiries, takes messages, and tells them when you'll be available.
 
-### 3. Auto-Engage / Lurker Mode
-With `777 engage <interval>`, GhostGram observes group conversations silently. At randomized intervals around your target time (e.g. every 20 minutes), it feeds recent context into Gemini with a structured JSON schema. If an engaging question or debate is found, it joins in naturally.
-
-### 4. Dynamic Persona Switching
+### 3. Dynamic Persona Switching
 Add custom `.txt` files to `personas/` to unlock instant runtime personality switching:
-
-```
-personas/
-├── normal.txt          <- Default conversational tone
-├── assistant.txt       <- Polite secretary tone
-├── sarcastic.txt       <- Witty, sarcastic humor (`777 sarcastic`)
-├── poetic.txt          <- Dramatic, poetic style (`777 poetic`)
-├── academic.txt        <- Formal scientific tone (`777 academic`)
-├── angry.txt           <- Short-tempered, direct tone (`777 angry`)
-├── drunk.txt           <- Unfiltered casual style (`777 drunk`)
-└── lust.txt            <- Warm, affectionate tone (`777 lust`)
-```
-
-> [!TIP]
-> **Hot-Swapping**: You can create a new file `personas/philosopher.txt` while the bot is running, and immediately use it in chat with `777 philosopher` — zero downtime!
-
----
-
-## ⚡ Human-Like Simulation Engine
-
-GhostGram is engineered to make AI detection practically impossible:
-
-```
-[Incoming Text] ──► [Reading Delay: 40ms/char + Jitter] ──► [Continuous Typing Action]
-                                                                      │
-[Outgoing Text] ◄── [Typing Delay: Non-linear Curve + Pauses] ◄──────┘
-```
-
-1. **Proportional Reading Delay**: Calculates realistic human reading time before reacting (`base_time = len(text) * 0.04s` with random jitter).
-2. **Persistent `typing...` Status**: Maintains Telegram's native typing action continuously during the entire processing and drafting lifecycle.
-3. **Non-Linear Typing Speed Curve**: Uses `(length ** 0.75) * 0.22` with dynamic pauses on Persian and English punctuation (`,`, `.`, `!`, `؟`, `،`) to simulate human finger movement.
-4. **Anti-AI Formatting Sanitizer**: Strips markdown lists, emojis, HTML tags, and Arabic diacritics that typically give away AI-generated text.
-
----
-
-## 🧬 Dual-Tier Memory Architecture
-
-```
-                                  CONVERSATION HISTORY
-                                           │
-             ┌─────────────────────────────┴─────────────────────────────┐
-             ▼                                                           ▼
-   [Short-Term Memory]                                         [Long-Term Memory]
-• Sliding window of 30 messages.                             • Background AI summarizer.
-• Smart sentence-boundary truncation.                        • Runs automatically every 30 messages.
-• Preserves immediate context & reply chains.                • Compresses key facts into persistent JSON.
-• Instant zero-latency fetch.                                • Survives restarts & sliding window drops.
-```
-
-- **Short-Term Memory**: Fetches the last 30 messages with formatted sender tags, reply chains, and timestamps. Long messages are truncated at natural sentence boundaries (`MAX_MESSAGE_SEGMENT_CHARS`).
-- **Rolling Long-Term Memory**: Every 30 messages, an asynchronous background Gemini task compresses important conversational facts into `memory_state.json`. Future prompts include this condensed memory.
-- **Memory Wipe (`333`)**: Atomically resets the cutoff timestamp, wiping all short-term and long-term memory for that specific chat.
-
----
-
-## 🛡️ Enterprise Gemini Engine & Key Pool
-
-```
-                       ┌──────────────────────────────┐
-                       │    GEMINI ENGINE ROTATOR     │
-                       └──────────────┬───────────────┘
-                                      │
-              ┌───────────────────────┼───────────────────────┐
-              ▼                       ▼                       ▼
-      [API Key 1 (Primary)]   [API Key 2 (Backup)]   [API Key N (Pool)]
-      • 490 req/day quota     • 490 req/day quota    • 490 req/day quota
-      • 15 RPM limiter        • 15 RPM limiter       • 15 RPM limiter
-      • Circuit Breaker       • Circuit Breaker      • Circuit Breaker
-              │                       │                       │
-              └───────────────────────┴───────────────────────┘
-                                      │
-                         [Strict 15s Per-Key Timeout]
-                                      │
-                         [Infinite Backoff Failover]
-```
-
-- **Multi-Key Round-Robin**: Supply unlimited Gemini API keys in `.env` (comma-separated).
-- **Daily Quota Management**: Tracks daily request counts in `api_usage.json` with a safe ceiling (490/day) below Google's 500 limit.
-- **15 RPM Limiter**: Protects keys against rate-limit bursts.
-- **Circuit Breaker**: If a key fails 3 consecutive times, it is placed in quarantine for 3 hours.
-- **15s Hard Timeout**: Prevents hanging requests by switching to the next available key after 15 seconds.
-
----
-
-## 🧹 Ghost Purge (Message Cleaner)
-
-Need to erase your presence? Send `999`:
-- Locates and deletes all messages sent by you in the current chat.
-- Uses high-speed batch deletion (50 messages per API call).
-- Handles Telegram `FloodWaitError` with automatic exponential backoff.
-- The trigger command `999` deletes itself before the purge begins.
+- `personas/hacker.txt` -> Activate in chat with `777 hacker`
+- `personas/sarcastic.txt` -> Activate in chat with `777 sarcastic`
 
 ---
 
 ## 🚀 Quick Start & Installation
 
-Choose whichever method best fits your setup:
-
 ### 🌟 Option 1: 1-Click Local Run on Windows (No VPS Needed, Zero Coding)
-If you just want to run GhostGram on your own PC without buying a server or touching code:
 
 1. Download or clone this repository.
-2. Double-click **`run.bat`** (or `setup.bat`).
-3. An interactive setup wizard will guide you through entering your Telegram API credentials, Gemini keys, and your name/bio, and will log into Telegram automatically.
-4. **That's it!** Whenever you want GhostGram running, just double-click **`run.bat`**.
+2. Double-click **`setup.bat`** to create a profile.
+3. **Setup Wizard**: It will ask for your profile name (leave blank for the default bot). It then asks for your API keys.
+4. **Login**: Type `Y` to log into Telegram right in the terminal. Your `SESSION_STRING` will be permanently injected into your profile's `.env` file!
+5. **Start the Bot**: Double-click **`run.bat`** to start your bot. If you have multiple profiles, type **`all`** to launch them all concurrently in the same terminal!
 
 ---
 
-### 💻 Option 2: Local CLI Installation (Windows / macOS / Linux / Termux)
+### ☁️ Option 2: Free 24/7 Cloud Deployment (Railway / Render / Koyeb - No VPS Required)
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/faithsaly5-stack/GhostGram.git
-cd GhostGram
+Because GhostGram writes your entire Telegram Session (`SESSION_STRING`) directly into your `.env` file, deploying to the cloud is 100% frictionless. You don't need to mount SQLite database volumes!
 
-# 2. Create and activate a virtual environment
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux / macOS:
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run interactive setup wizard (or copy .env.example to .env and edit manually)
-python setup.py
-
-# 5. Authenticate with Telegram (if not already done in setup)
-python login.py
-
-# 6. Start GhostGram!
-python main.py
-```
+1. Set up your bot locally using `run.bat` on your PC first (this generates your `SESSION_STRING` inside your `.env` file).
+2. Go to [Railway.app](https://railway.app) $\rightarrow$ **New Project** $\rightarrow$ **Deploy from GitHub repo**.
+3. In Railway, open the Variables tab and copy-paste every line from your `.env` file directly into Railway's variable editor.
+4. Railway will automatically detect **Cloud Mode**, see your variables, and boot your bot flawlessly 24/7!
 
 ---
 
-### ☁️ Option 3: Free 24/7 Cloud Deployment (Railway / Render / Koyeb - No VPS Required)
-You can run GhostGram 24/7 completely free on cloud platforms without keeping your PC on or buying a VPS.
+### 🖥️ Option 3: 1-Click 24/7 Linux VPS Deployment
 
-#### 🔑 Step 1: Generate your Session String (One-Time)
-Because cloud servers are headless and cannot interactively prompt for Telegram SMS codes during startup, generate your `SESSION_STRING` once on your computer:
-1. Run `python login.py` on your computer (or double-click `run.bat`).
-2. Log in with your phone number and Telegram verification code.
-3. The script will output a **`SESSION_STRING`** (a long string starting with `1Ap...`). Copy it!
+If you own a Linux VPS and want a background `systemd` service for all your bots simultaneously:
 
----
-
-#### 🚀 Step 2: Deploy to [Railway.app](https://railway.app) (Recommended)
-1. Fork or push this repository to your GitHub account.
-2. Go to [Railway.app](https://railway.app) $\rightarrow$ Click **New Project** $\rightarrow$ **Deploy from GitHub repo** $\rightarrow$ Select `GhostGram`.
-3. In Railway, open the service $\rightarrow$ go to the **Variables** tab and add:
-   - `API_ID`: Your Telegram API ID
-   - `API_HASH`: Your Telegram API Hash
-   - `PHONE_NUMBER`: Your Telegram Phone Number
-   - `SESSION_STRING`: Paste the session string from Step 1
-   - `GEMINI_API_KEYS`: Your Google Gemini API Key(s)
-   - `OWNER_ID`: Your numeric Telegram ID
-   - `OWNER_NAME`: Your name
-   - `OWNER_BIO`: Your bio/profession
-4. Railway will automatically build using the included `Dockerfile` and start GhostGram 24/7!
-
----
-
-#### 🚀 Step 3: Or Deploy to [Render.com](https://render.com)
-1. Go to [Render.com](https://render.com) $\rightarrow$ Click **New +** $\rightarrow$ **Background Worker**.
-2. Connect your GitHub repository.
-3. Choose **Docker** (or **Python 3** with Build: `pip install -r requirements.txt` and Start: `python main.py`).
-4. In the **Environment Variables** tab, add your variables including `SESSION_STRING`.
-5. Click **Create Background Worker**. GhostGram is now running 24/7 in the cloud!
-
----
-
-### 🖥️ Option 4: 1-Click 24/7 Linux VPS Deployment
-If you own a Linux VPS and want a background `systemd` service with automatic restarts on server reboot:
-
-1. In your local `.env`, configure your server connection:
-   ```env
-   VPS_IP=your.vps.ip.here
-   SSH_USER=root
-   SSH_PORT=22
-   ```
-2. Double-click **`deploy.bat`** (on Windows) or run `./deploy.sh` (on Linux).
-3. The script automatically compresses the project, uploads it via SCP, creates a Python venv on the server, installs requirements, sets up a persistent `systemd` service, and streams live logs.
-
----
-
-### 🐳 Option 5: Docker & Docker Compose
-
-```bash
-# Build and start container in background
-docker compose up -d --build
-
-# View live streaming logs
-docker compose logs -f
-```
+1. Use **`setup.bat`** to create as many fully functional bot profiles as you want locally. Ensure you logged into Telegram for each of them so they have a `SESSION_STRING`.
+2. Double-click **`deploy.bat`** on Windows.
+3. It will launch the **VPS Setup Wizard** to ask for your VPS IP Address and save it centrally to `profiles/default/.env`.
+4. The deployment engine automatically packages your source code and all your `profiles/`, uploads them securely over SSH, builds a Python virtual environment on your VPS, and registers a permanent systemd service!
+5. **Auto-Sync**: Anytime you add, delete, or modify bot profiles on your PC, simply double-click `deploy.bat` again and it will instantly mirror those changes to your VPS.
 
 ---
 
 ## ⚙️ Configuration Reference (.env)
 
 ```ini
-# =================================================================
-# 📱 TELEGRAM API CREDENTIALS (https://my.telegram.org/apps)
-# =================================================================
-API_ID=12345678
-API_HASH=abcdef0123456789abcdef0123456789
+API_ID=2040
+API_HASH=b18441a1ff607e10a989891a5462e627
 PHONE_NUMBER=+1234567890
-
-# =================================================================
-# 👤 USER IDENTITY & PERSONA CUSTOMIZATION
-# =================================================================
 OWNER_ID=123456789
-OWNER_NAME=YourName
-OWNER_BIO=Student & Developer / دانشجو و برنامه‌نویس
-OWNER_WEBSITE=yourwebsite.com
-OWNER_SERVICES=Consulting, Coding, Web Design / مشاوره و برنامه‌نویسی
-OWNER_INTERESTS=Music, Tech, Literature / موسیقی، تکنولوژی و کتاب
 
-# =================================================================
-# 🧠 GEMINI API CONFIGURATION (https://aistudio.google.com)
-# =================================================================
+# 📝 EDIT THESE VALUES IN YOUR TEXT EDITOR (Supports Persian/Farsi perfectly)
+OWNER_NAME=Your Name / نام شما
+OWNER_BIO=دانشجو و برنامه‌نویس
+OWNER_WEBSITE=yourwebsite.com
+OWNER_SERVICES=مشاوره، برنامه‌نویسی و طراحی پروژه
+OWNER_INTERESTS=موسیقی، کتاب، تکنولوژی و گفتگو
+
 GEMINI_API_KEYS=your_key_1,your_key_2
 GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
-SESSION_NAME=ghostgram_session
 
-# =================================================================
-# 🧠 MEMORY & BEHAVIOR TUNING
-# =================================================================
-SHORT_TERM_MEMORY_LIMIT=30
-LONG_TERM_SUMMARY_INTERVAL=30
-MAX_LONG_TERM_SUMMARY_CHARS=600
-MAX_MESSAGE_SEGMENT_CHARS=200
+SESSION_NAME=teleagent_session
+SESSION_STRING=1ApW... # Generated automatically by the Setup Wizard
 
-# =================================================================
-# ⌨️ HUMAN TYPING SIMULATION
-# =================================================================
-TYPING_SPEED_CPS=18.0
-MIN_TYPING_DELAY=1.5
-MAX_TYPING_DELAY=7.0
-
-# =================================================================
-# 🚀 VPS DEPLOYMENT SETTINGS
-# =================================================================
-VPS_IP=your.vps.ip.here
+# ☁️ Deployment Settings (Optional)
+VPS_IP=127.0.0.1
 SSH_USER=root
 SSH_PORT=22
 ```
@@ -476,7 +213,7 @@ SSH_PORT=22
 ## 🔒 Security
 
 > [!CAUTION]
-> **Never publish your `.env` or `*.session` files to public repositories!**
+> **Never publish your `.env` files to public repositories!** They contain your private `SESSION_STRING` which gives full access to your Telegram account.
 
 ---
 

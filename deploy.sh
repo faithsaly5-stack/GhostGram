@@ -12,9 +12,18 @@ sudo systemctl stop teleagent.service 2>/dev/null || true
 
 # Extract files from /tmp to /opt/teleagent
 echo "📝 Extracting files to ${APP_DIR}..."
+# Clear old profiles directory to sync deletions perfectly
+sudo rm -rf "${APP_DIR}"/profiles/
 # -o overwrites existing files without prompting
 sudo unzip -o /tmp/teleagent_deploy.zip -d "${APP_DIR}"
 sudo chown -R $USER:$USER "${APP_DIR}"
+
+if [ ! -d "${APP_DIR}/venv" ]; then
+    echo "📦 Creating new Python virtual environment..."
+    sudo apt-get update -y 2>/dev/null || true
+    sudo apt-get install -y python3-venv 2>/dev/null || true
+    python3 -m venv "${APP_DIR}/venv"
+fi
 
 echo "🌐 Installing / Updating Python requirements..."
 "${APP_DIR}/venv/bin/pip" install --upgrade pip
@@ -23,10 +32,29 @@ echo "🌐 Installing / Updating Python requirements..."
 # Clean up payload zip ONLY (do not delete deploy.sh while it's running)
 rm -f /tmp/teleagent_deploy.zip
 
-# Check login status non-interactively
 cd "${APP_DIR}"
-echo "🔐 Checking Telegram authentication status..."
-./venv/bin/python login.py || true
+
+if [ ! -f /etc/systemd/system/teleagent.service ]; then
+    echo "⚙️ Creating systemd service for the first time..."
+    sudo tee /etc/systemd/system/teleagent.service > /dev/null <<EOF
+[Unit]
+Description=GhostGram Background Service
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=${APP_DIR}
+ExecStart=${APP_DIR}/venv/bin/python main.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl enable teleagent.service
+fi
 
 # Start background service
 echo "🚀 Starting TeleAgent background service..."

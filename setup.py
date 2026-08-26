@@ -2,6 +2,16 @@ import os
 import sys
 import time
 
+PROFILE = "default"
+if "--profile" in sys.argv:
+    try:
+        idx = sys.argv.index("--profile")
+        PROFILE = sys.argv[idx+1]
+    except IndexError:
+        pass
+
+TARGET_ENV_FILE = f".env.{PROFILE}" if PROFILE != "default" else ".env"
+
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -13,11 +23,11 @@ def print_banner():
     print("configured and ready for deployment.\n")
 
 def check_existing_setup():
-    if os.path.exists(".env") and os.path.getsize(".env") > 50:
-        with open(".env", "r", encoding="utf-8") as f:
+    if os.path.exists(TARGET_ENV_FILE) and os.path.getsize(TARGET_ENV_FILE) > 50:
+        with open(TARGET_ENV_FILE, "r", encoding="utf-8") as f:
             content = f.read()
             if "YOUR_API_ID" not in content and "YOUR_VPS_IP" not in content:
-                print("⚠️  WARNING: A valid .env configuration already exists!")
+                print(f"⚠️  WARNING: A valid {TARGET_ENV_FILE} configuration already exists!")
                 print("Running this setup will overwrite your current settings.\n")
                 choice = input("Do you want to reconfigure? (y/N): ").strip().lower()
                 if choice != 'y':
@@ -43,37 +53,37 @@ def main():
 
     print("--- 1. Telegram API Credentials ---")
     print("Get these from https://my.telegram.org/apps")
-    api_id = ask("Telegram API_ID")
-    api_hash = ask("Telegram API_HASH")
+    api_id = ask("Telegram API_ID", default="2040")
+    api_hash = ask("Telegram API_HASH", default="b18441a1ff607e10a989891a5462e627")
     phone = ask("Telegram Phone Number (with +countrycode)")
     owner_id = ask("Your Telegram User ID (numeric, get from @userinfobot)")
-    owner_name = ask("Your Name / Persona Name", default="User")
-    owner_bio = ask("Your Bio / Profession", default="دانشجو و برنامه‌نویس")
-    owner_website = ask("Your Website / Channel (optional)", default="yourwebsite.com")
-    owner_services = ask("Your Services / Skills (optional)", default="مشاوره، برنامه‌نویسی و طراحی پروژه")
-    owner_interests = ask("Your Interests / Hobbies (optional)", default="موسیقی، کتاب، تکنولوژی و گفتگو")
     
     print("\n--- 2. Gemini API Configuration ---")
     print("Get your API key from Google AI Studio (aistudio.google.com)")
     gemini_key = ask("Gemini API Key")
     
-    print("\n--- 3. VPS Deployment Configuration ---")
-    print("If you don't have a VPS yet, you can leave these as defaults and run locally.")
-    vps_ip = ask("VPS IP Address", default="127.0.0.1")
-    ssh_user = ask("VPS SSH Username", default="root")
-    ssh_port = ask("VPS SSH Port", default="22")
+    print("\n--- 3. Telegram Session (Optional) ---")
+    print("If you already have a SESSION_STRING, paste it here to skip login.")
+    print("If you want to log in normally via Telegram code, just press Enter.")
+    session_string = input("SESSION_STRING (leave blank for normal login): ").strip()
 
-    print("\n💾 Saving configuration to .env...")
+    import os
+    import shutil
+    from config import TARGET_ENV_FILE, PROFILE_DIR
+
+    print(f"\n💾 Saving configuration to {TARGET_ENV_FILE}...")
     
     env_content = f"""API_ID={api_id}
 API_HASH={api_hash}
 PHONE_NUMBER={phone}
 OWNER_ID={owner_id}
-OWNER_NAME={owner_name}
-OWNER_BIO={owner_bio}
-OWNER_WEBSITE={owner_website}
-OWNER_SERVICES={owner_services}
-OWNER_INTERESTS={owner_interests}
+
+# 📝 EDIT THESE VALUES IN YOUR TEXT EDITOR (Supports Persian/Farsi perfectly)
+OWNER_NAME=Your Name / نام شما
+OWNER_BIO=دانشجو و برنامه‌نویس
+OWNER_WEBSITE=yourwebsite.com
+OWNER_SERVICES=مشاوره، برنامه‌نویسی و طراحی پروژه
+OWNER_INTERESTS=موسیقی، کتاب، تکنولوژی و گفتگو
 
 GEMINI_API_KEYS={gemini_key}
 
@@ -82,25 +92,33 @@ GEMINI_API_KEYS={gemini_key}
 # To disable a model, simply remove it from this comma-separated list!
 GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3.0-flash:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500,gemini-2.5-flash-lite:10:20"
 
-SESSION_NAME=teleagent_session
-
-# Deployment Settings
-VPS_IP={vps_ip}
-SSH_USER={ssh_user}
-SSH_PORT={ssh_port}
+SESSION_STRING={session_string}
 """
-    with open(".env", "w", encoding="utf-8") as f:
+
+    if PROFILE == "default":
+        env_content += """
+# ☁️ Deployment Settings (Global VPS Config)
+VPS_IP=127.0.0.1
+SSH_USER=root
+SSH_PORT=22
+"""
+
+    # Create profile directory and save env file
+    os.makedirs(PROFILE_DIR, exist_ok=True)
+    with open(TARGET_ENV_FILE, "w", encoding="utf-8") as f:
         f.write(env_content)
+        
+    # Copy default personas to profile directory
+    target_personas = os.path.join(PROFILE_DIR, "personas")
+    os.makedirs(target_personas, exist_ok=True)
+    if os.path.exists("personas"):
+        for p in os.listdir("personas"):
+            src = os.path.join("personas", p)
+            dst = os.path.join(target_personas, p)
+            if os.path.isfile(src) and not os.path.exists(dst):
+                shutil.copy2(src, dst)
 
-    print("✅ .env saved successfully!\n")
-
-    print("=" * 60)
-    print("🔐 TELEGRAM AUTHENTICATION")
-    print("=" * 60)
-    do_login = input("Would you like to log in to Telegram right now? (Y/n): ").strip().lower()
-    if do_login != 'n':
-        import login
-        login.main()
+    print(f"✅ {TARGET_ENV_FILE} saved successfully!\n")
 
     print("=" * 60)
     print("🎭 HOW PERSONAS WORK (777 Mode)")

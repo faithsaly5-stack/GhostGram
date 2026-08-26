@@ -11,6 +11,9 @@ env/
 .venv/
 .env
 
+# Profiles (Contains Sensitive DBs and API Keys)
+profiles/
+
 # Telethon
 *.session
 *.session-journal

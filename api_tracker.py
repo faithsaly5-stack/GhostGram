@@ -3,12 +3,10 @@ import os
 import time
 import threading
 from datetime import datetime, timezone
-from dotenv import load_dotenv
-
-load_dotenv()
+from config import Config
 
 MODELS_CONFIG = []
-models_env = os.environ.get("GEMINI_MODELS", "")
+models_env = Config.GEMINI_MODELS
 
 # Support multiline format with newlines or single-line with commas
 raw_lines = models_env.replace(',', '\n').split('\n')
@@ -30,8 +28,8 @@ if not MODELS_CONFIG:
     sys.exit(1)
 
 class APIUsageTracker:
-    def __init__(self, filename="api_usage.json"):
-        self.filename = filename
+    def __init__(self, filename=None):
+        self.filename = filename or getattr(Config, "API_USAGE_FILE", "api_usage.json")
         self._lock = threading.RLock()
         
         # Persistent daily count

@@ -838,8 +838,57 @@ def main():
     print("🚀 Listening for secret codes (777, 777 engage, 666, 000, 444, 555, 333, 999, 111, 888)...")
     print("=" * 50)
     
+    # Block and listen for messages indefinitely
     client.run_until_disconnected()
+    
+def master_launcher():
+    import sys
+    import os
+    import subprocess
+    import time
+    import glob
+    
+    # If a specific profile is requested, just run normally as a worker
+    if "--profile" in sys.argv or os.getenv("TELEAGENT_PROFILE"):
+        main()
+        return
+
+    # Otherwise, act as Master Process
+    processes = []
+    
+    # 1. Start all profiles found in the profiles/ directory
+    if os.path.exists("profiles"):
+        for p_name in os.listdir("profiles"):
+            profile_path = os.path.join("profiles", p_name)
+            env_path = os.path.join(profile_path, ".env")
+            
+            # A profile is valid if it has a .env file
+            if os.path.isdir(profile_path) and os.path.exists(env_path):
+                print(f"🚀 [MASTER] Launching PROFILE: {p_name}...")
+                env_copy = os.environ.copy()
+                env_copy["TELEAGENT_PROFILE"] = p_name
+                p = subprocess.Popen([sys.executable, "main.py", "--profile", p_name], env=env_copy)
+                processes.append(p)
+                
+    if not processes:
+        if os.getenv("API_ID") and os.getenv("API_HASH"):
+            print("🚀 [MASTER] Cloud Mode Detected! No profiles found, but environment variables exist. Running single bot...")
+            main()
+            return
+            
+        print("❌ [MASTER] No profiles found! Please run 'run.bat' or 'python setup.py' to configure a bot.")
+        return
+        
+    print(f"🌟 [MASTER] Running {len(processes)} bot(s) concurrently. Press Ctrl+C to stop all.")
+    try:
+        for p in processes:
+            p.wait()
+    except KeyboardInterrupt:
+        print("\n🛑 [MASTER] Shutting down all bots gracefully...")
+        for p in processes:
+            p.terminate()
+        time.sleep(2)
 
 if __name__ == '__main__':
-    main()
+    master_launcher()
 

@@ -1,9 +1,35 @@
 import os
+import sys
 from dotenv import load_dotenv
 
-load_dotenv()
+# --- MULTI-PROFILE SUPPORT ---
+PROFILE = "default"
+if "--profile" in sys.argv:
+    try:
+        idx = sys.argv.index("--profile")
+        PROFILE = sys.argv[idx+1]
+    except IndexError:
+        pass
+elif os.getenv("TELEAGENT_PROFILE"):
+    PROFILE = os.getenv("TELEAGENT_PROFILE")
+
+TARGET_ENV_FILE = os.path.join("profiles", PROFILE, ".env")
+PROFILE_DIR = os.path.join("profiles", PROFILE)
 
 class Config:
+    PROFILE = PROFILE
+    PROFILE_DIR = PROFILE_DIR
+    TARGET_ENV_FILE = TARGET_ENV_FILE
+    
+    # Ensure profile directory exists
+    if not os.path.exists(PROFILE_DIR):
+        os.makedirs(PROFILE_DIR, exist_ok=True)
+    
+    if os.path.exists(TARGET_ENV_FILE):
+        load_dotenv(TARGET_ENV_FILE, override=True)
+    else:
+        load_dotenv(override=True)
+    
     API_ID = int(os.getenv("API_ID") or 0)
     API_HASH = os.getenv("API_HASH") or ""
     @staticmethod
@@ -21,7 +47,9 @@ class Config:
         return keys
 
     GEMINI_API_KEYS = _load_keys()
-    SESSION_NAME = os.getenv("SESSION_NAME", "teleagent_session")
+    GEMINI_MODELS = os.getenv("GEMINI_MODELS", "")
+    
+    SESSION_NAME = os.path.join(PROFILE_DIR, "teleagent_session")
     SESSION_STRING = os.getenv("SESSION_STRING", "")
     OWNER_ID = int(os.getenv("OWNER_ID") or 0)
     OWNER_NAME = os.getenv("OWNER_NAME", "User")
@@ -30,9 +58,11 @@ class Config:
     OWNER_SERVICES = os.getenv("OWNER_SERVICES", "مشاوره، برنامه‌نویسی و طراحی پروژه")
     OWNER_INTERESTS = os.getenv("OWNER_INTERESTS", "موسیقی، ادبیات، تحلیل و گفتگو")
     PHONE_NUMBER = os.getenv("PHONE_NUMBER", "")
-    PAL_STATE_FILE = os.getenv("PAL_STATE_FILE", "pal_state.json")
-    ASSISTANT_STATE_FILE = os.getenv("ASSISTANT_STATE_FILE", "assistant_state.json")
-    MEMORY_STATE_FILE = os.getenv("MEMORY_STATE_FILE", "memory_state.json")
+    PAL_STATE_FILE = os.getenv("PAL_STATE_FILE", os.path.join(PROFILE_DIR, "pal_state.json"))
+    ASSISTANT_STATE_FILE = os.getenv("ASSISTANT_STATE_FILE", os.path.join(PROFILE_DIR, "assistant_state.json"))
+    MEMORY_STATE_FILE = os.getenv("MEMORY_STATE_FILE", os.path.join(PROFILE_DIR, "memory_state.json"))
+    API_USAGE_FILE = os.getenv("API_USAGE_FILE", os.path.join(PROFILE_DIR, "api_usage.json"))
+    
     SHORT_TERM_MEMORY_LIMIT = int(os.getenv("SHORT_TERM_MEMORY_LIMIT", "30"))
     LONG_TERM_SUMMARY_INTERVAL = int(os.getenv("LONG_TERM_SUMMARY_INTERVAL", "30"))
     MAX_LONG_TERM_SUMMARY_CHARS = int(os.getenv("MAX_LONG_TERM_SUMMARY_CHARS", "600"))

@@ -50,4 +50,4 @@ class PersonaManager:
         return list(self.personas.keys())
 
 # Singleton instance
-persona_manager = PersonaManager()
+persona_manager = PersonaManager(os.path.join(Config.PROFILE_DIR, "personas"))
