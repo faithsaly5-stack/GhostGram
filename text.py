@@ -1,7 +1,13 @@
 from config import Config
 
 class Text:
-    HELP = f"""
+    @classmethod
+    def get_help(cls):
+        from persona_manager import persona_manager
+        personas = persona_manager.get_all_persona_names()
+        personas_str = " | ".join([f"`{p}`" for p in personas])
+        
+        return f"""
 🕶️ **کدهای مخفی GhostGram (مخصوص {Config.OWNER_NAME})** 🕶️
 
 این کدها کاملاً مخفی (Stealth) هستند؛ یعنی به محض ارسال، خودبه‌خود پاک می‌شوند تا هیچ‌کس متوجه نشود:
@@ -12,7 +18,7 @@ class Text:
 `777`
 **روشن کردن با لحن خاص:**
 `777 <persona>`
-(حالت‌ها: `lust` | `angry` | `philosophical` | `sarcastic` | `depressed` | `drunk` | `academic` | `tehrani` | `poetic`)
+(حالت‌ها: {personas_str})
 **خاموش کردن در این چت:**
 `000`
 **خاموش کردن در کل چت‌ها:**

@@ -95,7 +95,7 @@ def normalize_digits(text: str) -> str:
 # ==========================================================
 
 async def handle_help(event):
-    await event.edit(Text.HELP)
+    await event.edit(Text.get_help())
 
 async def handle_pal_on(event, mode="normal"):
     chat_id = event.chat_id
