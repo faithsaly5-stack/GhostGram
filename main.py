@@ -251,7 +251,7 @@ async def handle_factory_reset(event):
     except Exception:
         pass
 
-async def handle_purge(event, limit=None):
+async def handle_purge(event, limit=None, search_only_mine=False):
     chat_id = event.chat_id
     trigger_id = event.id
     try:
@@ -266,13 +266,22 @@ async def handle_purge(event, limit=None):
     
     try:
         input_chat = await event.get_input_chat()
-        search_limit = limit
+        # We don't restrict iter_messages limit, we stop when we delete enough of OUR messages
+        search_limit = None
         
         msg_scan_count = 0
         delete_streak_count = 0
         
-        async for msg in client.iter_messages(input_chat, limit=search_limit):
+        iter_kwargs = {"limit": search_limit}
+        if search_only_mine:
+            iter_kwargs["from_user"] = "me"
+            
+        async for msg in client.iter_messages(input_chat, **iter_kwargs):
             msg_scan_count += 1
+            
+            if msg_scan_count > 3000:
+                print(f"😴 Human Purge: Reached scrolling fatigue limit (3000). Stopping scan.")
+                break
             
             # Simulate human scrolling / reading through chat history
             if msg_scan_count % 25 == 0:
@@ -317,6 +326,9 @@ async def handle_purge(event, limit=None):
                         pass
                 except Exception:
                     pass
+                
+                if limit is not None and deleted_count >= limit:
+                    break
             
         print(f"🧹 Stealth Purged {deleted_count} messages (Ultra-Human Mode) from chat {chat_id}")
     except Exception as e:
@@ -413,6 +425,13 @@ async def outgoing_command_dispatcher(event):
     if m_purge:
         limit = int(m_purge.group(1)) if m_purge.group(1) else None
         await handle_purge(event, limit)
+        return
+
+    # 4.5. SMART GHOST PURGE (998 [limit]) - Only searches your messages
+    m_smart_purge = re.match(r'^998(?:\s+(\d+))?$', norm_lower)
+    if m_smart_purge:
+        limit = int(m_smart_purge.group(1)) if m_smart_purge.group(1) else None
+        await handle_purge(event, limit, search_only_mine=True)
         return
 
     # 5. CUSTOM ASK (111 <prompt>)
