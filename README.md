@@ -95,17 +95,19 @@
 
 ---
 
-## 🤖 Zero-Effort Multi-Bot Engine
+## 🤖 Zero-Effort Multi-Bot Engine (Multiple Accounts)
 
-Managing multiple Telegram bots (e.g., a Work bot, a Personal bot, and a Test bot) used to require complicated setups. **Not anymore.** GhostGram features a containerized architecture!
+GhostGram natively supports running an unlimited number of completely distinct Telegram accounts simultaneously out of the exact same folder! Each account gets its own memory, its own API limits, and its own persona.
 
-1. **Add a Bot:** Double click `setup.bat` and enter a new profile name (e.g., `work`). It automatically creates an isolated folder at `profiles/work/`.
-2. **Remove a Bot:** Simply delete the `profiles/work/` folder!
-3. **Start All Bots:** Double-click `run.bat` and type `all` to run every bot profile simultaneously without conflicts!
+### 📝 Step-by-Step Guide to Adding Multiple Accounts:
+1. **Create a New Profile:** Double-click **`run.bat`**. When the launcher asks for a profile name, type a new name (for example, type `work` or `second_account`).
+2. **Setup the Account:** Because this profile doesn't exist yet, the Smart Launcher will automatically open the Setup Wizard. Follow the prompts to add your API keys and log into the second Telegram account.
+3. **Run them together:** To run all of your accounts at the exact same time, simply double-click **`run.bat`** and type **`all`**. The engine will instantly boot every account in parallel without any conflicts!
 
-The **Master Launcher** handles everything:
-- **Complete Isolation**: Each bot lives inside its own folder in `profiles/` with its own `.env`, SQLite memory database, API usage trackers, and Telegram session files.
-- **Customization**: You can even have custom Personas just for specific bots by adding text files to `profiles/botname/personas/`!
+### 🧹 How it works behind the scenes:
+- **Complete Isolation**: Each bot lives inside its own folder in `profiles/` (e.g. `profiles/work/`) with its own `.env`, SQLite memory database, API usage trackers, and Telegram session files.
+- **Custom Personas per Account**: You can give each account its own specific personalities! Just add text files to that specific account's persona folder (e.g. `profiles/work/personas/`).
+- **Easy Deletion**: Don't want the second account anymore? Just delete the `profiles/work/` folder. It's completely gone.
 
 ---
 
