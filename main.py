@@ -16,6 +16,7 @@ from memory_manager import memory_manager
 from typing_helper import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
 import random
+import time
 
 session_target = StringSession(Config.SESSION_STRING) if Config.SESSION_STRING else Config.SESSION_NAME
 client = TelegramClient(session_target, Config.API_ID, Config.API_HASH)
@@ -505,6 +506,16 @@ async def global_memory_tracker(event):
 # Changed to a GLOBAL lock per user request to process ALL messages strictly sequentially one by one across the entire bot
 global_ai_lock = asyncio.Lock()
 chat_latest_msg = {}
+chat_typing_status = {}
+
+@client.on(events.UserUpdate)
+async def user_update_handler(event):
+    if getattr(event, 'typing', False):
+        t = time.time()
+        if event.chat_id:
+            chat_typing_status[event.chat_id] = t
+        if getattr(event, 'user_id', None):
+            chat_typing_status[event.user_id] = t
 
 def get_chat_lock(chat_id):
     return global_ai_lock
@@ -565,13 +576,53 @@ async def incoming_message_handler(event):
         # Might be sticker/photo without caption
         return
 
-    # Track the latest message ID for this chat to debounce rapid spam
-    chat_latest_msg[chat_id] = event.id
+    # Track the latest message ID for this specific user in this chat to debounce rapid spam
+    sender_id = event.sender_id
+    user_key = (chat_id, sender_id) if sender_id else (chat_id, "unknown")
+    chat_latest_msg[user_key] = event.id
 
-    # Natural reading delay proportional to incoming text length (plus a bit of random jitter)
-    base_reading_time = max(1.0, len(incoming_text) * 0.04) # e.g. 50 chars = 2 seconds reading
-    reading_delay = min(base_reading_time, 8.0) # max 8 seconds reading time
-    await asyncio.sleep(random.uniform(reading_delay, reading_delay + 1.0))
+    # Smart Waiting & Batching Logic
+    if event.is_private:
+        # For DMs: Wait base time, then actively monitor typing status
+        base_reading_time = max(1.5, len(incoming_text) * 0.05)
+        reading_delay = min(base_reading_time, 8.0)
+        await asyncio.sleep(reading_delay)
+        
+        start_wait_time = time.time()
+        while True:
+            # If a newer message arrived from this user, abort (batching: newer message takes over)
+            if chat_latest_msg.get(user_key, 0) > event.id:
+                return
+                
+            # Safety ceiling: avoid waiting longer than 45 seconds under any circumstance
+            if time.time() - start_wait_time > 45.0:
+                break
+                
+            # Check if user is typing (activity within last 7 seconds)
+            last_typing_time = max(chat_typing_status.get(chat_id, 0), chat_typing_status.get(sender_id, 0) if sender_id else 0)
+            if time.time() - last_typing_time < 7.0:
+                await asyncio.sleep(2.0)
+                continue
+                
+            # Not typing. Wait a brief "thinking gap" in case they are about to type
+            await asyncio.sleep(2.5)
+            
+            # Final check before proceeding
+            if chat_latest_msg.get(user_key, 0) > event.id:
+                return
+            last_typing_time = max(chat_typing_status.get(chat_id, 0), chat_typing_status.get(sender_id, 0) if sender_id else 0)
+            if time.time() - last_typing_time < 7.0:
+                continue # They started typing again during the gap!
+                
+            break # Ready to process the batch!
+    else:
+        # For Groups: Wait a fixed window to batch consecutive messages from the SAME user
+        base_reading_time = max(1.5, len(incoming_text) * 0.04)
+        reading_delay = min(base_reading_time, 6.0)
+        await asyncio.sleep(reading_delay + random.uniform(1.0, 3.0)) # Base delay + jitter
+        
+        if chat_latest_msg.get(user_key, 0) > event.id:
+            return
     
     # Check if mode was turned off while we were sleeping
     if mode == "pal" and not pal_manager.is_active(chat_id):
@@ -581,9 +632,9 @@ async def incoming_message_handler(event):
 
     lock = get_chat_lock(chat_id)
     async with lock:
-        # If a newer message arrived from this chat while we were waiting/processing,
+        # If a newer message arrived from this user in this chat while we were waiting/processing,
         # skip this event. The newer event's handler will process the combined history!
-        if chat_latest_msg.get(chat_id, 0) > event.id:
+        if chat_latest_msg.get(user_key, 0) > event.id:
             return
 
         # Double check after obtaining lock
