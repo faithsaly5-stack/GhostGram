@@ -527,18 +527,20 @@ global_ai_lock = asyncio.Lock()
 chat_latest_msg = {}
 chat_typing_status = {}
 
-replied_message_ids = set()
-replied_message_queue = []
+replied_message_ids = {}
 
 def mark_as_replied(chat_id, msg_id):
     if msg_id:
         key = (chat_id, msg_id)
-        if key not in replied_message_ids:
-            replied_message_ids.add(key)
-            replied_message_queue.append(key)
-            if len(replied_message_queue) > 2000:
-                oldest = replied_message_queue.pop(0)
-                replied_message_ids.discard(oldest)
+        # Re-insert to push it to the end (newest) if it already existed
+        if key in replied_message_ids:
+            del replied_message_ids[key]
+        replied_message_ids[key] = True
+        
+        # Enforce max size (FIFO)
+        if len(replied_message_ids) > 2000:
+            oldest_key = next(iter(replied_message_ids))
+            del replied_message_ids[oldest_key]
 
 def is_already_replied(chat_id, msg_id):
     return (chat_id, msg_id) in replied_message_ids
