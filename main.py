@@ -527,6 +527,22 @@ global_ai_lock = asyncio.Lock()
 chat_latest_msg = {}
 chat_typing_status = {}
 
+replied_message_ids = set()
+replied_message_queue = []
+
+def mark_as_replied(chat_id, msg_id):
+    if msg_id:
+        key = (chat_id, msg_id)
+        if key not in replied_message_ids:
+            replied_message_ids.add(key)
+            replied_message_queue.append(key)
+            if len(replied_message_queue) > 2000:
+                oldest = replied_message_queue.pop(0)
+                replied_message_ids.discard(oldest)
+
+def is_already_replied(chat_id, msg_id):
+    return (chat_id, msg_id) in replied_message_ids
+
 @client.on(events.UserUpdate)
 async def user_update_handler(event):
     if getattr(event, 'typing', False):
@@ -661,6 +677,9 @@ async def incoming_message_handler(event):
             return
         if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
             return
+            
+        if is_already_replied(chat_id, event.id):
+            return
 
         input_chat = await event.get_input_chat()
         
@@ -726,6 +745,7 @@ async def incoming_message_handler(event):
 
                 reply_target = event.id if (event.is_group or event.is_channel) else None
                 await client.send_message(input_chat, response, reply_to=reply_target)
+                mark_as_replied(chat_id, event.id)
                 if mode == "pal":
                     print(f"✅ Pal replied naturally in chat {chat_id}")
                 else:
@@ -869,6 +889,10 @@ async def auto_engage_loop():
                                 if not pal_manager.is_auto_engage_active(chat_id):
                                     print(f"🛑 Dropped auto-engage in chat {chat_id} (Deactivated via 777 engage off)")
                                     continue
+                                    
+                                if is_already_replied(chat_id, target_id):
+                                    print(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied to target_id {target_id} before)")
+                                    continue
 
                                 human_typing_time = calculate_human_typing_delay(reply_text)
                                 input_chat = await client.get_input_entity(chat_id)
@@ -878,6 +902,7 @@ async def auto_engage_loop():
                                         if not pal_manager.is_auto_engage_active(chat_id):
                                             continue
                                         await client.send_message(input_chat, reply_text, reply_to=target_id)
+                                        mark_as_replied(chat_id, target_id)
                                         print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
                     except json.JSONDecodeError:
                         pass # Ignore if AI failed to output valid JSON
