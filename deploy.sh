@@ -12,10 +12,21 @@ sudo systemctl stop teleagent.service 2>/dev/null || true
 
 # Extract files from /tmp to /opt/teleagent
 echo "📝 Extracting files to ${APP_DIR}..."
-# Delete old .env files to sync deleted profiles, but KEEP live state (.json, .session) intact!
+# Delete old .env files to sync deleted profiles, but KEEP live state (.json, .session) of active profiles!
 sudo find "${APP_DIR}/profiles/" -name ".env" -type f -delete 2>/dev/null || true
 # -o overwrites existing files without prompting
 sudo unzip -o /tmp/teleagent_deploy.zip -d "${APP_DIR}"
+
+# Clean up any deleted profile directories (folders without a .env file after unzip)
+if [ -d "${APP_DIR}/profiles" ]; then
+    for pdir in "${APP_DIR}/profiles"/*/; do
+        if [ -d "$pdir" ] && [ ! -f "$pdir/.env" ]; then
+            echo "🗑️ Removing deleted profile directory: $(basename "$pdir")"
+            sudo rm -rf "$pdir"
+        fi
+    done
+fi
+
 sudo chown -R $USER:$USER "${APP_DIR}"
 
 if [ ! -d "${APP_DIR}/venv" ]; then
