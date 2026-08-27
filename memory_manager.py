@@ -97,23 +97,12 @@ class MemoryManager:
         """
         If a message is too long, intelligently truncates it to the first appropriate segment.
         Finds natural sentence/phrase boundaries.
+        Delegated to text_processing module.
         """
-        if not text:
-            return ""
+        from text_processing import truncate_text_segment
         if max_chars is None:
             max_chars = self.max_segment_chars
-
-        text = text.strip()
-        if len(text) <= max_chars:
-            return text
-
-        segment = text[:max_chars]
-        for delimiter in ["\n", ".\n", ". ", "؟", "!", "،", " - ", " "]:
-            last_pos = segment.rfind(delimiter, int(max_chars * 0.5))
-            if last_pos != -1:
-                return segment[:last_pos].strip() + "..."
-        
-        return segment.strip() + "..."
+        return truncate_text_segment(text, max_chars)
 
     async def get_chat_history(self, client, chat_id: int, format_sender_fn, my_id: int, limit: int = None, include_id: bool = False) -> str:
         """

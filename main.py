@@ -15,6 +15,7 @@ from assistant_manager import assistant_manager
 from memory_manager import memory_manager
 from typing_helper import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
+from text_processing import normalize_digits
 import random
 import time
 
@@ -75,20 +76,7 @@ async def get_reply_chain(message):
     
     return list(reversed(chain))
 
-def normalize_digits(text: str) -> str:
-    """Normalizes Persian/Arabic digits, ZWNJ, and whitespace to standard ASCII format."""
-    if not text:
-        return ""
-    mapping = {
-        '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
-        '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
-        '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
-        '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
-    }
-    cleaned = text.replace('\u200c', ' ').replace('\u00a0', ' ')
-    for char, digit in mapping.items():
-        cleaned = cleaned.replace(char, digit)
-    return re.sub(r'\s+', ' ', cleaned).strip()
+
 
 # ==========================================================
 # 🎮 OUTGOING COMMAND HANDLERS

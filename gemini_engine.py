@@ -9,6 +9,7 @@ from google.genai import types
 from config import Config
 from text import Text
 from api_tracker import api_tracker
+from text_processing import clean_outbound_text
 
 class GeminiEngine:
     def __init__(self):
@@ -27,35 +28,7 @@ class GeminiEngine:
                 self._clients[api_key] = c
             return c
 
-    def clean_prompt(self, raw_text: str) -> str:
-        if not raw_text:
-            return ""
-        try:
-            import html
-            import re
-            import emoji
-            
-            # Demojize first: Converts emojis to text (e.g. 😂 -> :face_with_tears_of_joy:)
-            # This preserves their emotional meaning before the strict allowlist strips weird unicode.
-            clean_text = emoji.demojize(raw_text)
-            
-            clean_text = html.unescape(clean_text)
-            clean_text = re.sub(r'<[^>]+>', '', clean_text)
-            
-            # Convert ZWNJ (نیم‌فاصله) to space for casual human-like style
-            clean_text = clean_text.replace('\u200c', ' ')
-            
-            # Strict Allowlist: Keep ONLY English, Persian/Arabic block, Numbers, Spaces, and basic Punctuation.
-            # All weird control characters and unsupported languages are safely replaced with a space.
-            allowed_pattern = re.compile(r'[^a-zA-Z0-9\u0600-\u06FF\s\.,!\?؟،؛:;\'"()\[\]{}<>_\-+=*&%$#@|\\/~^`]+')
-            clean_text = allowed_pattern.sub(' ', clean_text)
-            
-            clean_text = re.sub(r'[ \t]+', ' ', clean_text)
-            clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
-            return clean_text
-        except Exception as e:
-            print(f"⚠️ Text cleaning error: {e}")
-            return raw_text
+
 
     async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False, start_model: str = None) -> str:
         """
@@ -128,7 +101,7 @@ class GeminiEngine:
                 if is_json:
                     return raw_text
 
-                return self.clean_prompt(raw_text)
+                return clean_outbound_text(raw_text)
 
             except asyncio.TimeoutError:
                 # Force immediate GLOBAL cascade for this model across all keys
