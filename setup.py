@@ -90,7 +90,7 @@ GEMINI_API_KEYS={gemini_key}
 # 🧠 Gemini Models Cascade Configuration
 # Format: model_name:rpm:rpd,model_name2:rpm:rpd
 # To disable a model, simply remove it from this comma-separated list!
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3.0-flash:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500,gemini-2.5-flash-lite:10:20"
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500,gemini-2.5-flash-lite:10:20"
 
 SESSION_STRING={session_string}
 """

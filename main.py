@@ -903,6 +903,12 @@ async def auto_engage_loop():
                                         await asyncio.sleep(human_typing_time)
                                         if not pal_manager.is_auto_engage_active(chat_id):
                                             continue
+                                            
+                                        # Check again after sleep to prevent race conditions with the normal reply handler
+                                        if is_already_replied(chat_id, target_id):
+                                            print(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied while typing)")
+                                            continue
+                                            
                                         await client.send_message(input_chat, reply_text, reply_to=target_id)
                                         mark_as_replied(chat_id, target_id)
                                         print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
