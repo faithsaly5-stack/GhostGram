@@ -79,7 +79,8 @@ PHONE_NUMBER={phone}
 OWNER_ID={owner_id}
 
 # 📝 EDIT THESE VALUES IN YOUR TEXT EDITOR (Supports Persian/Farsi perfectly)
-OWNER_NAME=Your Name / نام شما
+OWNER_FIRST_NAME=Your First Name / نام شما
+OWNER_LAST_NAME=Your Last Name / نام خانوادگی شما
 OWNER_BIO=دانشجو و برنامه‌نویس
 OWNER_WEBSITE=yourwebsite.com
 OWNER_SERVICES=مشاوره، برنامه‌نویسی و طراحی پروژه

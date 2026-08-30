@@ -9,27 +9,47 @@ class PersonaManager:
         self.load_personas()
 
     def load_personas(self):
-        """Loads personas from the .txt files in the personas directory."""
+        """Loads personas from the .txt files in the personas directory.
+        Dynamically prepends normal.txt to all variant personas."""
         if not os.path.exists(self.dir_path):
             os.makedirs(self.dir_path)
             # Create a default normal.txt if folder was just created
             with open(os.path.join(self.dir_path, "normal.txt"), "w", encoding="utf-8") as f:
-                f.write("تو خودت «{owner_name}» هستی...")
+                f.write("تو خودت «{owner_first_name} {owner_last_name}» هستی...")
 
         self.personas.clear()
         
+        # 1. Load the master 'normal' persona first
+        normal_path = os.path.join(self.dir_path, "normal.txt")
+        normal_content = ""
+        if os.path.exists(normal_path):
+            try:
+                with open(normal_path, "r", encoding="utf-8") as f:
+                    normal_content = f.read().strip()
+            except Exception as e:
+                print(f"⚠️ Error loading master persona normal.txt: {e}")
+        
+        self.personas["normal"] = normal_content or "تو خودت «{owner_first_name} {owner_last_name}» هستی..."
+        
+        # 2. Load all other personas and prepend the normal content if they are variants
         for file_path in glob.glob(os.path.join(self.dir_path, "*.txt")):
             filename = os.path.basename(file_path)
             persona_name = os.path.splitext(filename)[0].lower()
+            
+            if persona_name == "normal":
+                continue
+                
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
-                    self.personas[persona_name] = f.read().strip()
+                    content = f.read().strip()
+                
+                # Prepend master rules to variants (assistant is completely separate)
+                if persona_name != "assistant":
+                    content = self.personas["normal"] + "\n\n" + content
+                    
+                self.personas[persona_name] = content
             except Exception as e:
                 print(f"⚠️ Error loading persona {filename}: {e}")
-
-        # Ensure fallback exists
-        if "normal" not in self.personas:
-            self.personas["normal"] = "تو خودت «{owner_name}» هستی..."
 
     def get_prompt(self, command_name: str) -> str:
         """Returns the prompt for a given persona command name, falling back to 'normal' with dynamic identity variables."""
@@ -40,7 +60,8 @@ class PersonaManager:
         # Inject all identity configurations from .env
         prompt = (
             raw_prompt
-            .replace("{owner_name}", Config.OWNER_NAME)
+            .replace("{owner_first_name}", Config.OWNER_FIRST_NAME)
+            .replace("{owner_last_name}", Config.OWNER_LAST_NAME)
             .replace("{owner_bio}", Config.OWNER_BIO)
             .replace("{owner_website}", Config.OWNER_WEBSITE)
             .replace("{owner_services}", Config.OWNER_SERVICES)

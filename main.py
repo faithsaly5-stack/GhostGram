@@ -356,13 +356,14 @@ async def handle_custom_ask(event, user_instruction=""):
         sender=sender_name,
         target_text=target_text or "گفت‌وگوی جاری",
         user_instruction=user_instruction or "پاسخ طبیعی، خودمونی و مناسب بده.",
-        owner_name=Config.OWNER_NAME
+        owner_first_name=Config.OWNER_FIRST_NAME
     )
     
     input_chat = await event.get_input_chat()
     async with global_ai_lock:
         async with ContinuousTyping(client, input_chat):
-            response = await get_response(prompt_input, persona_manager.get_prompt("normal"))
+            pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
+            response = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
             if response and response != Text.ERROR:
                 human_typing_time = calculate_human_typing_delay(response)
                 await asyncio.sleep(human_typing_time)
@@ -588,7 +589,7 @@ async def incoming_message_handler(event):
             is_mentioned = True
         if my_info and my_info.first_name and my_info.first_name.lower() in raw_lower:
             is_mentioned = True
-        if Config.OWNER_NAME and Config.OWNER_NAME.lower() in raw_lower:
+        if Config.OWNER_FIRST_NAME and Config.OWNER_FIRST_NAME.lower() in raw_lower:
             is_mentioned = True
                 
         # If it's a group, only reply if directly addressed or explicitly mentioned/replied
@@ -697,7 +698,7 @@ async def incoming_message_handler(event):
                     history_text=history_text,
                     sender=sender_name,
                     target_text=incoming_text,
-                    owner_name=Config.OWNER_NAME
+                    owner_first_name=Config.OWNER_FIRST_NAME
                 )
                 system_prompt = persona_manager.get_prompt(pal_variant)
                 print(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
@@ -708,7 +709,7 @@ async def incoming_message_handler(event):
                     history_text=history_text,
                     sender=sender_name,
                     target_text=incoming_text,
-                    owner_name=Config.OWNER_NAME
+                    owner_first_name=Config.OWNER_FIRST_NAME
                 )
                 system_prompt = persona_manager.get_prompt("assistant")
                 print(f"💼 Personal Assistant thinking & typing for chat {chat_id} (from {sender_name})...")
@@ -826,7 +827,7 @@ async def auto_engage_loop():
                         long_term_context=ltm_context,
                         history_text=history_text,
                         duration_minutes=duration_minutes,
-                        owner_name=Config.OWNER_NAME
+                        owner_first_name=Config.OWNER_FIRST_NAME
                     )
                     
                     # Dynamically get the active persona instead of assuming 'normal'

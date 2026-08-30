@@ -8,7 +8,7 @@ class Text:
         personas_str = " | ".join([f"`{p}`" for p in personas])
         
         return f"""
-🕶️ **کدهای مخفی GhostGram (مخصوص {Config.OWNER_NAME})** 🕶️
+🕶️ **کدهای مخفی GhostGram (مخصوص {Config.OWNER_FIRST_NAME} {Config.OWNER_LAST_NAME})** 🕶️
 
 این کدها کاملاً مخفی (Stealth) هستند؛ یعنی به محض ارسال، خودبه‌خود پاک می‌شوند تا هیچ‌کس متوجه نشود:
 
@@ -83,5 +83,5 @@ class Text:
     CHAIN_TEMPLATE = "[{time}] {sender}: {message}"
     NO_TEXT = "[رسانه / بدون متن]"
     UNKNOWN_SENDER = "مخاطب"
-    ME_LABEL = f"من ({Config.OWNER_NAME})" if Config.OWNER_NAME else "من"
+    ME_LABEL = f"من ({Config.OWNER_FIRST_NAME})" if Config.OWNER_FIRST_NAME else "من"
     AI_FOOTER = ""
