@@ -429,6 +429,69 @@ async def handle_custom_ask(event, user_instruction=""):
                 await client.send_message(input_chat, response, reply_to=reply_to_id)
                 print(f"⚡ Handled 111 in chat {chat_id}")
 
+async def handle_text_to_speech(event):
+    try:
+        await event.delete()
+    except Exception:
+        pass
+
+    valid_voices = {
+        "achernar", "achird", "algenib", "algieba", "alnilam", "aoede", 
+        "autonoe", "callirrhoe", "charon", "despina", "enceladus", "erinome", 
+        "fenrir", "gacrux", "iapetus", "kore", "laomedeia", "leda", "orus", 
+        "puck", "pulcherrima", "rasalgethi", "sadachbia", "sadaltager", 
+        "schedar", "sulafat", "umbriel", "vindemiatrix", "zephyr", "zubenelgenubi"
+    }
+    voice_name = "Aoede"
+    
+    text = event.raw_text.strip()
+    if text.lower().startswith("tv"):
+        text = text[2:].strip()
+        parts = text.split(maxsplit=1)
+        if parts and parts[0].lower() in valid_voices:
+            voice_name = parts[0].capitalize()
+            text = parts[1] if len(parts) > 1 else ""
+            
+    reply_msg = await event.get_reply_message()
+    if not text and reply_msg and getattr(reply_msg, "text", None):
+        text = reply_msg.text.strip()
+
+    if not text:
+        msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد. لطفاً بعد از tv متن را بنویسید یا روی یک پیام متنی ریپلای کنید.**\n\n💡 *برای تغییر صدا می‌توانید نام یکی از ۳۰ صدای موجود (مثل Zephyr, Puck, Leda, Charon و...) را بعد از tv بنویسید.*")
+        await asyncio.sleep(6)
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+        return
+
+    try:
+        from text_to_speech import generate_voice_message
+        keys = Config.GEMINI_API_KEYS
+        ogg_path = await generate_voice_message(text, keys, voice_name=voice_name)
+        
+        reply_to_id = reply_msg.id if reply_msg else None
+        
+        if ogg_path.startswith("Error"):
+            await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
+        else:
+            await client.send_file(
+                event.chat_id, 
+                ogg_path, 
+                voice_note=True, 
+                reply_to=reply_to_id
+            )
+            
+    except Exception as e:
+        await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`")
+    finally:
+        import os
+        if 'ogg_path' in locals() and ogg_path and not ogg_path.startswith("Error") and os.path.exists(ogg_path):
+            try:
+                os.remove(ogg_path)
+            except Exception:
+                pass
+
 async def handle_transcribe(event):
     try:
         await event.delete()
@@ -604,6 +667,11 @@ async def outgoing_command_dispatcher(event):
     # 13. TRANSCRIBE (808 or tt)
     if norm_lower in ["808", "tt"]:
         await handle_transcribe(event)
+        return
+
+    # 14. TEXT TO SPEECH (tv)
+    if norm_lower.startswith("tv"):
+        await handle_text_to_speech(event)
         return
 
 # ==========================================================

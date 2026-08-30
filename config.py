@@ -48,6 +48,8 @@ class Config:
 
     GEMINI_API_KEYS = _load_keys()
     GEMINI_MODELS = os.getenv("GEMINI_MODELS", "")
+    GEMINI_TTS_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
+    GEMINI_STT_MODEL = os.getenv("GEMINI_STT_MODEL", "models/gemini-3.5-transcribe-live")
     
     SESSION_NAME = os.path.join(PROFILE_DIR, "teleagent_session")
     SESSION_STRING = os.getenv("SESSION_STRING", "")

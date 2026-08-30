@@ -8,11 +8,12 @@ import subprocess
 import imageio_ffmpeg
 from google import genai
 from google.genai import types
+from config import Config
 
 # Get the bundled rock-solid ffmpeg binary path
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
 
-MODEL = "models/gemini-3.5-transcribe-live"
+MODEL = Config.GEMINI_STT_MODEL
 CHUNK_SIZE = 1024
 
 async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: str = "fa") -> str:
