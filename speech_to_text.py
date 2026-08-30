@@ -26,6 +26,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
         return "Error: No API keys provided."
 
     temp_wav_path = None
+    last_error = None
     try:
         # 1. Flawless audio conversion to 16000Hz, mono, 16-bit PCM WAV using direct ffmpeg
         fd, temp_wav_path = tempfile.mkstemp(suffix=".wav")
@@ -75,6 +76,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                 async with client.aio.live.connect(model=MODEL, config=config) as session:
                     
                     audio_finished = False
+                    raw_debug_data = []
 
                     async def send_audio():
                         nonlocal audio_finished
@@ -87,34 +89,56 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                                 await session.send(input={"data": data, "mime_type": "audio/pcm;rate=16000"})
                                 await asyncio.sleep(0.05)
                                 
-                        await session.send(input=".", end_of_turn=True)
+                        await session.send(input="", end_of_turn=True)
                         audio_finished = True
 
                     async def receive_transcription():
-                        async for response in session.receive():
-                            sc = getattr(response, "server_content", None)
-                            if sc is not None:
-                                transcription_obj = getattr(sc, "input_transcription", None)
-                                if transcription_obj is not None and getattr(transcription_obj, "text", ""):
-                                    full_transcription.append(transcription_obj.text.strip())
-                                    
-                                model_turn = getattr(sc, "model_turn", None)
-                                if model_turn is not None:
-                                    for part in getattr(model_turn, "parts", []):
-                                        if getattr(part, "text", ""):
-                                            full_transcription.append(part.text.strip())
+                        ag = session.receive()
+                        current_interim = ""
+                        current_timeout = 15.0  # Wait up to 15s for Gemini to start responding
+                        
+                        while True:
+                            try:
+                                response = await asyncio.wait_for(ag.__anext__(), timeout=current_timeout)
+                                current_timeout = 2.0  # Once it starts streaming, exit if it goes quiet for 2s
                                 
-                                # Only break if audio is fully uploaded AND the server finished generating
-                                if audio_finished and (getattr(sc, "turn_complete", False) or getattr(sc, "generation_complete", False)):
-                                    break
+                                sc = getattr(response, "server_content", None)
+                                if sc is not None:
+                                    transcription_obj = getattr(sc, "input_transcription", None)
+                                    if transcription_obj is not None and getattr(transcription_obj, "text", ""):
+                                        full_transcription.append(transcription_obj.text.strip())
+                                        current_interim = ""
+                                        
+                                    interim_obj = getattr(sc, "interim_input_transcription", None)
+                                    if interim_obj is not None and getattr(interim_obj, "text", ""):
+                                        current_interim = interim_obj.text.strip()
+                                        
+                                    model_turn = getattr(sc, "model_turn", None)
+                                    if model_turn is not None:
+                                        for part in getattr(model_turn, "parts", []):
+                                            if getattr(part, "text", ""):
+                                                full_transcription.append(part.text.strip())
+                                    
+                                    if audio_finished and (getattr(sc, "turn_complete", False) or getattr(sc, "generation_complete", False)):
+                                        break
+                            except (asyncio.TimeoutError, StopAsyncIteration):
+                                break
+                                
+                        if current_interim:
+                            full_transcription.append(current_interim)
 
-                    async with asyncio.TaskGroup() as tg:
-                        tg.create_task(send_audio())
-                        tg.create_task(receive_transcription())
+                    await asyncio.gather(
+                        send_audio(),
+                        receive_transcription()
+                    )
 
-                return " ".join(full_transcription).strip()
+                final_res = " ".join(full_transcription).strip()
+                if not final_res:
+                    return f"Error: Empty transcription. Raw: {raw_debug_data[:3]}"
+                return final_res
 
             except Exception as e:
+                last_error = e
                 err_str = str(e).lower()
                 if "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
                     print(f"⏳ Key {key_preview} hit rate limit on live transcribe. Rotating...")
@@ -126,7 +150,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                     print(f"⚠️ Unknown error on live transcribe with key {key_preview}: {e}. Rotating...")
                     continue
                     
-        return "Error: All keys exhausted or failed during transcription."
+        return f"Error: All keys exhausted or failed during transcription. Last Error: {last_error}"
 
     except Exception as e:
         traceback.print_exc()
