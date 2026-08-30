@@ -83,6 +83,8 @@ class MemoryManager:
         self.long_term_memories.clear()
         self.message_counts.clear()
         self.last_summarized_msg_ids.clear()
+        if hasattr(self, 'virtual_messages'):
+            self.virtual_messages.clear()
         self.save_state()
         print("♻️ Memory Manager has been factory reset.")
 
@@ -104,6 +106,20 @@ class MemoryManager:
             max_chars = self.max_segment_chars
         return truncate_text_segment(text, max_chars)
 
+    def add_virtual_message(self, chat_id: int, msg_id: int, text: str):
+        """Maps a real Telegram message ID to a virtual text (e.g. AI Voice Note text)."""
+        if not hasattr(self, 'virtual_messages'):
+            self.virtual_messages = {}
+        if chat_id not in self.virtual_messages:
+            self.virtual_messages[chat_id] = {}
+        
+        self.virtual_messages[chat_id][msg_id] = text
+        
+        # Prevent memory leak by keeping only the last 50 virtual messages per chat
+        if len(self.virtual_messages[chat_id]) > 50:
+            oldest_key = next(iter(self.virtual_messages[chat_id]))
+            del self.virtual_messages[chat_id][oldest_key]
+
     async def get_chat_history(self, client, chat_id: int, format_sender_fn, my_id: int, limit: int = None, include_id: bool = False) -> str:
         """
         Fetches up to 30 recent messages respecting the reset cutoff, formatting reply context, and truncating segments.
@@ -117,7 +133,11 @@ class MemoryManager:
         
         try:
             async for msg in client.iter_messages(chat_id, limit=limit):
-                if not msg or not msg.text:
+                text = msg.text
+                if not text and hasattr(self, 'virtual_messages') and chat_id in self.virtual_messages and msg.id in self.virtual_messages[chat_id]:
+                    text = self.virtual_messages[chat_id][msg.id]
+                    
+                if not text:
                     continue
                 
                 msg_ts = msg.date.replace(tzinfo=timezone.utc).timestamp()
@@ -140,7 +160,7 @@ class MemoryManager:
                     except Exception:
                         pass
                 
-                cleaned_content = self.truncate_segment(msg.text, self.max_segment_chars)
+                cleaned_content = self.truncate_segment(text, self.max_segment_chars)
                 
                 if include_id:
                     messages.append(f"(ID: {msg.id}) [{time_str}] {name}{reply_info}: {cleaned_content}")
@@ -198,12 +218,17 @@ class MemoryManager:
                     iter_kwargs["min_id"] = last_watermark
                     
                 async for msg in client.iter_messages(chat_id, **iter_kwargs):
-                    if not msg or not msg.text:
+                    text = msg.text
+                    if not text and hasattr(self, 'virtual_messages') and chat_id in self.virtual_messages and msg.id in self.virtual_messages[chat_id]:
+                        text = self.virtual_messages[chat_id][msg.id]
+                        
+                    if not text:
                         continue
+                        
                     msg_ts = msg.date.replace(tzinfo=timezone.utc).timestamp()
                     if msg_ts <= cutoff_ts:
                         break
-                    fetched_msgs.append(msg)
+                    fetched_msgs.append((msg, text))
                 
                 # If no new messages above watermark or cutoff, skip
                 if not fetched_msgs:
@@ -218,15 +243,16 @@ class MemoryManager:
                 msgs_to_summarize = fetched_msgs[self.memory_limit:]
                 
                 # Update watermark to the newest message ID that is ACTUALLY being summarized
-                newest_msg_id = max(m.id for m in msgs_to_summarize)
+                newest_msg_id = max(m[0].id for m in msgs_to_summarize)
                 
                 # Format fetched messages
                 formatted_lines = []
-                for msg in reversed(msgs_to_summarize):
+                for msg_tuple in reversed(msgs_to_summarize):
+                    msg, text = msg_tuple
                     sender = await msg.get_sender()
                     name = await format_sender_fn(sender, my_id)
                     time_str = msg.date.strftime("%H:%M")
-                    cleaned_content = self.truncate_segment(msg.text, self.max_segment_chars)
+                    cleaned_content = self.truncate_segment(text, self.max_segment_chars)
                     formatted_lines.append(f"[{time_str}] {name}: {cleaned_content}")
                     
                 history_text = "\n".join(formatted_lines)

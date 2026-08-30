@@ -495,12 +495,14 @@ async def handle_text_to_speech(event, user_inst):
         if ogg_path.startswith("Error"):
             await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
         else:
-            await client.send_file(
+            sent_msg = await client.send_file(
                 event.chat_id, 
                 ogg_path, 
                 voice_note=True, 
                 reply_to=reply_to_id
             )
+            # Inject the AI's generated response into stealth virtual memory mapped to the real message ID!
+            memory_manager.add_virtual_message(chat_id, sent_msg.id, f"[Voice Note] {text}")
             
     except Exception as e:
         await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`")
