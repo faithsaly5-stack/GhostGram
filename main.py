@@ -429,6 +429,58 @@ async def handle_custom_ask(event, user_instruction=""):
                 await client.send_message(input_chat, response, reply_to=reply_to_id)
                 print(f"⚡ Handled 111 in chat {chat_id}")
 
+async def handle_transcribe(event):
+    try:
+        await event.delete()
+    except Exception:
+        pass
+
+    reply_msg = await event.get_reply_message()
+    if not reply_msg or not getattr(reply_msg, "media", None):
+        msg = await event.respond("❌ **لطفاً این دستور را روی یک پیام صوتی، آهنگ یا ویدیو ریپلای کنید.**")
+        await asyncio.sleep(4)
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+        return
+
+    msg = await event.respond("⏳ **در حال دانلود فایل...**")
+    try:
+        file_path = await reply_msg.download_media("temp_transcribe")
+        if not file_path:
+            await msg.edit("❌ **خطا در دانلود فایل!**")
+            return
+            
+        from speech_to_text import transcribe_audio_file
+        await msg.edit("🤖 **در حال پیاده‌سازی متن (توسط جمنای لایو)...**")
+        
+        keys = Config.GEMINI_API_KEYS
+        transcript = await transcribe_audio_file(file_path, keys)
+        
+        if transcript.startswith("Error"):
+            await msg.edit(f"❌ **خطا در پردازش:**\n`{transcript}`")
+        else:
+            final_text = f"📝 **متن پیاده‌سازی شده:**\n\n{transcript}"
+            if len(final_text) < 4000:
+                await msg.edit(final_text)
+            else:
+                await msg.edit("📝 **متن پیاده‌سازی شده:** (به دلیل طولانی بودن در چند پیام ارسال می‌شود)")
+                # Split and send chunks
+                chunk_size = 4000
+                for i in range(0, len(transcript), chunk_size):
+                    await event.respond(transcript[i:i+chunk_size])
+            
+    except Exception as e:
+        await msg.edit(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`")
+    finally:
+        import os
+        if 'file_path' in locals() and file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except:
+                pass
+
 # ==========================================================
 # 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
 # ==========================================================
@@ -548,6 +600,11 @@ async def outgoing_command_dispatcher(event):
     # 12. FACTORY RESET (222)
     if norm_lower == "222":
         await handle_factory_reset(event)
+        return
+
+    # 13. TRANSCRIBE (808 or tt)
+    if norm_lower in ["808", "tt"]:
+        await handle_transcribe(event)
         return
 
 # ==========================================================

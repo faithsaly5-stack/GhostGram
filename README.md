@@ -127,6 +127,7 @@ GhostGram natively supports running an unlimited number of completely distinct T
 | `444` | Single Chat | **Mute Assistant** in this specific chat only. |
 | `444 all` | Global DMs | **Deactivate Assistant Globally** across all DMs. |
 | `111` (on reply) | Reply Target | **Smart Reply**: Generates an intelligent, natural response to the quoted message. |
+| `tt` or `808` | Reply Target | **Voice to Text**: Transcribes voice messages or audio/video files using Gemini Live API. |
 | `303` | Single Chat | **View Memory**: Displays saved long-term memory summaries for this chat (append `all` for all chats). |
 | `333` | Single Chat | **Reset Memory**: Clears short-term and long-term memory for this chat. |
 | `999 [limit]` | Single Chat | **Ghost Purge**: Deletes your messages (scans up to 3000 msgs). |
