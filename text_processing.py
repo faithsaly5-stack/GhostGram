@@ -61,6 +61,9 @@ def clean_outbound_text(raw_text: str) -> str:
     try:
         clean_text = html.unescape(raw_text)
         
+        # Security: Strip ALL emojis before sending, as requested.
+        clean_text = emoji.replace_emoji(clean_text, replace='')
+        
         # Security: Prevent Prompt Injection from triggering our own command handlers.
         # If the AI's response starts with one of our command prefixes, we prepend an 
         # invisible Zero-Width Space (\u200B) to it. This prevents it from matching the 
