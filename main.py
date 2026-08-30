@@ -429,35 +429,49 @@ async def handle_custom_ask(event, user_instruction=""):
                 await client.send_message(input_chat, response, reply_to=reply_to_id)
                 print(f"⚡ Handled 111 in chat {chat_id}")
 
-async def handle_text_to_speech(event):
+async def handle_text_to_speech(event, user_inst):
     try:
         await event.delete()
     except Exception:
         pass
 
-    valid_voices = {
-        "achernar", "achird", "algenib", "algieba", "alnilam", "aoede", 
-        "autonoe", "callirrhoe", "charon", "despina", "enceladus", "erinome", 
-        "fenrir", "gacrux", "iapetus", "kore", "laomedeia", "leda", "orus", 
-        "puck", "pulcherrima", "rasalgethi", "sadachbia", "sadaltager", 
-        "schedar", "sulafat", "umbriel", "vindemiatrix", "zephyr", "zubenelgenubi"
-    }
-    voice_name = "Aoede"
+    from voice_manager import voice_manager
+    voice_name = voice_manager.get_current_voice()
     
-    text = event.raw_text.strip()
-    if text.lower().startswith("tv"):
-        text = text[2:].strip()
-        parts = text.split(maxsplit=1)
-        if parts and parts[0].lower() in valid_voices:
-            voice_name = parts[0].capitalize()
-            text = parts[1] if len(parts) > 1 else ""
-            
     reply_msg = await event.get_reply_message()
-    if not text and reply_msg and getattr(reply_msg, "text", None):
-        text = reply_msg.text.strip()
-
+    text = user_inst
+    
+    if reply_msg and (reply_msg.text or getattr(reply_msg, 'media', None)):
+        # Smart Voice Reply mode
+        chat_id = event.chat_id
+        history_text = await get_chat_history_str(client, chat_id, limit=20)
+        target_text = reply_msg.text or Text.NO_TEXT
+        sender = await reply_msg.get_sender()
+        sender_name = await format_sender_name(sender, my_info.id if my_info else Config.OWNER_ID)
+        
+        now_persian = get_current_persian_datetime()
+        ltm = memory_manager.get_long_term_summary(chat_id)
+        ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
+        
+        prompt_input = Prompt.ASK_TEMPLATE.format(
+            current_time=now_persian,
+            long_term_context=ltm_context,
+            history_text=history_text,
+            sender=sender_name,
+            target_text=target_text or "گفت‌وگوی جاری",
+            user_instruction=user_inst or "پاسخ طبیعی، خودمونی و مناسب بده.",
+            owner_first_name=Config.OWNER_FIRST_NAME
+        )
+        
+        input_chat = await event.get_input_chat()
+        async with global_ai_lock:
+            pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
+            text = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
+            if text == Text.ERROR:
+                text = ""
+                
     if not text:
-        msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد. لطفاً بعد از tv متن را بنویسید یا روی یک پیام متنی ریپلای کنید.**\n\n💡 *برای تغییر صدا می‌توانید نام یکی از ۳۰ صدای موجود (مثل Zephyr, Puck, Leda, Charon و...) را بعد از tv بنویسید.*")
+        msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد یا تولید نشد.**\n\n💡 *راهنما:* `809 <متن>` *یا روی یک پیام ریپلای کنید.*")
         await asyncio.sleep(6)
         try:
             await msg.delete()
@@ -491,6 +505,45 @@ async def handle_text_to_speech(event):
                 os.remove(ogg_path)
             except Exception:
                 pass
+
+async def handle_voice_settings(event, val_str):
+    try:
+        await event.delete()
+    except Exception:
+        pass
+        
+    from voice_manager import voice_manager, VOICES
+    
+    if val_str:
+        try:
+            idx = int(val_str)
+            if voice_manager.save(idx):
+                msg = await event.respond(f"✅ **صدای پیش‌فرض با موفقیت تغییر کرد به:** `{voice_manager.get_current_voice()}`")
+            else:
+                msg = await event.respond(f"❌ **شماره صدا نامعتبر است (بین ۱ تا {len(VOICES)}).**")
+        except ValueError:
+            msg = await event.respond("❌ **لطفاً فقط یک عدد صحیح وارد کنید.**")
+            
+        await asyncio.sleep(4)
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+        return
+        
+    # List voices
+    text = "🎙️ **تنظیمات صدای ربات (TTS)**\n\n"
+    text += f"صدای فعلی: `{voice_manager.get_current_voice()}`\n\n"
+    for i, v in enumerate(VOICES, 1):
+        text += f"`{i}. {v}`\n"
+    text += "\n💡 *برای انتخاب صدا، کافیست شماره آن را بفرستید:*\n`810 5`"
+    
+    msg = await event.respond(text)
+    await asyncio.sleep(15)
+    try:
+        await msg.delete()
+    except Exception:
+        pass
 
 async def handle_transcribe(event):
     try:
@@ -664,14 +717,23 @@ async def outgoing_command_dispatcher(event):
         await handle_factory_reset(event)
         return
 
-    # 13. TRANSCRIBE (808 or tt)
-    if norm_lower in ["808", "tt"]:
+    # 13. TRANSCRIBE (808)
+    if norm_lower == "808":
         await handle_transcribe(event)
         return
 
-    # 14. TEXT TO SPEECH (tv)
-    if norm_lower.startswith("tv"):
-        await handle_text_to_speech(event)
+    # 14. SMART VOICE REPLY (809)
+    m_tts = re.match(r'^809(?:\s+(.*))?$', norm, re.DOTALL)
+    if m_tts:
+        user_inst = (m_tts.group(1) or "").strip()
+        await handle_text_to_speech(event, user_inst)
+        return
+
+    # 15. VOICE SETTINGS (810)
+    m_vsettings = re.match(r'^810(?:\s+(\d+))?$', norm_lower)
+    if m_vsettings:
+        val = m_vsettings.group(1)
+        await handle_voice_settings(event, val)
         return
 
 # ==========================================================
