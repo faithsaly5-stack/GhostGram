@@ -220,6 +220,65 @@ async def handle_reset_memory(event):
         pass
     print(f"🧠 Short-term memory RESET for chat {chat_id}")
 
+async def handle_view_memory(event, is_all=False):
+    try:
+        await event.delete()
+    except Exception:
+        pass
+
+    if is_all:
+        memories = memory_manager.long_term_memories
+        if not memories:
+            msg = await event.respond("📭 **هیچ حافظه بلندمدتی در سیستم ثبت نشده است.**")
+            await asyncio.sleep(5)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+            return
+            
+        report_chunks = []
+        current_chunk = "🧠 **گزارش کل حافظه بلندمدت (تمام چت‌ها):**\n"
+        
+        # Build chunks respecting Telegram's 4096 char limit
+        for chat_id, summary in memories.items():
+            if not summary.strip():
+                continue
+            
+            try:
+                entity = await client.get_entity(chat_id)
+                name = getattr(entity, 'title', None) or getattr(entity, 'first_name', None) or str(chat_id)
+            except Exception:
+                name = str(chat_id)
+                
+            entry = f"\n🔹 **چت:** {name} (`{chat_id}`)\n📝 **خلاصه:** {summary}\n" + ("─"*20)
+            
+            if len(current_chunk) + len(entry) > 3800:
+                report_chunks.append(current_chunk)
+                current_chunk = entry
+            else:
+                current_chunk += entry
+                
+        if current_chunk.strip():
+            report_chunks.append(current_chunk)
+            
+        for chunk in report_chunks:
+            if chunk.strip():
+                await event.respond(chunk)
+                await asyncio.sleep(0.5)
+    else:
+        chat_id = event.chat_id
+        summary = memory_manager.get_long_term_summary(chat_id)
+        if summary:
+            await event.respond(f"🧠 **حافظه بلندمدت این چت:**\n\n{summary}")
+        else:
+            msg = await event.respond("📭 **هیچ حافظه بلندمدتی برای این چت ثبت نشده است.**")
+            await asyncio.sleep(5)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
+
 async def handle_factory_reset(event):
     from api_tracker import api_tracker
     api_tracker.factory_reset()
@@ -404,7 +463,14 @@ async def outgoing_command_dispatcher(event):
             await event.respond(stats_text)
         return
 
-    # 3. RESET MEMORY (333)
+    # 3.5. VIEW MEMORY (303 [all])
+    m_view_mem = re.match(r'^303(?:\s+(all))?$', norm_lower)
+    if m_view_mem:
+        scope = m_view_mem.group(1)
+        await handle_view_memory(event, is_all=(scope == "all"))
+        return
+
+    # 4. RESET MEMORY (333)
     if norm_lower == "333":
         await handle_reset_memory(event)
         return
