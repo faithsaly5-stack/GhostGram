@@ -438,37 +438,43 @@ async def handle_text_to_speech(event, user_inst):
     from voice_manager import voice_manager
     voice_name = voice_manager.get_current_voice()
     
-    reply_msg = await event.get_reply_message()
-    text = user_inst
+    reply_to_id = event.reply_to_msg_id
+    chat_id = event.chat_id
     
-    if reply_msg and (reply_msg.text or getattr(reply_msg, 'media', None)):
-        # Smart Voice Reply mode
-        chat_id = event.chat_id
-        history_text = await get_chat_history_str(client, chat_id, limit=20)
-        target_text = reply_msg.text or Text.NO_TEXT
-        sender = await reply_msg.get_sender()
-        sender_name = await format_sender_name(sender, my_info.id if my_info else Config.OWNER_ID)
+    if not user_inst and not reply_to_id:
+        return
         
-        now_persian = get_current_persian_datetime()
-        ltm = memory_manager.get_long_term_summary(chat_id)
-        ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
-        
-        prompt_input = Prompt.ASK_TEMPLATE.format(
-            current_time=now_persian,
-            long_term_context=ltm_context,
-            history_text=history_text,
-            sender=sender_name,
-            target_text=target_text or "گفت‌وگوی جاری",
-            user_instruction=user_inst or "پاسخ طبیعی، خودمونی و مناسب بده.",
-            owner_first_name=Config.OWNER_FIRST_NAME
-        )
-        
-        input_chat = await event.get_input_chat()
-        async with global_ai_lock:
-            pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
-            text = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
-            if text == Text.ERROR:
-                text = ""
+    history_text = await get_recent_chat_history(chat_id)
+    target_text = ""
+    sender_name = "مخاطب"
+    
+    if reply_to_id:
+        reply_msg = await event.get_reply_message()
+        if reply_msg:
+            target_text = reply_msg.text or Text.NO_TEXT
+            sender = await reply_msg.get_sender()
+            sender_name = await format_sender_name(sender, my_info.id if my_info else Config.OWNER_ID)
+            
+    now_persian = get_current_persian_datetime()
+    ltm = memory_manager.get_long_term_summary(chat_id)
+    ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
+    
+    prompt_input = Prompt.ASK_TEMPLATE.format(
+        current_time=now_persian,
+        long_term_context=ltm_context,
+        history_text=history_text,
+        sender=sender_name,
+        target_text=target_text or "گفت‌وگوی جاری",
+        user_instruction=user_inst or "پاسخ طبیعی، خودمونی و مناسب بده.",
+        owner_first_name=Config.OWNER_FIRST_NAME
+    )
+    
+    input_chat = await event.get_input_chat()
+    async with global_ai_lock:
+        pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
+        text = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
+        if text == Text.ERROR:
+            text = ""
                 
     if not text:
         msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد یا تولید نشد.**\n\n💡 *راهنما:* `809 <متن>` *یا روی یک پیام ریپلای کنید.*")

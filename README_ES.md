@@ -92,6 +92,9 @@
 | `444` | Chat actual | **Pausa el Asistente** solo para este contacto privado. |
 | `444 all` | Todos los DMs | **Desactiva el Asistente Personal globalmente**. |
 | `111 <instrucción>` | Chat / Respuesta | **Respuesta puntual inteligente** según tu instrucción específica. |
+| `808` | Respuesta | **Voz a texto (STT)**: Transcribe mensajes de voz o videos a texto. |
+| `809` | Chat / Respuesta | **Voz inteligente**: Genera una respuesta de voz inteligente usando IA. |
+| `810` | Chat actual | **Ajustes de voz**: Lista 30 voces diferentes para seleccionar tu favorita. |
 | `555` | Chat actual | **Panel de Estado** (informe breve que se borra en 4s). |
 | `333` | Chat actual | **Reinicia la memoria a corto plazo** de este chat. |
 | `999 [límite]` | Chat actual | **Ghost Purge** (elimina tus mensajes, escanea hasta 3000). |
