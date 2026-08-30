@@ -48,7 +48,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
             return f"Error: Audio conversion failed.\n{stderr.decode(errors='ignore')}"
         
         # 2. Connect to API with Rotation Logic
-        max_attempts = min(len(api_keys) * 2, 10)
+        max_attempts = len(api_keys)
         
         for attempt in range(max_attempts):
             api_key = api_keys[attempt % len(api_keys)]

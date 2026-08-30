@@ -445,34 +445,33 @@ async def handle_transcribe(event):
             pass
         return
 
-    msg = await event.respond("⏳ **در حال دانلود فایل...**")
     try:
         file_path = await reply_msg.download_media("temp_transcribe")
         if not file_path:
-            await msg.edit("❌ **خطا در دانلود فایل!**")
+            await event.respond("❌ **خطا در دانلود فایل!**", reply_to=reply_msg.id)
             return
             
         from speech_to_text import transcribe_audio_file
-        await msg.edit("🤖 **در حال پیاده‌سازی متن (توسط جمنای لایو)...**")
         
         keys = Config.GEMINI_API_KEYS
         transcript = await transcribe_audio_file(file_path, keys)
         
         if transcript.startswith("Error"):
-            await msg.edit(f"❌ **خطا در پردازش:**\n`{transcript}`")
+            await event.respond(f"❌ **خطا در پردازش:**\n`{transcript}`", reply_to=reply_msg.id)
         else:
-            final_text = f"📝 **متن پیاده‌سازی شده:**\n\n{transcript}"
-            if len(final_text) < 4000:
-                await msg.edit(final_text)
+            if not transcript.strip():
+                transcript = "⚠️ هیچ صدایی تشخیص داده نشد یا فایل کاملاً بی‌صدا بود."
+                
+            if len(transcript) < 4000:
+                await event.respond(transcript, reply_to=reply_msg.id)
             else:
-                await msg.edit("📝 **متن پیاده‌سازی شده:** (به دلیل طولانی بودن در چند پیام ارسال می‌شود)")
                 # Split and send chunks
                 chunk_size = 4000
                 for i in range(0, len(transcript), chunk_size):
-                    await event.respond(transcript[i:i+chunk_size])
+                    await event.respond(transcript[i:i+chunk_size], reply_to=reply_msg.id)
             
     except Exception as e:
-        await msg.edit(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`")
+        await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`", reply_to=reply_msg.id)
     finally:
         import os
         if 'file_path' in locals() and file_path and os.path.exists(file_path):
