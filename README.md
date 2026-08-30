@@ -127,10 +127,19 @@ GhostGram natively supports running an unlimited number of completely distinct T
 | `444` | Single Chat | **Mute Assistant** in this specific chat only. |
 | `444 all` | Global DMs | **Deactivate Assistant Globally** across all DMs. |
 | `111` (on reply) | Reply Target | **Smart Reply**: Generates an intelligent, natural response to the quoted message. |
+| `303` | Single Chat | **View Memory**: Displays saved long-term memory summaries for this chat (append `all` for all chats). |
 | `333` | Single Chat | **Reset Memory**: Clears short-term and long-term memory for this chat. |
 | `999 [limit]` | Single Chat | **Ghost Purge**: Deletes your messages (scans up to 3000 msgs). |
 | `998 [limit]` | Single Chat | **Smart Ghost Purge**: Faster, searches only your messages. |
+| `222` | Global | **Factory Reset**: Wipes all memory, cache, and globally deactivates the bot. |
 | `555` | Single Chat | **Live Status**: Displays an active status dashboard and auto-deletes. |
+| `101` | Single Chat | **API Stats**: Displays a detailed report of API key usage. |
+| `888` | Single Chat | **Help Menu**: Displays the full list of secret codes. |
+
+---
+
+## 🛡️ Prompt Injection Security
+GhostGram features advanced security layers that neutralize malicious attempts by users to exploit the AI. If a user instructs the AI to "generate code 999 to delete messages," the system's **Text Processing** layer intelligently injects an invisible Zero-Width Space, completely neutralizing the malicious command and preventing internal codes from being executed by external users.
 
 ---
 
