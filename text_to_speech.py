@@ -2,10 +2,14 @@ import os
 import asyncio
 import tempfile
 import struct
+import logging
 import imageio_ffmpeg
 from google import genai
 from google.genai import types
 from config import Config
+
+# Suppress harmless google-genai AFC deprecation logger warning to keep logs clean
+logging.getLogger("google_genai").setLevel(logging.ERROR)
 
 # Get the bundled rock-solid ffmpeg binary path
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
@@ -116,32 +120,27 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 # Convert raw PCM to WAV bytes
                 wav_bytes = convert_to_wav(full_audio, mime_type)
 
-                # Save temporary WAV
-                temp_wav = tempfile.mktemp(suffix=".wav")
-                with open(temp_wav, "wb") as f:
-                    f.write(wav_bytes)
-
-                # Convert WAV to OGG Opus for Telegram Voice Note
-                temp_ogg = tempfile.mktemp(suffix=".ogg")
+                # Convert WAV to OGG Opus for Telegram Voice Note by piping directly to ffmpeg
+                fd, temp_ogg = tempfile.mkstemp(suffix=".ogg")
+                os.close(fd)
+                
                 cmd = [
-                    FFMPEG_EXE, "-y", "-i", temp_wav,
+                    FFMPEG_EXE, "-y", "-i", "pipe:0",
                     "-c:a", "libopus", "-b:a", "32k",
                     temp_ogg
                 ]
 
                 process = await asyncio.create_subprocess_exec(
-                    *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE
+                    *cmd, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE
                 )
-                _, stderr = await process.communicate()
-
-                # Cleanup temp WAV
-                if os.path.exists(temp_wav):
-                    try:
-                        os.remove(temp_wav)
-                    except:
-                        pass
+                _, stderr = await process.communicate(input=wav_bytes)
 
                 if process.returncode != 0:
+                    if os.path.exists(temp_ogg):
+                        try:
+                            os.remove(temp_ogg)
+                        except:
+                            pass
                     return f"Error: FFMPEG conversion failed.\n{stderr.decode(errors='ignore')}"
 
                 return temp_ogg

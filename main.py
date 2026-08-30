@@ -749,7 +749,7 @@ async def outgoing_command_dispatcher(event):
 @client.on(events.NewMessage())
 async def global_memory_tracker(event):
     """Tracks every incoming and outgoing message in active chats for accurate long-term summarization."""
-    if not event.text:
+    if not event.text and not getattr(event.message, 'voice', None) and not getattr(event.message, 'audio', None):
         return
         
     chat_id = event.chat_id
@@ -829,9 +829,38 @@ async def incoming_message_handler(event):
     elif assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
         mode = "assistant"
     else:
-        # Neither mode is active for this chat
+    # Neither mode is active for this chat
         return
     
+    # 🎙️ Auto-Transcribe Voice Messages before any other logic to ensure memory capture
+    incoming_text = event.text or ""
+    
+    if not incoming_text.strip():
+        if getattr(event.message, 'voice', None) or getattr(event.message, 'audio', None):
+            import os
+            from speech_to_text import transcribe_audio_file
+            
+            # Download and transcribe
+            os.makedirs("scratch", exist_ok=True)
+            audio_path = await event.message.download_media(file="scratch/")
+            
+            if audio_path:
+                transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
+                try:
+                    os.remove(audio_path)
+                except:
+                    pass
+                    
+                if transcribed and not transcribed.startswith("Error"):
+                    incoming_text = f"[Voice Note] {transcribed}"
+                    # Inject into stealth virtual memory!
+                    memory_manager.add_virtual_message(chat_id, event.message.id, incoming_text)
+                else:
+                    return
+        else:
+            # Might be sticker/photo without caption
+            return
+
     # For group chats: only respond if replied to me, or mentioned
     if event.is_group or event.is_channel:
         is_reply_to_me = False
@@ -842,7 +871,7 @@ async def incoming_message_handler(event):
                     is_reply_to_me = True
         
         is_mentioned = False
-        raw_lower = (event.raw_text or "").lower()
+        raw_lower = (incoming_text).lower() # Check against transcribed text too!
         if my_info and my_info.username and f"@{my_info.username.lower()}" in raw_lower:
             is_mentioned = True
         if my_info and my_info.first_name and my_info.first_name.lower() in raw_lower:
@@ -853,12 +882,6 @@ async def incoming_message_handler(event):
         # If it's a group, only reply if directly addressed or explicitly mentioned/replied
         if not (is_reply_to_me or is_mentioned):
             return
-
-    # Check incoming content
-    incoming_text = event.text or ""
-    if not incoming_text.strip():
-        # Might be sticker/photo without caption
-        return
 
     # Track the latest message ID for this specific user in this chat to debounce rapid spam
     sender_id = event.sender_id

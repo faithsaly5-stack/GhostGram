@@ -4,11 +4,15 @@ import wave
 import tempfile
 import traceback
 import subprocess
+import logging
 
 import imageio_ffmpeg
 from google import genai
 from google.genai import types
 from config import Config
+
+# Suppress harmless google-genai AFC deprecation logger warning to keep logs clean
+logging.getLogger("google_genai").setLevel(logging.ERROR)
 
 # Get the bundled rock-solid ffmpeg binary path
 FFMPEG_EXE = imageio_ffmpeg.get_ffmpeg_exe()
@@ -33,9 +37,10 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
         fd, temp_wav_path = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
         
-        # Run ffmpeg to convert any input format to strict 16kHz mono WAV
+        # Run ffmpeg to convert any input format to strict 16kHz mono WAV, capped at 120 seconds max
         cmd = [
             FFMPEG_EXE, "-y", "-i", file_path, 
+            "-t", "120", 
             "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", 
             temp_wav_path
         ]
@@ -101,7 +106,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                         while True:
                             try:
                                 response = await asyncio.wait_for(ag.__anext__(), timeout=current_timeout)
-                                current_timeout = 2.0  # Once it starts streaming, exit if it goes quiet for 2s
+                                current_timeout = 10.0  # Once it starts streaming, wait up to 10s for new tokens (protects against latency spikes)
                                 
                                 sc = getattr(response, "server_content", None)
                                 if sc is not None:
