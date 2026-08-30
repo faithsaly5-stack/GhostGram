@@ -490,8 +490,6 @@ async def handle_text_to_speech(event, user_inst):
         keys = Config.GEMINI_API_KEYS
         ogg_path = await generate_voice_message(text, keys, voice_name=voice_name)
         
-        reply_to_id = reply_msg.id if reply_msg else None
-        
         if ogg_path.startswith("Error"):
             await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
         else:

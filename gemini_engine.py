@@ -4,12 +4,16 @@ import html
 import time
 import asyncio
 import threading
+import warnings
 from google import genai
 from google.genai import types
 from config import Config
 from text import Text
 from api_tracker import api_tracker
 from text_processing import clean_outbound_text
+
+# Suppress harmless google-genai AFC deprecation warning to keep logs clean
+warnings.filterwarnings("ignore", message="Direct use of automatic function calling")
 
 class GeminiEngine:
     def __init__(self):
