@@ -928,19 +928,22 @@ async def auto_engage_loop():
                                 except Exception:
                                     pass
                                     
-                                if target_msg and (target_msg.sender_id == my_id or target_msg.out):
+                                if not target_msg:
+                                    print(f"⚠️ Auto-engage target message ({target_id}) not found or hallucinated. Ignoring!")
+                                    continue
+                                    
+                                if target_msg.sender_id == my_id or target_msg.out:
                                     print(f"⚠️ AI tried to reply to its own message ({target_id}). Ignoring!")
                                     continue
                                 
                                 # Prevent the AI from replying to other bots!
-                                if target_msg:
-                                    try:
-                                        target_sender = await target_msg.get_sender()
-                                        if target_sender and getattr(target_sender, 'bot', False):
-                                            print(f"⚠️ AI tried to reply to a bot ({target_id}). Ignoring!")
-                                            continue
-                                    except Exception:
-                                        pass
+                                try:
+                                    target_sender = await target_msg.get_sender()
+                                    if target_sender and getattr(target_sender, 'bot', False):
+                                        print(f"⚠️ AI tried to reply to a bot ({target_id}). Ignoring!")
+                                        continue
+                                except Exception:
+                                    pass
                                 
                                 # Final check before sending auto engage message
                                 if not pal_manager.is_auto_engage_active(chat_id):
