@@ -95,11 +95,23 @@
 | `808` | Respuesta | **Voz a texto (STT)**: Transcribe mensajes de voz o videos a texto. |
 | `809` | Chat / Respuesta | **Voz inteligente**: Genera una respuesta de voz inteligente usando IA. |
 | `810` | Chat actual | **Ajustes de voz**: Lista 30 voces diferentes para seleccionar tu favorita. |
+| `811` | Global | **Cambiador de voz (Stealth)**: Reemplaza secretamente tus notas de voz con una voz de IA generada a partir de tu transcripción. |
+| `303` | Chat actual | **Ver memoria**: Muestra resúmenes de memoria a largo plazo guardados para este chat (agrega `all` para todos). |
 | `555` | Chat actual | **Panel de Estado** (informe breve que se borra en 4s). |
-| `333` | Chat actual | **Reinicia la memoria a corto plazo** de este chat. |
 | `999 [límite]` | Chat actual | **Ghost Purge** (elimina tus mensajes, escanea hasta 3000). |
 | `998 [límite]` | Chat actual | **Smart Ghost Purge** (más rápido, solo busca tus mensajes). |
+| `222` | Global | **Restablecimiento de fábrica**: Borra toda la memoria y desactiva el bot globalmente. |
+| `101` | Chat actual | **Estadísticas de API**: Muestra un informe detallado del uso de las claves API. |
 | `888` | Chat actual | **Muestra el menú de ayuda**. |
+
+---
+
+## 👻 Ghost Engine 2.0 (Simulación Humana)
+El bot incluye un **Ghost Engine** diseñado matemáticamente para evitar que se comporte como un script automatizado:
+- **Simulación de Escritura:** Escribe exactamente a 60-80 WPM con pausas naturales de puntuación, con un límite estricto de 35 segundos.
+- **Agrupación de Mensajes:** Espera de forma inteligente a que los usuarios terminen de escribir. Si alguien envía 5 mensajes seguidos, procesa todos simultáneamente y responde solo una vez.
+- **Escucha Simulada (Notas de Voz):** Si le envías un audio de 3 minutos, no responderá en 5 segundos. Simula matemáticamente el tiempo de escuchar el audio antes de escribir.
+- **Simulación Acústica (Notas de Voz):** Aplica filtros avanzados de FFmpeg y ruido rosa al TTS generado por IA, simulando perfectamente la acústica y el ruido ambiental de un micrófono de teléfono real.
 
 ---
 

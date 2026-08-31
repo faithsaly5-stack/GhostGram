@@ -155,6 +155,7 @@ The bot includes a mathematically engineered **Ghost Engine** to prevent it from
 - **Piecewise Typing Simulation:** Types at exactly 60-80 WPM with natural punctuation pauses, capped strictly at 35 seconds to prevent UX frustration.
 - **Debounce & Message Batching:** Intelligently waits for users to finish typing in DMs. If a user sends 5 messages back-to-back, GhostGram aborts early threads and processes them all simultaneously, replying just once.
 - **Fake Listening (Voice Notes):** If you send it a 3-minute voice note, it won't reply in 5 seconds. It mathematically simulates physically listening to the audio before typing.
+- **Acoustic Simulation (Voice Notes):** Applies surgical FFmpeg bandpass filters and pink noise overlays to AI-generated TTS, perfectly simulating the frequency response and ambient static of a real smartphone microphone.
 
 ---
 

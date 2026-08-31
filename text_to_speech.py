@@ -124,8 +124,15 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 fd, temp_ogg = tempfile.mkstemp(suffix=".ogg")
                 os.close(fd)
                 
+                # Apply surgical FFmpeg filters: 
+                # 1. Bandpass filter (highpass 200, lowpass 4000) to simulate a smartphone microphone's frequency response.
+                # 2. Pink noise overlay (anoisesrc) to simulate natural room ambiance and mic static.
                 cmd = [
-                    FFMPEG_EXE, "-y", "-i", "pipe:0",
+                    FFMPEG_EXE, "-y", 
+                    "-i", "pipe:0",
+                    "-f", "lavfi", "-i", "anoisesrc=c=pink:r=24000:a=0.012",
+                    "-filter_complex", "[0:a]highpass=f=200,lowpass=f=4000[v];[v][1:a]amix=inputs=2:duration=shortest[a]",
+                    "-map", "[a]",
                     "-c:a", "libopus", "-b:a", "32k",
                     temp_ogg
                 ]
