@@ -15,28 +15,41 @@ class VoiceManager:
         self.state_file = os.path.join(Config.PROFILE_DIR, "voice_state.json")
         self.voices = VOICES
         self.default_index = 6 # Aoede is index 6
-        self.current_index = self._load()
+        
+        saved_data = self._load()
+        self.current_index = saved_data.get("voice_index", self.default_index)
+        self.voice_changer_active = saved_data.get("voice_changer_active", False)
 
     def _load(self):
         if os.path.exists(self.state_file):
             try:
                 with open(self.state_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return data.get("voice_index", self.default_index)
+                    return json.load(f)
             except Exception:
                 pass
-        return self.default_index
+        return {}
 
-    def save(self, index: int):
+    def save(self):
+        try:
+            with open(self.state_file, 'w', encoding='utf-8') as f:
+                json.dump({
+                    "voice_index": self.current_index,
+                    "voice_changer_active": self.voice_changer_active
+                }, f)
+            return True
+        except Exception:
+            return False
+
+    def set_voice(self, index: int):
         if 1 <= index <= len(self.voices):
             self.current_index = index
-            try:
-                with open(self.state_file, 'w', encoding='utf-8') as f:
-                    json.dump({"voice_index": self.current_index}, f)
-                return True
-            except Exception:
-                pass
+            return self.save()
         return False
+        
+    def toggle_voice_changer(self) -> bool:
+        self.voice_changer_active = not self.voice_changer_active
+        self.save()
+        return self.voice_changer_active
         
     def get_current_voice(self) -> str:
         idx = self.current_index - 1

@@ -63,7 +63,11 @@ async def get_reply_chain(message):
     while current_msg:
         sender = await current_msg.get_sender()
         name = await format_sender_name(sender, my_id)
-        text = current_msg.text or Text.NO_TEXT
+        text = current_msg.text
+        if not text:
+            text = memory_manager.get_virtual_text(current_msg.chat_id, current_msg.id)
+        if not text:
+            text = Text.NO_TEXT
         time_str = current_msg.date.strftime("%Y-%m-%d %H:%M:%S")
         
         formatted_msg = Text.CHAIN_TEMPLATE.format(
@@ -400,7 +404,34 @@ async def handle_custom_ask(event, user_instruction=""):
     if reply_to_id:
         reply_msg = await event.get_reply_message()
         if reply_msg:
-            target_text = reply_msg.text or Text.NO_TEXT
+            target_text = reply_msg.text
+            if not target_text:
+                target_text = memory_manager.get_virtual_text(chat_id, reply_msg.id)
+                
+            # --- ON DEMAND TRANSCRIPTION ---
+            if not target_text and getattr(reply_msg, "media", None):
+                if getattr(reply_msg, 'voice', None) or getattr(reply_msg, 'video_note', None) or getattr(reply_msg, 'audio', None) or (getattr(reply_msg, 'document', None) and getattr(reply_msg.document, 'mime_type', '').startswith('audio/')):
+                    msg_wait = await event.respond("⏳ **در حال استخراج متن از فایل رسانه برای تحلیل...**")
+                    import os
+                    from speech_to_text import transcribe_audio_file
+                    os.makedirs("scratch", exist_ok=True)
+                    audio_path = await reply_msg.download_media(file="scratch/")
+                    if audio_path:
+                        transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
+                        try:
+                            os.remove(audio_path)
+                        except:
+                            pass
+                        if transcribed and not transcribed.startswith("Error"):
+                            target_text = f"[Voice Note] {transcribed}"
+                            memory_manager.add_virtual_message(chat_id, reply_msg.id, target_text)
+                    try:
+                        await msg_wait.delete()
+                    except:
+                        pass
+            
+            if not target_text:
+                target_text = Text.NO_TEXT
             sender = await reply_msg.get_sender()
             sender_name = await format_sender_name(sender, my_info.id if my_info else Config.OWNER_ID)
     
@@ -451,7 +482,34 @@ async def handle_text_to_speech(event, user_inst):
     if reply_to_id:
         reply_msg = await event.get_reply_message()
         if reply_msg:
-            target_text = reply_msg.text or Text.NO_TEXT
+            target_text = reply_msg.text
+            if not target_text:
+                target_text = memory_manager.get_virtual_text(chat_id, reply_msg.id)
+                
+            # --- ON DEMAND TRANSCRIPTION ---
+            if not target_text and getattr(reply_msg, "media", None):
+                if getattr(reply_msg, 'voice', None) or getattr(reply_msg, 'video_note', None) or getattr(reply_msg, 'audio', None) or (getattr(reply_msg, 'document', None) and getattr(reply_msg.document, 'mime_type', '').startswith('audio/')):
+                    msg_wait = await event.respond("⏳ **در حال استخراج متن از فایل رسانه برای تحلیل...**")
+                    import os
+                    from speech_to_text import transcribe_audio_file
+                    os.makedirs("scratch", exist_ok=True)
+                    audio_path = await reply_msg.download_media(file="scratch/")
+                    if audio_path:
+                        transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
+                        try:
+                            os.remove(audio_path)
+                        except:
+                            pass
+                        if transcribed and not transcribed.startswith("Error"):
+                            target_text = f"[Voice Note] {transcribed}"
+                            memory_manager.add_virtual_message(chat_id, reply_msg.id, target_text)
+                    try:
+                        await msg_wait.delete()
+                    except:
+                        pass
+            
+            if not target_text:
+                target_text = Text.NO_TEXT
             sender = await reply_msg.get_sender()
             sender_name = await format_sender_name(sender, my_info.id if my_info else Config.OWNER_ID)
             
@@ -493,6 +551,10 @@ async def handle_text_to_speech(event, user_inst):
         if ogg_path.startswith("Error"):
             await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
         else:
+            global last_ai_voice_time
+            import time
+            last_ai_voice_time = time.time()
+            
             sent_msg = await client.send_file(
                 event.chat_id, 
                 ogg_path, 
@@ -523,7 +585,7 @@ async def handle_voice_settings(event, val_str):
     if val_str:
         try:
             idx = int(val_str)
-            if voice_manager.save(idx):
+            if voice_manager.set_voice(idx):
                 msg = await event.respond(f"✅ **صدای پیش‌فرض با موفقیت تغییر کرد به:** `{voice_manager.get_current_voice()}`")
             else:
                 msg = await event.respond(f"❌ **شماره صدا نامعتبر است (بین ۱ تا {len(VOICES)}).**")
@@ -602,13 +664,75 @@ async def handle_transcribe(event):
             except:
                 pass
 
+async def handle_voice_changer(event):
+    from voice_manager import voice_manager
+    import os
+    from speech_to_text import transcribe_audio_file
+    from text_to_speech import generate_voice_message
+    
+    try:
+        await event.delete()
+    except Exception:
+        pass
+        
+    reply_to_id = event.reply_to_msg_id
+    
+    try:
+        os.makedirs("scratch", exist_ok=True)
+        audio_path = await event.download_media(file="scratch/")
+        if audio_path:
+            keys = Config.GEMINI_API_KEYS
+            transcript = await transcribe_audio_file(audio_path, keys)
+            try:
+                os.remove(audio_path)
+            except Exception:
+                pass
+                
+            if transcript and not transcript.startswith("Error") and transcript.strip():
+                voice_name = voice_manager.get_current_voice()
+                ogg_path = await generate_voice_message(transcript, keys, voice_name=voice_name)
+                
+                if not ogg_path.startswith("Error"):
+                    global last_ai_voice_time
+                    import time
+                    last_ai_voice_time = time.time()
+                    
+                    await client.send_file(
+                        event.chat_id,
+                        ogg_path,
+                        voice_note=True,
+                        reply_to=reply_to_id
+                    )
+                    
+                    try:
+                        os.remove(ogg_path)
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"⚠️ Voice Changer Error: {e}")
+
 # ==========================================================
 # 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
 # ==========================================================
+last_ai_voice_time = 0
+
 @client.on(events.NewMessage(outgoing=True))
 async def outgoing_command_dispatcher(event):
     if not is_owner(event):
         return
+        
+    # --- VOICE CHANGER INTERCEPTION ---
+    from voice_manager import voice_manager
+    import time
+    global last_ai_voice_time
+    
+    if getattr(event, 'voice', None) and voice_manager.voice_changer_active:
+        # Prevent infinite loops from bot-generated voice notes
+        if time.time() - last_ai_voice_time < 15:
+            return 
+        await handle_voice_changer(event)
+        return
+        
     raw_text = event.text or ""
     if not raw_text.strip():
         return
@@ -691,6 +815,21 @@ async def outgoing_command_dispatcher(event):
             duration = int(val)
         await handle_auto_engage_on(event, duration)
         return
+        
+    # 7.5 VOICE CHANGER TOGGLE (811)
+    if norm_lower == "811":
+        from voice_manager import voice_manager
+        is_active = voice_manager.toggle_voice_changer()
+        status = "✅ فعال" if is_active else "❌ غیرفعال"
+        msg = await event.respond(f"🎙️ **حالت Voice Changer:** {status}")
+        await asyncio.sleep(4)
+        try:
+            await msg.delete()
+            await event.delete()
+        except Exception:
+            pass
+        return
+        return
 
     # 8. PAL OFF (000 [all])
     m_pal_off = re.match(r'^000(?:\s+(all))?$', norm_lower)
@@ -766,13 +905,20 @@ async def global_memory_tracker(event):
     global my_info
     my_id = my_info.id if my_info else Config.OWNER_ID
     
+    import time
+    if event.out or getattr(event, 'sender_id', None) == my_id:
+        memory_manager.update_owner_activity(chat_id)
+    else:
+        if event.is_group or event.is_channel:
+            last_active = memory_manager.get_owner_last_active_time(chat_id)
+            if time.time() - last_active > 30 * 60:
+                return # Ignore message (owner is not actively participating)
+                
     memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 # Concurrency management to prevent API spam and overlapping replies
 # Changed to a GLOBAL lock per user request to process ALL messages strictly sequentially one by one across the entire bot
 global_ai_lock = asyncio.Lock()
-chat_latest_msg = {}
-chat_typing_status = {}
 
 replied_message_ids = {}
 
@@ -795,11 +941,8 @@ def is_already_replied(chat_id, msg_id):
 @client.on(events.UserUpdate)
 async def user_update_handler(event):
     if getattr(event, 'typing', False):
-        t = time.time()
-        if event.chat_id:
-            chat_typing_status[event.chat_id] = t
-        if getattr(event, 'user_id', None):
-            chat_typing_status[event.user_id] = t
+        import human_behavior
+        human_behavior.update_typing_status(event.chat_id, getattr(event, 'user_id', None))
 
 def get_chat_lock(chat_id):
     return global_ai_lock
@@ -832,46 +975,19 @@ async def incoming_message_handler(event):
     # Neither mode is active for this chat
         return
     
-    # 🎙️ Auto-Transcribe Voice Messages before any other logic to ensure memory capture
-    incoming_text = event.text or ""
+    # For group chats: only respond if replied to me, or mentioned (text only for mentions)
+    incoming_text_raw = event.text or ""
+    is_reply_to_me = False
+    is_mentioned = False
     
-    if not incoming_text.strip():
-        if getattr(event.message, 'voice', None) or getattr(event.message, 'audio', None):
-            import os
-            from speech_to_text import transcribe_audio_file
-            
-            # Download and transcribe
-            os.makedirs("scratch", exist_ok=True)
-            audio_path = await event.message.download_media(file="scratch/")
-            
-            if audio_path:
-                transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
-                try:
-                    os.remove(audio_path)
-                except:
-                    pass
-                    
-                if transcribed and not transcribed.startswith("Error"):
-                    incoming_text = f"[Voice Note] {transcribed}"
-                    # Inject into stealth virtual memory!
-                    memory_manager.add_virtual_message(chat_id, event.message.id, incoming_text)
-                else:
-                    return
-        else:
-            # Might be sticker/photo without caption
-            return
-
-    # For group chats: only respond if replied to me, or mentioned
     if event.is_group or event.is_channel:
-        is_reply_to_me = False
         if event.is_reply:
             reply_msg = await event.get_reply_message()
             if reply_msg:
                 if reply_msg.out or reply_msg.sender_id == my_id or getattr(reply_msg.from_id, 'user_id', None) == my_id:
                     is_reply_to_me = True
         
-        is_mentioned = False
-        raw_lower = (incoming_text).lower() # Check against transcribed text too!
+        raw_lower = incoming_text_raw.lower()
         if my_info and my_info.username and f"@{my_info.username.lower()}" in raw_lower:
             is_mentioned = True
         if my_info and my_info.first_name and my_info.first_name.lower() in raw_lower:
@@ -883,53 +999,49 @@ async def incoming_message_handler(event):
         if not (is_reply_to_me or is_mentioned):
             return
 
+    # 🎙️ Audio processing ONLY for DMs or explicitly addressed group messages
+    incoming_text = incoming_text_raw
+    
+    if not incoming_text.strip():
+        # In Telethon, event itself has .voice, .audio, .video_note, and .document shortcuts
+        if getattr(event, 'voice', None) or getattr(event, 'video_note', None) or getattr(event, 'audio', None) or (getattr(event, 'document', None) and getattr(event.document, 'mime_type', '').startswith('audio/')):
+            print(f"🎙️ Intercepted addressed media in chat {chat_id}! Downloading...")
+            import os
+            from speech_to_text import transcribe_audio_file
+            
+            # Download and transcribe
+            os.makedirs("scratch", exist_ok=True)
+            audio_path = await event.download_media(file="scratch/")
+            
+            if audio_path:
+                print(f"🎙️ Downloaded to {audio_path}. Transcribing...")
+                transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
+                try:
+                    os.remove(audio_path)
+                except:
+                    pass
+                    
+                if transcribed and not transcribed.startswith("Error"):
+                    print(f"🎙️ Transcription success: {transcribed}")
+                    incoming_text = f"[Voice Note] {transcribed}"
+                    # Inject into stealth virtual memory!
+                    memory_manager.add_virtual_message(chat_id, event.message.id, incoming_text)
+                else:
+                    print(f"⚠️ Transcription failed: {transcribed}")
+                    return
+        else:
+            # Might be sticker/photo without caption
+            return
+
     # Track the latest message ID for this specific user in this chat to debounce rapid spam
+    import human_behavior
     sender_id = event.sender_id
-    user_key = (chat_id, sender_id) if sender_id else (chat_id, "unknown")
-    chat_latest_msg[user_key] = event.id
+    human_behavior.update_latest_message(chat_id, sender_id, event.id)
 
     # Smart Waiting & Batching Logic
-    if event.is_private:
-        # For DMs: Wait base time, then actively monitor typing status
-        base_reading_time = max(1.5, len(incoming_text) * 0.05)
-        reading_delay = min(base_reading_time, 8.0)
-        await asyncio.sleep(reading_delay)
-        
-        start_wait_time = time.time()
-        while True:
-            # If a newer message arrived from this user, abort (batching: newer message takes over)
-            if chat_latest_msg.get(user_key, 0) > event.id:
-                return
-                
-            # Safety ceiling: avoid waiting longer than 45 seconds under any circumstance
-            if time.time() - start_wait_time > 45.0:
-                break
-                
-            # Check if user is typing (activity within last 7 seconds)
-            last_typing_time = max(chat_typing_status.get(chat_id, 0), chat_typing_status.get(sender_id, 0) if sender_id else 0)
-            if time.time() - last_typing_time < 7.0:
-                await asyncio.sleep(2.0)
-                continue
-                
-            # Not typing. Wait a brief "thinking gap" in case they are about to type
-            await asyncio.sleep(2.5)
-            
-            # Final check before proceeding
-            if chat_latest_msg.get(user_key, 0) > event.id:
-                return
-            last_typing_time = max(chat_typing_status.get(chat_id, 0), chat_typing_status.get(sender_id, 0) if sender_id else 0)
-            if time.time() - last_typing_time < 7.0:
-                continue # They started typing again during the gap!
-                
-            break # Ready to process the batch!
-    else:
-        # For Groups: Wait a fixed window to batch consecutive messages from the SAME user
-        base_reading_time = max(1.5, len(incoming_text) * 0.04)
-        reading_delay = min(base_reading_time, 6.0)
-        await asyncio.sleep(reading_delay + random.uniform(1.0, 3.0)) # Base delay + jitter
-        
-        if chat_latest_msg.get(user_key, 0) > event.id:
-            return
+    should_abort = await human_behavior.simulate_reading_and_batching(event, incoming_text)
+    if should_abort:
+        return
     
     # Check if mode was turned off while we were sleeping
     if mode == "pal" and not pal_manager.is_active(chat_id):
@@ -941,7 +1053,7 @@ async def incoming_message_handler(event):
     async with lock:
         # If a newer message arrived from this user in this chat while we were waiting/processing,
         # skip this event. The newer event's handler will process the combined history!
-        if chat_latest_msg.get(user_key, 0) > event.id:
+        if human_behavior.is_superseded(chat_id, sender_id, event.id):
             return
 
         # Double check after obtaining lock

@@ -12,6 +12,7 @@ class MemoryManager:
         self.long_term_memories = {}      # chat_id -> summary string
         self.message_counts = {}          # chat_id -> int
         self.last_summarized_msg_ids = {} # chat_id -> int (watermark message id)
+        self.owner_last_active_time = {}  # chat_id -> timestamp (float)
         self.memory_limit = Config.SHORT_TERM_MEMORY_LIMIT
         self.summary_interval = Config.LONG_TERM_SUMMARY_INTERVAL
         self.max_segment_chars = Config.MAX_MESSAGE_SEGMENT_CHARS
@@ -37,17 +38,20 @@ class MemoryManager:
                         self.long_term_memories = {int(k): str(v) for k, v in data.get("long_term_memories", {}).items()}
                         self.message_counts = {int(k): int(v) for k, v in data.get("message_counts", {}).items()}
                         self.last_summarized_msg_ids = {int(k): int(v) for k, v in data.get("last_summarized_msg_ids", {}).items()}
+                        self.owner_last_active_time = {int(k): float(v) for k, v in data.get("owner_last_active_time", {}).items()}
             except Exception as e:
                 print(f"⚠️ Error loading memory state: {e}")
                 self.reset_cutoffs = {}
                 self.long_term_memories = {}
                 self.message_counts = {}
                 self.last_summarized_msg_ids = {}
+                self.owner_last_active_time = {}
         else:
             self.reset_cutoffs = {}
             self.long_term_memories = {}
             self.message_counts = {}
             self.last_summarized_msg_ids = {}
+            self.owner_last_active_time = {}
 
 
     def save_state(self):
@@ -57,7 +61,8 @@ class MemoryManager:
                 "reset_cutoffs": self.reset_cutoffs,
                 "long_term_memories": self.long_term_memories,
                 "message_counts": self.message_counts,
-                "last_summarized_msg_ids": self.last_summarized_msg_ids
+                "last_summarized_msg_ids": self.last_summarized_msg_ids,
+                "owner_last_active_time": self.owner_last_active_time
             }
             tmp_file = f"{self.state_file}.tmp"
             with open(tmp_file, "w", encoding="utf-8") as f:
@@ -74,6 +79,7 @@ class MemoryManager:
         self.long_term_memories[chat_id] = ""
         self.message_counts[chat_id] = 0
         self.last_summarized_msg_ids[chat_id] = 0
+        self.owner_last_active_time[chat_id] = now_ts
         self.save_state()
         return True
 
@@ -83,6 +89,7 @@ class MemoryManager:
         self.long_term_memories.clear()
         self.message_counts.clear()
         self.last_summarized_msg_ids.clear()
+        self.owner_last_active_time.clear()
         if hasattr(self, 'virtual_messages'):
             self.virtual_messages.clear()
         self.save_state()
@@ -94,6 +101,14 @@ class MemoryManager:
     def get_long_term_summary(self, chat_id: int) -> str:
         """Returns the long-term compressed summary if available."""
         return self.long_term_memories.get(int(chat_id), "").strip()
+
+    def update_owner_activity(self, chat_id: int):
+        import time
+        self.owner_last_active_time[int(chat_id)] = time.time()
+        self.save_state()
+
+    def get_owner_last_active_time(self, chat_id: int) -> float:
+        return self.owner_last_active_time.get(int(chat_id), 0.0)
 
     def truncate_segment(self, text: str, max_chars: int = None) -> str:
         """
@@ -119,6 +134,12 @@ class MemoryManager:
         if len(self.virtual_messages[chat_id]) > 50:
             oldest_key = next(iter(self.virtual_messages[chat_id]))
             del self.virtual_messages[chat_id][oldest_key]
+
+    def get_virtual_text(self, chat_id: int, msg_id: int) -> str:
+        """Retrieves transcribed text for a message ID if it exists."""
+        if hasattr(self, 'virtual_messages'):
+            return self.virtual_messages.get(int(chat_id), {}).get(int(msg_id), "")
+        return ""
 
     async def get_chat_history(self, client, chat_id: int, format_sender_fn, my_id: int, limit: int = None, include_id: bool = False) -> str:
         """

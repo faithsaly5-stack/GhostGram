@@ -93,7 +93,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                                 if not data:
                                     break
                                 await session.send(input={"data": data, "mime_type": "audio/pcm;rate=16000"})
-                                await asyncio.sleep(0.05)
+                                await asyncio.sleep(0.1) # Upload at 10x real-time to prevent server buffer overflow
                                 
                         await session.send(input="", end_of_turn=True)
                         audio_finished = True
@@ -101,12 +101,12 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                     async def receive_transcription():
                         ag = session.receive()
                         current_interim = ""
-                        current_timeout = 15.0  # Wait up to 15s for Gemini to start responding
+                        current_timeout = 45.0  # Wait up to 45s for Gemini to start responding to large files
                         
                         while True:
                             try:
                                 response = await asyncio.wait_for(ag.__anext__(), timeout=current_timeout)
-                                current_timeout = 10.0  # Once it starts streaming, wait up to 10s for new tokens (protects against latency spikes)
+                                current_timeout = 25.0  # Once streaming, wait up to 25s for new tokens
                                 
                                 sc = getattr(response, "server_content", None)
                                 if sc is not None:

@@ -100,7 +100,7 @@ class AssistantManager:
 
     def calculate_typing_delay(self, text: str) -> float:
         """Calculates a realistic typing duration based on text length and punctuation."""
-        from typing_helper import calculate_human_typing_delay
+        from human_behavior import calculate_human_typing_delay
         return calculate_human_typing_delay(text)
 
     async def send_assistant_message(self, client, chat_id, text: str, reply_to=None):
@@ -108,7 +108,7 @@ class AssistantManager:
         if not text or not text.strip():
             return None
         text = text.strip()
-        from typing_helper import ContinuousTyping, calculate_human_typing_delay
+        from human_behavior import ContinuousTyping, calculate_human_typing_delay
         typing_delay = calculate_human_typing_delay(text)
         
         async with ContinuousTyping(client, chat_id):

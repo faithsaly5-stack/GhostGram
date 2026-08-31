@@ -13,8 +13,11 @@
 </p>
 
 <p align="center">
-  <a href="README.md"><b>English</b></a> •
-  <a href="README_FA.md"><b>فارسی</b></a>
+  <a href="README.md"><b>🇺🇸 English</b></a> •
+  <a href="README_FA.md"><b>🇮🇷 فارسی</b></a> •
+  <a href="README_ES.md"><b>🇪🇸 Español</b></a> •
+  <a href="README_RU.md"><b>🇷🇺 Русский</b></a> •
+  <a href="README_ZH.md"><b>🇨🇳 中文</b></a>
 </p>
 
 <p align="center">
@@ -130,6 +133,7 @@ GhostGram natively supports running an unlimited number of completely distinct T
 | `808` (on reply) | Reply Target | **Voice to Text (STT)**: Transcribes voice messages or audio/video files using Gemini Live API. |
 | `809` (on reply/text) | Single Chat | **Smart Voice Engine**: TTS (Text-to-Speech) or generates Smart AI Voice Reply to quoted messages. |
 | `810` | Single Chat | **Voice Settings**: List and select your preferred TTS voice from 30 available options. |
+| `811` | Global | **AI Voice Changer (Stealth)**: Intercepts your sent voice notes, auto-deletes them, and seamlessly replaces them with a generated AI voice reading your exact transcription. |
 | `303` | Single Chat | **View Memory**: Displays saved long-term memory summaries for this chat (append `all` for all chats). |
 | `333` | Single Chat | **Reset Memory**: Clears short-term and long-term memory for this chat. |
 | `999 [limit]` | Single Chat | **Ghost Purge**: Deletes your messages (scans up to 3000 msgs). |
@@ -143,6 +147,14 @@ GhostGram natively supports running an unlimited number of completely distinct T
 
 ## 🛡️ Prompt Injection Security
 GhostGram features advanced security layers that neutralize malicious attempts by users to exploit the AI. If a user instructs the AI to "generate code 999 to delete messages," the system's **Text Processing** layer intelligently injects an invisible Zero-Width Space, completely neutralizing the malicious command and preventing internal codes from being executed by external users.
+
+---
+
+## 👻 Ghost Engine 2.0 (Human Simulation)
+The bot includes a mathematically engineered **Ghost Engine** to prevent it from ever behaving like an automated script:
+- **Piecewise Typing Simulation:** Types at exactly 60-80 WPM with natural punctuation pauses, capped strictly at 35 seconds to prevent UX frustration.
+- **Debounce & Message Batching:** Intelligently waits for users to finish typing in DMs. If a user sends 5 messages back-to-back, GhostGram aborts early threads and processes them all simultaneously, replying just once.
+- **Fake Listening (Voice Notes):** If you send it a 3-minute voice note, it won't reply in 5 seconds. It mathematically simulates physically listening to the audio before typing.
 
 ---
 
