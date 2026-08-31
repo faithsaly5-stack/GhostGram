@@ -411,7 +411,7 @@ async def handle_custom_ask(event, user_instruction=""):
             # --- ON DEMAND TRANSCRIPTION ---
             if not target_text and getattr(reply_msg, "media", None):
                 if getattr(reply_msg, 'voice', None) or getattr(reply_msg, 'video_note', None) or getattr(reply_msg, 'audio', None) or (getattr(reply_msg, 'document', None) and getattr(reply_msg.document, 'mime_type', '').startswith('audio/')):
-                    msg_wait = await event.respond("⏳ **در حال استخراج متن از فایل رسانه برای تحلیل...**")
+                    msg_wait = await client.send_message('me', "⏳ **در حال استخراج متن از فایل رسانه برای تحلیل... (Stealth)**")
                     import os
                     from speech_to_text import transcribe_audio_file
                     os.makedirs("scratch", exist_ok=True)
@@ -489,7 +489,7 @@ async def handle_text_to_speech(event, user_inst):
             # --- ON DEMAND TRANSCRIPTION ---
             if not target_text and getattr(reply_msg, "media", None):
                 if getattr(reply_msg, 'voice', None) or getattr(reply_msg, 'video_note', None) or getattr(reply_msg, 'audio', None) or (getattr(reply_msg, 'document', None) and getattr(reply_msg.document, 'mime_type', '').startswith('audio/')):
-                    msg_wait = await event.respond("⏳ **در حال استخراج متن از فایل رسانه برای تحلیل...**")
+                    msg_wait = await client.send_message('me', "⏳ **در حال استخراج متن از فایل رسانه برای تحلیل... (Stealth)**")
                     import os
                     from speech_to_text import transcribe_audio_file
                     os.makedirs("scratch", exist_ok=True)
