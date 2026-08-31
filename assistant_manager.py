@@ -1,7 +1,6 @@
 import os
 import json
 import asyncio
-import random
 from config import Config
 
 class AssistantManager:

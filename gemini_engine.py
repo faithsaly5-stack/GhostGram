@@ -1,7 +1,4 @@
-import os
 import re
-import html
-import time
 import asyncio
 import threading
 import logging
