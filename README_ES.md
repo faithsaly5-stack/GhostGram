@@ -106,6 +106,11 @@
 
 ---
 
+## 🩺 Registro de Diagnóstico Integral
+El bot cuenta con un **Registrador de Archivos Rotativos** (`ghostgram.log`) de nivel industrial que se ejecuta en segundo plano. Mientras su terminal permanece perfectamente limpia, el archivo de registro graba un rastro microscópico paso a paso de exactamente por qué el bot respondió (o ignoró) cada mensaje, facilitando enormemente la depuración sin consumir espacio de disco infinito.
+
+---
+
 ## 👻 Ghost Engine 2.0 (Simulación Humana)
 El bot incluye un **Ghost Engine** diseñado matemáticamente para evitar que se comporte como un script automatizado:
 - **Simulación de Escritura:** Escribe exactamente a 60-80 WPM con pausas naturales de puntuación, con un límite estricto de 35 segundos.
