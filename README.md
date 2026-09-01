@@ -243,55 +243,80 @@ GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🧠 Memory & Processing Tuning
-# SHORT_TERM_MEMORY_LIMIT: Number of recent messages sent by you to scan to prevent repeating yourself.
+# SHORT_TERM_MEMORY_LIMIT: How many of YOUR recent messages to scan to avoid the AI repeating itself.
+# Unit: Message Count (e.g., 30 = looks at the last 30 messages you sent)
 SHORT_TERM_MEMORY_LIMIT=30
-# LONG_TERM_SUMMARY_INTERVAL: Number of messages after which the AI triggers a long-term memory summary compression.
+# LONG_TERM_SUMMARY_INTERVAL: Trigger long-term memory compression after this many messages.
+# Unit: Message Count (e.g., 30 = compresses memory every 30 messages)
 LONG_TERM_SUMMARY_INTERVAL=30
-# LONG_TERM_SUMMARY_SCAN_LIMIT: Maximum number of recent messages fetched during a long-term summary compression scan.
+# LONG_TERM_SUMMARY_SCAN_LIMIT: How far back the AI looks when compressing older chat history.
+# Unit: Message Count (e.g., 100 = scans the last 100 messages for the summary)
 LONG_TERM_SUMMARY_SCAN_LIMIT=100
-# MAX_LONG_TERM_SUMMARY_CHARS: Maximum characters allowed for a long-term summary record before older parts are truncated.
+# MAX_LONG_TERM_SUMMARY_CHARS: Maximum size of the long-term memory file before older memories are deleted.
+# Unit: Characters (e.g., 600 = keeps around 100-150 words of core memories)
 MAX_LONG_TERM_SUMMARY_CHARS=600
-# MAX_MESSAGE_SEGMENT_CHARS: AI splits messages if they exceed this limit (preserves human-like short bursts).
+# MAX_MESSAGE_SEGMENT_CHARS: AI splits messages if they get too long, keeping responses looking like human texting.
+# Unit: Characters (e.g., 200 = splits long paragraphs into multiple short texts)
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ⚡ Human Simulation Engine (Ghost Engine 2.0)
+# TYPING_SPEED_CPS: How fast the bot pretends to type.
+# Unit: Characters Per Second (e.g., 18.0 = fast human typist)
 TYPING_SPEED_CPS=18.0
+# MIN_TYPING_DELAY: The absolute minimum time the bot will pretend to type, even for a 1-word reply.
+# Unit: Seconds (e.g., 1.5 = waits at least 1.5 seconds)
 MIN_TYPING_DELAY=1.5
+# MAX_TYPING_DELAY: The absolute maximum time the bot will pretend to type, even for a massive essay.
+# Unit: Seconds (e.g., 7.0 = never shows "typing..." for more than 7 seconds)
 MAX_TYPING_DELAY=7.0
-# MAX_DEBOUNCE_WAIT_SECONDS: Maximum time the engine waits for a user to stop typing before it forces a response.
+# MAX_DEBOUNCE_WAIT_SECONDS: How long the bot waits for the other person to finish typing before forcing a reply.
+# Unit: Seconds (e.g., 45.0 = gives up waiting after 45 seconds)
 MAX_DEBOUNCE_WAIT_SECONDS=45.0
-# MAX_VOICE_LISTEN_DELAY_SECONDS: Maximum simulated delay when "listening" to an incoming voice note.
+# MAX_VOICE_LISTEN_DELAY_SECONDS: How long the bot pretends to "listen" to a voice note.
+# Unit: Seconds (e.g., 25.0 = never pretends to listen longer than 25 seconds)
 MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # ⚙️ Advanced System Tuning
 # 🤖 AI Limits & Connectivity
-# GEMINI_MAX_CHARS: Maximum characters sent to AI per request (prevents payload crashes).
+# GEMINI_MAX_CHARS: Maximum text size sent to the AI per request to prevent crashes.
+# Unit: Characters (e.g., 50000 = about 10,000 words)
 GEMINI_MAX_CHARS=50000
-# GEMINI_MAX_ATTEMPTS: How many times the bot will try cascading to different models if one fails.
+# GEMINI_MAX_ATTEMPTS: How many times the bot tries switching API keys if one gets rate-limited.
+# Unit: Retry Count (e.g., 20 = tries up to 20 times across all available keys)
 GEMINI_MAX_ATTEMPTS=20
-# GEMINI_TIMEOUT_SECONDS: Strict timeout (in seconds) before switching to the next AI model.
+# GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
+# Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
 GEMINI_TIMEOUT_SECONDS=25.0
 
 # 🗄️ System & Media
-# LOG_MAX_BYTES: Maximum file size for the log file before it rotates (5242880 = 5MB).
+# LOG_MAX_BYTES: How large the background log file can get before it creates a new one.
+# Unit: Bytes (e.g., 5242880 = exactly 5 Megabytes)
 LOG_MAX_BYTES=5242880
-# LOG_BACKUP_COUNT: How many old log files to keep.
+# LOG_BACKUP_COUNT: How many old log files to keep before deleting the oldest ones.
+# Unit: File Count (e.g., 3 = keeps 3 historical logs)
 LOG_BACKUP_COUNT=3
-# FFMPEG_TIMEOUT_SECONDS: Max time to wait for a voice note to convert to text.
+# FFMPEG_TIMEOUT_SECONDS: Maximum time allowed to convert a voice note before killing the process.
+# Unit: Seconds (e.g., 120 = gives up on broken audio after 2 minutes)
 FFMPEG_TIMEOUT_SECONDS=120
 
 # ⚡ Behavior & Automation
-# AUTO_ENGAGE_INTERVAL_MINUTES: Minutes of user inactivity required before the Ghost Lurker engages.
+# AUTO_ENGAGE_INTERVAL_MINUTES: How long you must be offline before the bot starts talking on your behalf.
+# Unit: Minutes (e.g., 30 = takes over if you haven't spoken in half an hour)
 AUTO_ENGAGE_INTERVAL_MINUTES=30
-# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: The default auto-engage duration if triggered automatically (via schedule or /lurk without arguments).
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: How long the bot stays active in a chat once triggered.
+# Unit: Minutes (e.g., 20 = chats for 20 minutes then goes back to sleep)
 AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
-# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: The check interval (in seconds) for the auto-engage master loop.
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: How often the bot wakes up in the background to check if it should talk.
+# Unit: Seconds (e.g., 60 = checks every 1 minute)
 AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
-# FATAL_ERROR_RETRY_SECONDS: How long the bot waits to retry if the auto-engage loop encounters a fatal error.
+# FATAL_ERROR_RETRY_SECONDS: If the bot crashes, how long it waits before rebooting the background loop.
+# Unit: Seconds (e.g., 60 = reboots after 1 minute)
 FATAL_ERROR_RETRY_SECONDS=60
-# GHOST_PURGE_SCAN_LIMIT: Maximum number of messages to scan back when doing a mass message purge.
+# GHOST_PURGE_SCAN_LIMIT: How many messages the bot scrolls back to delete when you use the purge command.
+# Unit: Message Count (e.g., 3000 = deletes your messages from the last 3000 texts in chat)
 GHOST_PURGE_SCAN_LIMIT=3000
-# AI_VOICE_COOLDOWN_SECONDS: Anti-spam cooldown for voice-changer commands to prevent rate limits.
+# AI_VOICE_COOLDOWN_SECONDS: Anti-spam timer preventing the bot from sending too many voice notes too fast.
+# Unit: Seconds (e.g., 15 = must wait 15s between voice messages)
 AI_VOICE_COOLDOWN_SECONDS=15
 
 # ☁️ System Settings
