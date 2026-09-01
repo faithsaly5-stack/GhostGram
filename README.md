@@ -228,20 +228,34 @@ API_HASH=b18441a1ff607e10a989891a5462e627
 PHONE_NUMBER=+1234567890
 OWNER_ID=123456789
 
-# 📝 EDIT THESE VALUES IN YOUR TEXT EDITOR (Supports Persian/Farsi perfectly)
-OWNER_NAME=Your Name / نام شما
+# 👤 Personal Identity (Supports Persian/Farsi perfectly)
+OWNER_FIRST_NAME=Your First Name / نام شما
+OWNER_LAST_NAME=Your Last Name / نام خانوادگی
 OWNER_BIO=دانشجو و برنامه‌نویس
 OWNER_WEBSITE=yourwebsite.com
 OWNER_SERVICES=مشاوره، برنامه‌نویسی و طراحی پروژه
 OWNER_INTERESTS=موسیقی، کتاب، تکنولوژی و گفتگو
 
+# 🤖 AI Engine Settings
 GEMINI_API_KEYS=your_key_1,your_key_2
 GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
+GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🧠 Memory & Processing Tuning
+SHORT_TERM_MEMORY_LIMIT=30
+LONG_TERM_SUMMARY_INTERVAL=30
+MAX_LONG_TERM_SUMMARY_CHARS=600
+MAX_MESSAGE_SEGMENT_CHARS=200
+
+# ⚡ Human Simulation Engine (Ghost Engine 2.0)
+TYPING_SPEED_CPS=18.0
+MIN_TYPING_DELAY=1.5
+MAX_TYPING_DELAY=7.0
+
+# ☁️ System Settings
 SESSION_NAME=teleagent_session
 SESSION_STRING=1ApW... # Generated automatically by the Setup Wizard
-
-# ☁️ Deployment Settings (Optional)
 VPS_IP=127.0.0.1
 SSH_USER=root
 SSH_PORT=22

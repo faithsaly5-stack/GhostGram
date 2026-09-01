@@ -251,19 +251,36 @@ docker compose logs -f
 API_ID=12345678
 API_HASH=abcdef0123456789abcdef0123456789
 PHONE_NUMBER=+1234567890
-SESSION_NAME=teleagent_session
-# SESSION_STRING= (для облачных платформ Railway / Render)
-
-GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
-
 OWNER_ID=123456789
-OWNER_NAME=Иван
+
+# 👤 Личные данные
+OWNER_FIRST_NAME=Имя
+OWNER_LAST_NAME=Фамилия
 OWNER_BIO=Разработчик & Исследователь
 OWNER_WEBSITE=yourwebsite.com
 OWNER_SERVICES=Разработка ботов, консультирование
 OWNER_INTERESTS=Технологии, музыка, литература
 
+# 🤖 Настройки ИИ-движка
+GEMINI_API_KEYS=your_key_1,your_key_2
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
+GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
+
+# 🧠 Настройки памяти и обработки
+SHORT_TERM_MEMORY_LIMIT=30
+LONG_TERM_SUMMARY_INTERVAL=30
+MAX_LONG_TERM_SUMMARY_CHARS=600
+MAX_MESSAGE_SEGMENT_CHARS=200
+
+# ⚡ Движок симуляции человека (Ghost Engine 2.0)
+TYPING_SPEED_CPS=18.0
+MIN_TYPING_DELAY=1.5
+MAX_TYPING_DELAY=7.0
+
+# ☁️ Системные настройки
+SESSION_NAME=teleagent_session
+# SESSION_STRING= (для облачных платформ Railway / Render)
 VPS_IP=123.45.67.89
 SSH_USER=root
 SSH_PORT=22

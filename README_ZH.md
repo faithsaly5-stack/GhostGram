@@ -256,28 +256,46 @@ docker compose logs -f
 API_ID=12345678
 API_HASH=abcdef0123456789abcdef0123456789
 PHONE_NUMBER=+1234567890
-SESSION_NAME=teleagent_session
-# SESSION_STRING= (可选，用于 Railway/Render 等云端无头部署)
-
-# ==========================================
-# 🧠 GOOGLE GEMINI API 密钥 (支持多 Key 轮询)
-# ==========================================
-GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
+OWNER_ID=123456789
 
 # ==========================================
 # 👤 用户身份与人设动态插值参数
 # ==========================================
-OWNER_ID=123456789
-OWNER_NAME=YourName
+OWNER_FIRST_NAME=YourFirstName
+OWNER_LAST_NAME=YourLastName
 OWNER_BIO=计算机科学研究生 & AI 开发者
 OWNER_WEBSITE=yourwebsite.com
 OWNER_SERVICES=AI 开发、网站建设、咨询
 OWNER_INTERESTS=音乐、科技、摄影、阅读
 
 # ==========================================
-# 🖥️ VPS 自动化部署设置 (可选)
+# 🤖 GOOGLE GEMINI API 引擎设置
 # ==========================================
+GEMINI_API_KEYS=your_key_1,your_key_2
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
+GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
+
+# ==========================================
+# 🧠 记忆与处理设置
+# ==========================================
+SHORT_TERM_MEMORY_LIMIT=30
+LONG_TERM_SUMMARY_INTERVAL=30
+MAX_LONG_TERM_SUMMARY_CHARS=600
+MAX_MESSAGE_SEGMENT_CHARS=200
+
+# ==========================================
+# ⚡ 拟人化引擎设置 (Ghost Engine 2.0)
+# ==========================================
+TYPING_SPEED_CPS=18.0
+MIN_TYPING_DELAY=1.5
+MAX_TYPING_DELAY=7.0
+
+# ==========================================
+# ☁️ 系统与 VPS 自动化部署设置
+# ==========================================
+SESSION_NAME=teleagent_session
+# SESSION_STRING= (可选，用于 Railway/Render 等云端无头部署)
 VPS_IP=123.45.67.89
 SSH_USER=root
 SSH_PORT=22
