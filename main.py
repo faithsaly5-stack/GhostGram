@@ -1231,7 +1231,7 @@ async def auto_engage_loop():
                         continue
 
                     # Check if I have sent a message recently to avoid talking too much
-                    recent_my_msgs = await client.get_messages(chat_id, limit=30, from_user="me")
+                    recent_my_msgs = await client.get_messages(chat_id, limit=Config.SHORT_TERM_MEMORY_LIMIT, from_user="me")
                     if recent_my_msgs:
                         last_mine = recent_my_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                         # If I spoke recently (relative to the configured duration), skip
@@ -1258,7 +1258,8 @@ async def auto_engage_loop():
                     if not pal_manager.is_auto_engage_active(chat_id):
                         continue
 
-                    history_text = await get_recent_chat_history(chat_id, limit=30, include_id=True)
+                    # Provide the chat context for AI to formulate response
+                    history_text = await get_recent_chat_history(chat_id, limit=Config.SHORT_TERM_MEMORY_LIMIT, include_id=True)
                     now_persian = get_current_persian_datetime()
                     ltm = memory_manager.get_long_term_summary(chat_id)
                     ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""

@@ -133,8 +133,8 @@ def calculate_human_typing_delay(text: str) -> float:
     
     total_delay = base_time + pause_time + jitter
     
-    # Strict maximum cap: Never wait more than 35 seconds to send a message.
-    return max(Config.MIN_TYPING_DELAY, min(total_delay, 35.0))
+    # Strict maximum cap: Never wait more than max typing delay to send a message.
+    return max(Config.MIN_TYPING_DELAY, min(total_delay, Config.MAX_TYPING_DELAY))
 
 def ContinuousTyping(client, input_chat_or_id):
     """
