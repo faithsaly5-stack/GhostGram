@@ -2,19 +2,13 @@ import os
 import json
 from config import Config
 
-VOICES = [
-    "Achernar", "Achird", "Algenib", "Algieba", "Alnilam", "Aoede",
-    "Autonoe", "Callirrhoe", "Charon", "Despina", "Enceladus", "Erinome",
-    "Fenrir", "Gacrux", "Iapetus", "Kore", "Laomedeia", "Leda", "Orus",
-    "Puck", "Pulcherrima", "Rasalgethi", "Sadachbia", "Sadaltager",
-    "Schedar", "Sulafat", "Umbriel", "Vindemiatrix", "Zephyr", "Zubenelgenubi"
-]
+VOICES = Config.TTS_VOICES
 
 class VoiceManager:
     def __init__(self):
         self.state_file = os.path.join(Config.PROFILE_DIR, "voice_state.json")
         self.voices = VOICES
-        self.default_index = 6 # Aoede is index 6
+        self.default_index = Config.TTS_DEFAULT_VOICE_INDEX
         
         saved_data = self._load()
         self.current_index = saved_data.get("voice_index", self.default_index)

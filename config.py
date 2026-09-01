@@ -97,3 +97,13 @@ class Config:
     FATAL_ERROR_RETRY_SECONDS = int(os.getenv("FATAL_ERROR_RETRY_SECONDS", "60"))
     GHOST_PURGE_SCAN_LIMIT = int(os.getenv("GHOST_PURGE_SCAN_LIMIT", "3000"))
     AI_VOICE_COOLDOWN_SECONDS = int(os.getenv("AI_VOICE_COOLDOWN_SECONDS", "15"))
+    
+    # Media & Voice Settings
+    TTS_NOISE_LEVEL = float(os.getenv("TTS_NOISE_LEVEL", "0.012"))
+    TTS_HIGHPASS = int(os.getenv("TTS_HIGHPASS", "200"))
+    TTS_LOWPASS = int(os.getenv("TTS_LOWPASS", "4000"))
+    TTS_BITRATE = os.getenv("TTS_BITRATE", "32k")
+    TTS_VOICES = [v.strip() for v in os.getenv("TTS_VOICES", "Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi").split(",")]
+    TTS_DEFAULT_VOICE_INDEX = int(os.getenv("TTS_DEFAULT_VOICE_INDEX", "6"))
+    STT_INITIAL_TIMEOUT_SECONDS = float(os.getenv("STT_INITIAL_TIMEOUT_SECONDS", "45.0"))
+    STT_STREAMING_TIMEOUT_SECONDS = float(os.getenv("STT_STREAMING_TIMEOUT_SECONDS", "25.0"))

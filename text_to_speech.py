@@ -128,15 +128,15 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 os.close(fd)
                 
                 # Apply surgical FFmpeg filters: 
-                # 1. Bandpass filter (highpass 200, lowpass 4000) to simulate a smartphone microphone's frequency response.
+                # 1. Bandpass filter to simulate a smartphone microphone's frequency response.
                 # 2. Pink noise overlay (anoisesrc) to simulate natural room ambiance and mic static.
                 cmd = [
                     FFMPEG_EXE, "-y", 
                     "-i", "pipe:0",
-                    "-f", "lavfi", "-i", "anoisesrc=c=pink:r=24000:a=0.012",
-                    "-filter_complex", "[0:a]highpass=f=200,lowpass=f=4000[v];[v][1:a]amix=inputs=2:duration=shortest[a]",
+                    "-f", "lavfi", "-i", f"anoisesrc=c=pink:r=24000:a={Config.TTS_NOISE_LEVEL}",
+                    "-filter_complex", f"[0:a]highpass=f={Config.TTS_HIGHPASS},lowpass=f={Config.TTS_LOWPASS}[v];[v][1:a]amix=inputs=2:duration=shortest[a]",
                     "-map", "[a]",
-                    "-c:a", "libopus", "-b:a", "32k",
+                    "-c:a", "libopus", "-b:a", Config.TTS_BITRATE,
                     temp_ogg
                 ]
 

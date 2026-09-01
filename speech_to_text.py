@@ -103,12 +103,12 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                     async def receive_transcription():
                         ag = session.receive()
                         current_interim = ""
-                        current_timeout = 45.0  # Wait up to 45s for Gemini to start responding to large files
+                        current_timeout = Config.STT_INITIAL_TIMEOUT_SECONDS  # Wait up to 45s for Gemini to start responding to large files
                         
                         while True:
                             try:
                                 response = await asyncio.wait_for(ag.__anext__(), timeout=current_timeout)
-                                current_timeout = 25.0  # Once streaming, wait up to 25s for new tokens
+                                current_timeout = Config.STT_STREAMING_TIMEOUT_SECONDS  # Once streaming, wait up to 25s for new tokens
                                 
                                 sc = getattr(response, "server_content", None)
                                 if sc is not None:

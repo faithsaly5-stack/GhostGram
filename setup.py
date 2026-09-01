@@ -174,6 +174,31 @@ GHOST_PURGE_SCAN_LIMIT=3000
 # Unit: Seconds (e.g., 15 = must wait 15s between voice messages)
 AI_VOICE_COOLDOWN_SECONDS=15
 
+# 🎙️ Media & Audio Settings
+# TTS_NOISE_LEVEL: The intensity of the simulated pink noise/static added to the bot's voice to make it sound like a real mic.
+# Unit: Amplitude (e.g., 0.012 = subtle static, 0 = crystal clear, 0.05 = noisy room)
+TTS_NOISE_LEVEL=0.012
+# TTS_HIGHPASS / TTS_LOWPASS: Audio EQ filters applied to simulate a smartphone microphone frequency response.
+# Unit: Hertz (Hz)
+TTS_HIGHPASS=200
+TTS_LOWPASS=4000
+# TTS_BITRATE: Compression quality of the generated OGG audio file.
+# Unit: Bitrate string (e.g., 32k = standard voice note quality, 64k = high quality)
+TTS_BITRATE=32k
+# TTS_DEFAULT_VOICE_INDEX: The default AI voice number used by the bot out of the TTS_VOICES list (1-indexed).
+# Unit: Integer (e.g., 6 = Aoede)
+TTS_DEFAULT_VOICE_INDEX=6
+# TTS_VOICES: The list of Gemini TTS voice names available. You can add new ones here if Google adds them.
+# Unit: Comma-separated strings
+TTS_VOICES=Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi
+
+# STT_INITIAL_TIMEOUT_SECONDS: How long the bot waits for the Gemini AI to start analyzing a large received audio file.
+# Unit: Seconds (e.g., 45.0)
+STT_INITIAL_TIMEOUT_SECONDS=45.0
+# STT_STREAMING_TIMEOUT_SECONDS: Timeout between streaming text chunks when the AI is transcribing audio.
+# Unit: Seconds (e.g., 25.0)
+STT_STREAMING_TIMEOUT_SECONDS=25.0
+
 SESSION_STRING={session_string}
 """
 
