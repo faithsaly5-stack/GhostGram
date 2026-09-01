@@ -150,6 +150,11 @@ GhostGram features advanced security layers that neutralize malicious attempts b
 
 ---
 
+## 🩺 Comprehensive Diagnostic Logging
+The bot features an industrial-grade **Rotating File Logger** (`ghostgram.log`) that runs in the background. While your terminal stays perfectly clean, the log file records a microscopic, step-by-step trace of exactly why the bot replied (or ignored) every single message, making debugging incredibly easy without consuming infinite disk space.
+
+---
+
 ## 👻 Ghost Engine 2.0 (Human Simulation)
 The bot includes a mathematically engineered **Ghost Engine** to prevent it from ever behaving like an automated script:
 - **Piecewise Typing Simulation:** Types at exactly 60-80 WPM with natural punctuation pauses, capped strictly at 35 seconds to prevent UX frustration.
