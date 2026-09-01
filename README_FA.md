@@ -202,6 +202,30 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🎙️ تنظیمات رسانه و صدا
+# TTS_NOISE_LEVEL: شدت نویز/پارازیت صورتی شبیه‌سازی شده روی صدای ربات تا شبیه میکروفون واقعی شود.
+# واحد: دامنه (مثلاً 0.012 = پارازیت ملایم، 0 = شفاف، 0.05 = محیط پر سر و صدا)
+TTS_NOISE_LEVEL=0.012
+# TTS_HIGHPASS / TTS_LOWPASS: فیلترهای صوتی EQ اعمال شده برای شبیه‌سازی پاسخ فرکانسی میکروفون گوشی هوشمند.
+# واحد: هرتز (Hz)
+TTS_HIGHPASS=200
+TTS_LOWPASS=4000
+# TTS_BITRATE: کیفیت فشرده‌سازی فایل صوتی OGG تولید شده.
+# واحد: بیت‌ریت (مثلاً 32k = کیفیت استاندارد، 64k = کیفیت بالا)
+TTS_BITRATE=32k
+# TTS_DEFAULT_VOICE_INDEX: شماره صدای پیش‌فرض هوش مصنوعی مورد استفاده ربات از لیست TTS_VOICES (شروع از ۱).
+# واحد: عدد صحیح (مثلاً 6 = Aoede)
+TTS_DEFAULT_VOICE_INDEX=6
+# TTS_VOICES: لیست نام صداهای TTS موجود در Gemini.
+# واحد: نام‌های جدا شده با ویرگول
+TTS_VOICES=Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi
+# STT_INITIAL_TIMEOUT_SECONDS: مدت زمانی که ربات منتظر می‌ماند تا هوش مصنوعی شروع به تحلیل یک فایل صوتی بزرگ کند.
+# واحد: ثانیه (مثلاً 45.0)
+STT_INITIAL_TIMEOUT_SECONDS=45.0
+# STT_STREAMING_TIMEOUT_SECONDS: زمان انتظار بین تکه‌های متنی استریم شده هنگام تبدیل ویس به متن.
+# واحد: ثانیه (مثلاً 25.0)
+STT_STREAMING_TIMEOUT_SECONDS=25.0
+
 # 🧠 تنظیمات حافظه و پردازش
 # SHORT_TERM_MEMORY_LIMIT: تعداد پیام‌های اخیر ارسالی توسط شما که برای جلوگیری از تکرار بررسی می‌شوند.
 SHORT_TERM_MEMORY_LIMIT=30

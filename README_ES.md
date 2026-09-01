@@ -267,6 +267,30 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🎙️ Ajustes de Medios y Audio
+# TTS_NOISE_LEVEL: La intensidad del ruido rosa/estática simulada agregada a la voz del bot para que suene como un micrófono real.
+# Unidad: Amplitud (ej., 0.012 = estática sutil, 0 = claro, 0.05 = ruidoso)
+TTS_NOISE_LEVEL=0.012
+# TTS_HIGHPASS / TTS_LOWPASS: Filtros de audio (EQ) para simular la respuesta de frecuencia del micrófono de un teléfono inteligente.
+# Unidad: Hertzios (Hz)
+TTS_HIGHPASS=200
+TTS_LOWPASS=4000
+# TTS_BITRATE: Calidad de compresión del archivo de audio OGG generado.
+# Unidad: Tasa de bits (ej., 32k = nota de voz estándar, 64k = alta calidad)
+TTS_BITRATE=32k
+# TTS_DEFAULT_VOICE_INDEX: El número de voz de IA predeterminado (índice 1) utilizado por el bot de la lista TTS_VOICES.
+# Unidad: Número entero (ej., 6 = Aoede)
+TTS_DEFAULT_VOICE_INDEX=6
+# TTS_VOICES: La lista de nombres de voz TTS de Gemini disponibles.
+# Unidad: Cadenas separadas por comas
+TTS_VOICES=Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi
+# STT_INITIAL_TIMEOUT_SECONDS: Tiempo que espera el bot a que la IA comience a analizar un archivo de audio recibido de gran tamaño.
+# Unidad: Segundos (ej., 45.0)
+STT_INITIAL_TIMEOUT_SECONDS=45.0
+# STT_STREAMING_TIMEOUT_SECONDS: Tiempo de espera entre fragmentos de texto transmitidos cuando la IA transcribe audio.
+# Unidad: Segundos (ej., 25.0)
+STT_STREAMING_TIMEOUT_SECONDS=25.0
+
 # 🧠 Ajustes de Memoria y Procesamiento
 # SHORT_TERM_MEMORY_LIMIT: Número de mensajes recientes enviados por ti para analizar y evitar repetirte.
 SHORT_TERM_MEMORY_LIMIT=30

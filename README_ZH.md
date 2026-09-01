@@ -276,6 +276,30 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🎙️ 媒体与音频设置
+# TTS_NOISE_LEVEL: 机器人声音中添加的模拟粉红噪音/静电的强度，使其听起来像真实的麦克风。
+# 单位: 振幅 (例如，0.012 = 轻微静电，0 = 清晰，0.05 = 嘈杂环境)
+TTS_NOISE_LEVEL=0.012
+# TTS_HIGHPASS / TTS_LOWPASS: 应用于模拟智能手机麦克风频率响应的音频 EQ 滤波器。
+# 单位: 赫兹 (Hz)
+TTS_HIGHPASS=200
+TTS_LOWPASS=4000
+# TTS_BITRATE: 生成的 OGG 音频文件的压缩质量。
+# 单位: 比特率字符串 (例如，32k = 标准语音消息，64k = 高质量)
+TTS_BITRATE=32k
+# TTS_DEFAULT_VOICE_INDEX: 从 TTS_VOICES 列表中使用的默认 AI 声音编号（基于 1 索引）。
+# 单位: 整数 (例如，6 = Aoede)
+TTS_DEFAULT_VOICE_INDEX=6
+# TTS_VOICES: 可用的 Gemini TTS 声音名称列表。
+# 单位: 逗号分隔的字符串
+TTS_VOICES=Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi
+# STT_INITIAL_TIMEOUT_SECONDS: 机器人等待 AI 开始分析大型接收音频文件的时间。
+# 单位: 秒 (例如，45.0)
+STT_INITIAL_TIMEOUT_SECONDS=45.0
+# STT_STREAMING_TIMEOUT_SECONDS: AI 转换音频时流式文本块之间的超时。
+# 单位: 秒 (例如，25.0)
+STT_STREAMING_TIMEOUT_SECONDS=25.0
+
 # ==========================================
 # 🧠 内存与处理调优
 # ==========================================

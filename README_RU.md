@@ -267,6 +267,30 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🎙️ Настройки медиа и звука
+# TTS_NOISE_LEVEL: Интенсивность имитируемого розового шума/помех, добавляемых к голосу бота.
+# Единица измерения: Амплитуда (напр., 0.012 = легкие помехи, 0 = кристально чистый, 0.05 = шумная комната)
+TTS_NOISE_LEVEL=0.012
+# TTS_HIGHPASS / TTS_LOWPASS: Звуковые фильтры EQ, применяемые для имитации АЧХ микрофона смартфона.
+# Единица измерения: Герц (Hz)
+TTS_HIGHPASS=200
+TTS_LOWPASS=4000
+# TTS_BITRATE: Качество сжатия генерируемого аудиофайла OGG.
+# Единица измерения: Битрейт (напр., 32k = стандартное голосовое сообщение, 64k = высокое качество)
+TTS_BITRATE=32k
+# TTS_DEFAULT_VOICE_INDEX: Номер ИИ-голоса по умолчанию (начиная с 1) из списка TTS_VOICES.
+# Единица измерения: Целое число (напр., 6 = Aoede)
+TTS_DEFAULT_VOICE_INDEX=6
+# TTS_VOICES: Список доступных имен голосов Gemini TTS.
+# Единица измерения: Строки через запятую
+TTS_VOICES=Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi
+# STT_INITIAL_TIMEOUT_SECONDS: Время ожидания начала анализа большого аудиофайла ИИ.
+# Единица измерения: Секунды (напр., 45.0)
+STT_INITIAL_TIMEOUT_SECONDS=45.0
+# STT_STREAMING_TIMEOUT_SECONDS: Тайм-аут между потоковыми фрагментами текста при транскрибации аудио.
+# Единица измерения: Секунды (напр., 25.0)
+STT_STREAMING_TIMEOUT_SECONDS=25.0
+
 # 🧠 Настройки памяти и обработки
 # SHORT_TERM_MEMORY_LIMIT: Количество ваших недавних сообщений для сканирования, чтобы избежать повторений.
 SHORT_TERM_MEMORY_LIMIT=30
