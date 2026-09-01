@@ -72,16 +72,21 @@ class APIUsageTracker:
         import asyncio
         import os
         import copy
+        import threading
+        if not hasattr(self, '_write_lock'):
+            self._write_lock = threading.Lock()
+            
         data = copy.deepcopy(self.usage_data)
         
         def _write():
-            try:
-                tmp_file = f"{self.filename}.tmp"
-                with open(tmp_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2)
-                os.replace(tmp_file, self.filename)
-            except Exception:
-                pass
+            with self._write_lock:
+                try:
+                    tmp_file = f"{self.filename}.tmp"
+                    with open(tmp_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, indent=2)
+                    os.replace(tmp_file, self.filename)
+                except Exception:
+                    pass
 
         try:
             loop = asyncio.get_running_loop()

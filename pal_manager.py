@@ -45,19 +45,24 @@ class PalManager:
     def save_state(self):
         """Persists active chat IDs and auto-engage IDs to disk (Async Offloaded)."""
         import asyncio
+        import threading
+        if not hasattr(self, '_write_lock'):
+            self._write_lock = threading.Lock()
+            
         data = {
             "active_chats": self.active_chats.copy(),
             "auto_engage_chats": self.auto_engage_chats.copy()
         }
         
         def _write():
-            try:
-                tmp_file = f"{self.state_file}.tmp"
-                with open(tmp_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-                os.replace(tmp_file, self.state_file)
-            except Exception as e:
-                logger.error(f"⚠️ Error saving Pal state: {e}")
+            with self._write_lock:
+                try:
+                    tmp_file = f"{self.state_file}.tmp"
+                    with open(tmp_file, "w", encoding="utf-8") as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                    os.replace(tmp_file, self.state_file)
+                except Exception as e:
+                    logger.error(f"⚠️ Error saving Pal state: {e}")
 
         try:
             loop = asyncio.get_running_loop()

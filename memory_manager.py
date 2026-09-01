@@ -57,6 +57,10 @@ class MemoryManager:
 
     def save_state(self):
         """Atomically persists all memory states and watermarks to disk (Async Offloaded)."""
+        import threading
+        if not hasattr(self, '_write_lock'):
+            self._write_lock = threading.Lock()
+            
         # 1. Snapshot the dictionaries synchronously to prevent race conditions during write
         data = {
             "reset_cutoffs": self.reset_cutoffs.copy(),
@@ -67,14 +71,15 @@ class MemoryManager:
         }
         
         def _write():
-            try:
-                tmp_file = f"{self.state_file}.tmp"
-                with open(tmp_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-                os.replace(tmp_file, self.state_file)
-                logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
-            except Exception as e:
-                logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
+            with self._write_lock:
+                try:
+                    tmp_file = f"{self.state_file}.tmp"
+                    with open(tmp_file, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                    os.replace(tmp_file, self.state_file)
+                    logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
+                except Exception as e:
+                    logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
 
         # 2. Fire and forget in a background thread so the event loop never stutters
         try:

@@ -31,19 +31,24 @@ class VoiceManager:
 
     def save(self):
         import asyncio
+        import threading
+        if not hasattr(self, '_write_lock'):
+            self._write_lock = threading.Lock()
+            
         data = {
             "voice_index": self.current_index,
             "voice_changer_active": self.voice_changer_active
         }
         
         def _write():
-            try:
-                tmp_file = f"{self.state_file}.tmp"
-                with open(tmp_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f)
-                os.replace(tmp_file, self.state_file)
-            except Exception:
-                pass
+            with self._write_lock:
+                try:
+                    tmp_file = f"{self.state_file}.tmp"
+                    with open(tmp_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f)
+                    os.replace(tmp_file, self.state_file)
+                except Exception:
+                    pass
 
         try:
             loop = asyncio.get_running_loop()
