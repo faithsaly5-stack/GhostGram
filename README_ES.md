@@ -106,6 +106,13 @@
 
 ---
 
+## 🚀 Escalabilidad de Grado Empresarial y Anti-Ban
+- **Rotación de Claves API:** Cargue claves API de Gemini ilimitadas en su `.env`. Si una clave alcanza su límite (Cuota 429), el motor rota de forma instantánea y fluida a la siguiente clave sin perder el mensaje.
+- **Modelos en Cascada Automática:** El bot cuenta con enrutamiento inteligente de conmutación por error. Si su modelo de IA principal está sobrecargado por Google, se transfiere automáticamente a sus modelos de respaldo secundarios para garantizar un tiempo de inactividad cero.
+- **Protección Anti-Ban FloodWait:** Tareas en segundo plano como Ghost Purge (999) cuentan con una simulación matemática de "fatiga humana". Toma micro-descansos calculados entre eliminaciones masivas y maneja las trampas FloodWait de Telegram silenciosamente para evadir por completo los bloqueos de cuenta.
+
+---
+
 ## 🩺 Registro de Diagnóstico Integral
 El bot cuenta con un **Registrador de Archivos Rotativos** (`ghostgram.log`) de nivel industrial que se ejecuta en segundo plano. Mientras su terminal permanece perfectamente limpia, el archivo de registro graba un rastro microscópico paso a paso de exactamente por qué el bot respondió (o ignoró) cada mensaje, facilitando enormemente la depuración sin consumir espacio de disco infinito.
 
