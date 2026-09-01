@@ -98,15 +98,25 @@ GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🧠 Memory & Processing Tuning
+# SHORT_TERM_MEMORY_LIMIT: Number of recent messages sent by you to scan to prevent repeating yourself.
 SHORT_TERM_MEMORY_LIMIT=30
+# LONG_TERM_SUMMARY_INTERVAL: Number of messages after which the AI triggers a long-term memory summary compression.
 LONG_TERM_SUMMARY_INTERVAL=30
+# LONG_TERM_SUMMARY_SCAN_LIMIT: Maximum number of recent messages fetched during a long-term summary compression scan.
+LONG_TERM_SUMMARY_SCAN_LIMIT=100
+# MAX_LONG_TERM_SUMMARY_CHARS: Maximum characters allowed for a long-term summary record before older parts are truncated.
 MAX_LONG_TERM_SUMMARY_CHARS=600
+# MAX_MESSAGE_SEGMENT_CHARS: AI splits messages if they exceed this limit (preserves human-like short bursts).
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ⚡ Human Simulation Engine (Ghost Engine 2.0)
 TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
+# MAX_DEBOUNCE_WAIT_SECONDS: Maximum time the engine waits for a user to stop typing before it forces a response.
+MAX_DEBOUNCE_WAIT_SECONDS=45.0
+# MAX_VOICE_LISTEN_DELAY_SECONDS: Maximum simulated delay when "listening" to an incoming voice note.
+MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # --- Advanced System Tuning ---
 # 🤖 AI Limits & Connectivity
@@ -128,6 +138,12 @@ FFMPEG_TIMEOUT_SECONDS=120
 # ⚡ Behavior & Automation
 # AUTO_ENGAGE_INTERVAL_MINUTES: Minutes of user inactivity required before the Ghost Lurker engages.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: The default auto-engage duration if triggered automatically (via schedule or /lurk without arguments).
+AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: The check interval (in seconds) for the auto-engage master loop.
+AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
+# FATAL_ERROR_RETRY_SECONDS: How long the bot waits to retry if the auto-engage loop encounters a fatal error.
+FATAL_ERROR_RETRY_SECONDS=60
 # GHOST_PURGE_SCAN_LIMIT: Maximum number of messages to scan back when doing a mass message purge.
 GHOST_PURGE_SCAN_LIMIT=3000
 # AI_VOICE_COOLDOWN_SECONDS: Anti-spam cooldown for voice-changer commands to prevent rate limits.

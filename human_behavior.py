@@ -46,9 +46,9 @@ async def simulate_reading_and_batching(event, incoming_text: str) -> bool:
         if is_voice:
             # Simulate listening to the audio. 
             # Average speaking speed is ~12 chars per second.
-            # We cap at 25s (simulates listening at ~1.5x-2.0x speed for very long notes)
+            # We cap at configured seconds (simulates listening at ~1.5x-2.0x speed for very long notes)
             simulated_listen_time = len(incoming_text) / 12.0
-            reading_delay = min(simulated_listen_time, 25.0)
+            reading_delay = min(simulated_listen_time, Config.MAX_VOICE_LISTEN_DELAY_SECONDS)
         else:
             # Fast text reading (~25 chars per sec). Capped at 6s for responsiveness.
             base_reading_time = 1.5 + (len(incoming_text) / 25.0)
@@ -62,8 +62,8 @@ async def simulate_reading_and_batching(event, incoming_text: str) -> bool:
             if _chat_latest_msg.get(user_key, 0) > event.id:
                 return True
                 
-            # Safety ceiling: avoid waiting longer than 45 seconds under any circumstance
-            if time.time() - start_wait_time > 45.0:
+            # Safety ceiling: avoid waiting longer than configured seconds under any circumstance
+            if time.time() - start_wait_time > Config.MAX_DEBOUNCE_WAIT_SECONDS:
                 break
                 
             # Check if user is typing (activity within last 7 seconds)

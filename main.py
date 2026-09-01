@@ -1190,14 +1190,14 @@ async def auto_engage_loop():
     global auto_engage_schedule
     while True:
         try:
-            # Smart Dispatcher Loop: Wake up every 60 seconds
-            await asyncio.sleep(60)
+            # Smart Dispatcher Loop: Wake up based on config
+            await asyncio.sleep(Config.AUTO_ENGAGE_LOOP_INTERVAL_SECONDS)
+            now = datetime.now(timezone.utc).timestamp()
             
             global my_info
             if not my_info:
                 continue
             my_id = my_info.id
-            now_ts = datetime.now(timezone.utc).timestamp()
             
             # Clean up obsolete schedules
             for chat_id in list(auto_engage_schedule.keys()):
@@ -1213,17 +1213,17 @@ async def auto_engage_loop():
                     # Initial delay is randomized safely
                     min_delay = min(2, duration_minutes * 0.5) * 60
                     max_delay = duration_minutes * 60
-                    auto_engage_schedule[chat_id] = (now_ts + random.uniform(min_delay, max_delay), duration_minutes)
+                    auto_engage_schedule[chat_id] = (now + random.uniform(min_delay, max_delay), duration_minutes)
                     
                 next_time, _ = auto_engage_schedule[chat_id]
                     
                 # Is it time to engage for this specific chat?
-                if now_ts < next_time:
+                if now < next_time:
                     continue # Not time yet
                     
                 # IT'S TIME! Reschedule for the next cycle immediately
                 next_delay = random.uniform(duration_minutes * 0.75, duration_minutes * 1.25) * 60
-                auto_engage_schedule[chat_id] = (now_ts + next_delay, duration_minutes)
+                auto_engage_schedule[chat_id] = (now + next_delay, duration_minutes)
                 
                 try:
                     # Verify auto-engage is still active
@@ -1235,7 +1235,7 @@ async def auto_engage_loop():
                     if recent_my_msgs:
                         last_mine = recent_my_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                         # If I spoke recently (relative to the configured duration), skip
-                        if now_ts - last_mine < (duration_minutes * 60 * 0.75):
+                        if now - last_mine < (duration_minutes * 60 * 0.75):
                             logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (I spoke recently).")
                             continue # I already talked recently, skip engaging.
                     
@@ -1251,7 +1251,7 @@ async def auto_engage_loop():
                     last_msg_time = latest_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                     # A chat is dead if no one spoke in 30 mins OR 1.5x the configured duration
                     dead_threshold = max(30 * 60, duration_minutes * 60 * 1.5)
-                    if now_ts - last_msg_time > dead_threshold:
+                    if now - last_msg_time > dead_threshold:
                         logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (Chat is dead).")
                         continue # Chat is dead, don't randomly talk to nobody.
                     
@@ -1355,8 +1355,8 @@ async def auto_engage_loop():
                     logger.error(f"⚠️ Auto-Engage error in chat {chat_id}: {e}", exc_info=True)
                     
         except Exception as e:
-            logger.error(f"⚠️ Auto-Engage Loop Error: {e}", exc_info=True)
-            await asyncio.sleep(60) # Sleep before retrying loop on fatal error
+            logger.critical(f"🔥 FATAL ERROR in auto-engage task: {e}")
+            await asyncio.sleep(Config.FATAL_ERROR_RETRY_SECONDS) # Sleep before retrying loop on fatal error
 
 # ==========================================================
 # 🌟 MAIN STARTUP

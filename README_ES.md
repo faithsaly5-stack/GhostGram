@@ -267,16 +267,26 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
-# 🧠 Ajuste de Memoria y Procesamiento
+# 🧠 Ajustes de Memoria y Procesamiento
+# SHORT_TERM_MEMORY_LIMIT: Número de mensajes recientes enviados por ti para analizar y evitar repetirte.
 SHORT_TERM_MEMORY_LIMIT=30
+# LONG_TERM_SUMMARY_INTERVAL: Número de mensajes tras los cuales la IA comprime la memoria a largo plazo.
 LONG_TERM_SUMMARY_INTERVAL=30
+# LONG_TERM_SUMMARY_SCAN_LIMIT: Número máximo de mensajes analizados durante una compresión de memoria.
+LONG_TERM_SUMMARY_SCAN_LIMIT=100
+# MAX_LONG_TERM_SUMMARY_CHARS: Caracteres máximos para el registro a largo plazo antes de truncarse.
 MAX_LONG_TERM_SUMMARY_CHARS=600
+# MAX_MESSAGE_SEGMENT_CHARS: La IA divide los mensajes que superen este límite (ráfagas más humanas).
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ⚡ Motor de Simulación Humana (Ghost Engine 2.0)
 TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
+# MAX_DEBOUNCE_WAIT_SECONDS: Tiempo máximo de espera para que un usuario deje de escribir.
+MAX_DEBOUNCE_WAIT_SECONDS=45.0
+# MAX_VOICE_LISTEN_DELAY_SECONDS: Retraso simulado máximo al "escuchar" una nota de voz.
+MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # ⚙️ Ajustes Avanzados del Sistema
 # 🤖 Límites de IA y Conectividad
@@ -298,6 +308,12 @@ FFMPEG_TIMEOUT_SECONDS=120
 # ⚡ Comportamiento y Automatización
 # AUTO_ENGAGE_INTERVAL_MINUTES: Minutos de inactividad necesarios antes de que el Ghost Lurker interactúe.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: Duración por defecto si se activa automáticamente.
+AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: Intervalo de comprobación (en segundos) para el bucle del Lurker.
+AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
+# FATAL_ERROR_RETRY_SECONDS: Tiempo de espera para reintentar tras un error fatal en el bucle.
+FATAL_ERROR_RETRY_SECONDS=60
 # GHOST_PURGE_SCAN_LIMIT: Número máximo de mensajes a analizar al hacer una purga masiva.
 GHOST_PURGE_SCAN_LIMIT=3000
 # AI_VOICE_COOLDOWN_SECONDS: Enfriamiento anti-spam para comandos de cambio de voz.

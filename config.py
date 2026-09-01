@@ -70,9 +70,14 @@ class Config:
     LONG_TERM_SUMMARY_INTERVAL = int(os.getenv("LONG_TERM_SUMMARY_INTERVAL", "30"))
     MAX_LONG_TERM_SUMMARY_CHARS = int(os.getenv("MAX_LONG_TERM_SUMMARY_CHARS", "600"))
     MAX_MESSAGE_SEGMENT_CHARS = int(os.getenv("MAX_MESSAGE_SEGMENT_CHARS", "200"))
+    LONG_TERM_SUMMARY_SCAN_LIMIT = int(os.getenv("LONG_TERM_SUMMARY_SCAN_LIMIT", "100"))
+
+    # ⚡ Human Simulation Engine (Ghost Engine 2.0)
     TYPING_SPEED_CPS = float(os.getenv("TYPING_SPEED_CPS", "18.0"))  # characters typed per second
     MIN_TYPING_DELAY = float(os.getenv("MIN_TYPING_DELAY", "1.5"))   # seconds
     MAX_TYPING_DELAY = float(os.getenv("MAX_TYPING_DELAY", "7.0"))   # seconds
+    MAX_DEBOUNCE_WAIT_SECONDS = float(os.getenv("MAX_DEBOUNCE_WAIT_SECONDS", "45.0"))
+    MAX_VOICE_LISTEN_DELAY_SECONDS = float(os.getenv("MAX_VOICE_LISTEN_DELAY_SECONDS", "25.0"))
     
     # --- Advanced System Tuning ---
     # AI Limits & Connectivity
@@ -87,5 +92,8 @@ class Config:
     
     # Behavior & Automation
     AUTO_ENGAGE_INTERVAL_MINUTES = int(os.getenv("AUTO_ENGAGE_INTERVAL_MINUTES", "30"))
+    AUTO_ENGAGE_DEFAULT_DURATION_MINUTES = int(os.getenv("AUTO_ENGAGE_DEFAULT_DURATION_MINUTES", "20"))
+    AUTO_ENGAGE_LOOP_INTERVAL_SECONDS = int(os.getenv("AUTO_ENGAGE_LOOP_INTERVAL_SECONDS", "60"))
+    FATAL_ERROR_RETRY_SECONDS = int(os.getenv("FATAL_ERROR_RETRY_SECONDS", "60"))
     GHOST_PURGE_SCAN_LIMIT = int(os.getenv("GHOST_PURGE_SCAN_LIMIT", "3000"))
     AI_VOICE_COOLDOWN_SECONDS = int(os.getenv("AI_VOICE_COOLDOWN_SECONDS", "15"))

@@ -203,15 +203,25 @@ GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🧠 تنظیمات حافظه و پردازش
+# SHORT_TERM_MEMORY_LIMIT: تعداد پیام‌های اخیر ارسالی توسط شما که برای جلوگیری از تکرار بررسی می‌شوند.
 SHORT_TERM_MEMORY_LIMIT=30
+# LONG_TERM_SUMMARY_INTERVAL: تعداد پیام‌هایی که پس از آن هوش مصنوعی فشرده‌سازی خلاصه حافظه بلندمدت را آغاز می‌کند.
 LONG_TERM_SUMMARY_INTERVAL=30
+# LONG_TERM_SUMMARY_SCAN_LIMIT: حداکثر تعداد پیام‌های اخیر بازیابی شده در طول اسکن فشرده‌سازی حافظه بلندمدت.
+LONG_TERM_SUMMARY_SCAN_LIMIT=100
+# MAX_LONG_TERM_SUMMARY_CHARS: حداکثر کاراکترهای مجاز برای سوابق خلاصه بلندمدت قبل از کوتاه شدن بخش‌های قدیمی‌تر.
 MAX_LONG_TERM_SUMMARY_CHARS=600
+# MAX_MESSAGE_SEGMENT_CHARS: هوش مصنوعی پیام‌هایی که از این حد فراتر می‌روند را به قطعات کوچک‌تر تقسیم می‌کند (برای حفظ لحن طبیعی انسان).
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ⚡ موتور شبیه‌سازی انسان (Ghost Engine 2.0)
 TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
+# MAX_DEBOUNCE_WAIT_SECONDS: حداکثر زمانی که موتور منتظر می‌ماند تا تایپ کردن کاربر متوقف شود قبل از اینکه پاسخی اجباری ارسال کند.
+MAX_DEBOUNCE_WAIT_SECONDS=45.0
+# MAX_VOICE_LISTEN_DELAY_SECONDS: حداکثر تاخیر شبیه‌سازی شده هنگام "گوش دادن" به یک پیام صوتی دریافتی.
+MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # ⚙️ تنظیمات پیشرفته سیستم
 # 🤖 محدودیت‌های هوش مصنوعی و اتصال
@@ -233,6 +243,12 @@ FFMPEG_TIMEOUT_SECONDS=120
 # ⚡ رفتار و اتوماسیون
 # AUTO_ENGAGE_INTERVAL_MINUTES: دقایق عدم فعالیت کاربر قبل از اینکه Ghost Lurker درگیر شود.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: مدت زمان پیش‌فرض درگیری خودکار در صورت راه‌اندازی (از طریق برنامه زمان‌بندی یا /lurk).
+AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: فاصله بررسی (به ثانیه) برای حلقه اصلی درگیری خودکار.
+AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
+# FATAL_ERROR_RETRY_SECONDS: مدت زمانی که ربات در صورت بروز خطای مهلک در حلقه درگیری خودکار برای تلاش مجدد صبر می‌کند.
+FATAL_ERROR_RETRY_SECONDS=60
 # GHOST_PURGE_SCAN_LIMIT: حداکثر تعداد پیام‌هایی که هنگام پاکسازی گروهی بررسی می‌شوند.
 GHOST_PURGE_SCAN_LIMIT=3000
 # AI_VOICE_COOLDOWN_SECONDS: زمان استراحت (Cooldown) ضد اسپم برای دستورات تغییر صدا.

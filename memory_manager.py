@@ -230,13 +230,13 @@ class MemoryManager:
             
         async with lock:
             try:
-                logger.info(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
+                        logger.info(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
                 cutoff_ts = self.get_cutoff_timestamp(chat_id)
                 last_watermark = self.last_summarized_msg_ids.get(chat_id, 0)
                 
-                # Fetch up to 100 messages since last watermark. If bot was offline, older messages are intentionally dropped.
+                # Fetch up to Config.LONG_TERM_SUMMARY_SCAN_LIMIT messages since last watermark. If bot was offline, older messages are intentionally dropped.
                 fetched_msgs = []
-                iter_kwargs = {"limit": 100}
+                iter_kwargs = {"limit": Config.LONG_TERM_SUMMARY_SCAN_LIMIT}
                 if last_watermark > 0:
                     iter_kwargs["min_id"] = last_watermark
                     

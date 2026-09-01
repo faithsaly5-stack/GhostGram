@@ -268,15 +268,25 @@ GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🧠 Настройки памяти и обработки
+# SHORT_TERM_MEMORY_LIMIT: Количество ваших недавних сообщений для сканирования, чтобы избежать повторений.
 SHORT_TERM_MEMORY_LIMIT=30
+# LONG_TERM_SUMMARY_INTERVAL: Количество сообщений, после которого ИИ запускает сжатие долгосрочной памяти.
 LONG_TERM_SUMMARY_INTERVAL=30
+# LONG_TERM_SUMMARY_SCAN_LIMIT: Максимальное количество недавних сообщений, извлекаемых во время сжатия памяти.
+LONG_TERM_SUMMARY_SCAN_LIMIT=100
+# MAX_LONG_TERM_SUMMARY_CHARS: Максимальное количество символов для долгосрочной памяти перед удалением старых записей.
 MAX_LONG_TERM_SUMMARY_CHARS=600
+# MAX_MESSAGE_SEGMENT_CHARS: ИИ разбивает сообщения, если они превышают этот лимит (для более человечного общения).
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ⚡ Движок симуляции человека (Ghost Engine 2.0)
 TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
+# MAX_DEBOUNCE_WAIT_SECONDS: Максимальное время ожидания, пока пользователь не перестанет печатать.
+MAX_DEBOUNCE_WAIT_SECONDS=45.0
+# MAX_VOICE_LISTEN_DELAY_SECONDS: Максимальная симулируемая задержка при "прослушивании" входящего голосового сообщения.
+MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # ⚙️ Расширенные настройки системы
 # 🤖 Лимиты ИИ и подключение
@@ -298,6 +308,12 @@ FFMPEG_TIMEOUT_SECONDS=120
 # ⚡ Поведение и автоматизация
 # AUTO_ENGAGE_INTERVAL_MINUTES: Минуты неактивности пользователя до включения Ghost Lurker.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: Продолжительность автоматического взаимодействия по умолчанию.
+AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: Интервал проверки (в секундах) для основного цикла авто-взаимодействия.
+AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
+# FATAL_ERROR_RETRY_SECONDS: Время ожидания перед повторной попыткой после фатальной ошибки цикла.
+FATAL_ERROR_RETRY_SECONDS=60
 # GHOST_PURGE_SCAN_LIMIT: Максимальное количество сообщений для сканирования при массовой очистке.
 GHOST_PURGE_SCAN_LIMIT=3000
 # AI_VOICE_COOLDOWN_SECONDS: Анти-спам задержка для команд изменения голоса.

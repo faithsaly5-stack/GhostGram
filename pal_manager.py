@@ -73,8 +73,10 @@ class PalManager:
             return True
         return False
         
-    def activate_auto_engage(self, chat_id: int, duration_minutes: int = 20) -> bool:
+    def activate_auto_engage(self, chat_id: int, duration_minutes: int = None) -> bool:
         """Activates Auto-Engage (Lurker) for a chat with a specific duration."""
+        if duration_minutes is None:
+            duration_minutes = Config.AUTO_ENGAGE_DEFAULT_DURATION_MINUTES
         if self.auto_engage_chats.get(chat_id) != duration_minutes:
             self.auto_engage_chats[chat_id] = duration_minutes
             self.save_state()

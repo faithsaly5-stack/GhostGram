@@ -277,11 +277,17 @@ GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # ==========================================
-# 🧠 记忆与处理设置
+# 🧠 内存与处理调优
 # ==========================================
+# SHORT_TERM_MEMORY_LIMIT: 扫描您最近发送的消息数量，以防止重复说话。
 SHORT_TERM_MEMORY_LIMIT=30
+# LONG_TERM_SUMMARY_INTERVAL: 经过多少条消息后，AI 触发长期记忆压缩摘要。
 LONG_TERM_SUMMARY_INTERVAL=30
+# LONG_TERM_SUMMARY_SCAN_LIMIT: 在长期记忆摘要压缩扫描期间获取的最大近期消息数。
+LONG_TERM_SUMMARY_SCAN_LIMIT=100
+# MAX_LONG_TERM_SUMMARY_CHARS: 长期摘要记录在旧部分被截断前允许的最大字符数。
 MAX_LONG_TERM_SUMMARY_CHARS=600
+# MAX_MESSAGE_SEGMENT_CHARS: 如果消息超过此限制，AI 会将其拆分（保持像人类一样的短句）。
 MAX_MESSAGE_SEGMENT_CHARS=200
 
 # ==========================================
@@ -290,6 +296,10 @@ MAX_MESSAGE_SEGMENT_CHARS=200
 TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
+# MAX_DEBOUNCE_WAIT_SECONDS: 引擎在强制回复前等待用户停止输入的最大时间。
+MAX_DEBOUNCE_WAIT_SECONDS=45.0
+# MAX_VOICE_LISTEN_DELAY_SECONDS: “收听”输入语音笔记时的最大模拟延迟。
+MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 
 # ==========================================
 # ⚙️ 高级系统调优
@@ -313,6 +323,12 @@ FFMPEG_TIMEOUT_SECONDS=120
 # ⚡ 行为与自动化
 # AUTO_ENGAGE_INTERVAL_MINUTES: Ghost Lurker 参与前所需的用户不活动分钟数。
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# AUTO_ENGAGE_DEFAULT_DURATION_MINUTES: 自动触发时的默认参与持续时间。
+AUTO_ENGAGE_DEFAULT_DURATION_MINUTES=20
+# AUTO_ENGAGE_LOOP_INTERVAL_SECONDS: 自动参与主循环的检查间隔（秒）。
+AUTO_ENGAGE_LOOP_INTERVAL_SECONDS=60
+# FATAL_ERROR_RETRY_SECONDS: 如果循环遇到致命错误，机器人的重试等待时间。
+FATAL_ERROR_RETRY_SECONDS=60
 # GHOST_PURGE_SCAN_LIMIT: 批量清除消息时向后扫描的最大消息数。
 GHOST_PURGE_SCAN_LIMIT=3000
 # AI_VOICE_COOLDOWN_SECONDS: 变声器命令的防垃圾冷却时间。
