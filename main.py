@@ -13,7 +13,7 @@ from gemini_engine import gemini
 from pal_manager import pal_manager
 from assistant_manager import assistant_manager
 from memory_manager import memory_manager
-from typing_helper import ContinuousTyping, calculate_human_typing_delay
+from human_behavior import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
 from text_processing import normalize_digits
 import random
