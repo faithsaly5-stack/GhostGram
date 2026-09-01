@@ -563,14 +563,22 @@ async def handle_text_to_speech(event, user_inst):
             import time
             last_ai_voice_time = time.time()
             
-            sent_msg = await client.send_file(
-                event.chat_id, 
-                ogg_path, 
-                voice_note=True, 
-                reply_to=reply_to_id
-            )
-            # Inject the AI's generated response into stealth virtual memory mapped to the real message ID!
-            memory_manager.add_virtual_message(chat_id, sent_msg.id, f"[Voice Note] {text}")
+            try:
+                sent_msg = await client.send_file(
+                    event.chat_id, 
+                    ogg_path, 
+                    voice_note=True, 
+                    reply_to=reply_to_id
+                )
+                # Inject the AI's generated response into stealth virtual memory mapped to the real message ID!
+                memory_manager.add_virtual_message(chat_id, sent_msg.id, f"[Voice Note] {text}")
+            except Exception as media_err:
+                if "You cannot send voices" in str(media_err) or "SendMediaRequest" in str(media_err):
+                    logger.warning(f"Voice restricted in chat {event.chat_id}, falling back to text.")
+                    sent_msg = await event.respond(f"🎤 *(Voice restricted in this chat, sending text instead)*\n\n{text}", reply_to=reply_to_id)
+                    memory_manager.add_virtual_message(chat_id, sent_msg.id, text)
+                else:
+                    raise media_err
             
     except Exception as e:
         logger.error(f"❌ **خطای غیرمنتظره در TTS:**\n`{str(e)}`")
@@ -723,12 +731,19 @@ async def handle_voice_changer(event):
                     import time
                     last_ai_voice_time = time.time()
                     
-                    await client.send_file(
-                        event.chat_id,
-                        ogg_path,
-                        voice_note=True,
-                        reply_to=reply_to_id
-                    )
+                    try:
+                        await client.send_file(
+                            event.chat_id,
+                            ogg_path,
+                            voice_note=True,
+                            reply_to=reply_to_id
+                        )
+                    except Exception as media_err:
+                        if "You cannot send voices" in str(media_err) or "SendMediaRequest" in str(media_err):
+                            logger.warning(f"Voice restricted in chat {event.chat_id}, falling back to text.")
+                            await event.respond(f"🎤 *(Voice restricted in this chat, sending text instead)*\n\n{transcript}", reply_to=reply_to_id)
+                        else:
+                            raise media_err
                     
                     try:
                         os.remove(ogg_path)
