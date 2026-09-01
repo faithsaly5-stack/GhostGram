@@ -278,6 +278,22 @@ TYPING_SPEED_CPS=18.0
 MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
 
+# ⚙️ Расширенные настройки системы
+# Лимиты ИИ и подключение
+GEMINI_MAX_CHARS=50000
+GEMINI_MAX_ATTEMPTS=20
+GEMINI_TIMEOUT_SECONDS=25.0
+
+# Система и медиа
+LOG_MAX_BYTES=5242880
+LOG_BACKUP_COUNT=3
+FFMPEG_TIMEOUT_SECONDS=120
+
+# Поведение и автоматизация
+AUTO_ENGAGE_INTERVAL_MINUTES=30
+GHOST_PURGE_SCAN_LIMIT=3000
+AI_VOICE_COOLDOWN_SECONDS=15
+
 # ☁️ Системные настройки
 SESSION_NAME=teleagent_session
 # SESSION_STRING= (для облачных платформ Railway / Render)

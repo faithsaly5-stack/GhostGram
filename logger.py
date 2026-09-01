@@ -25,8 +25,8 @@ def setup_logger():
     # Create file handler
     log_file = os.path.join(Config.PROFILE_DIR, "ghostgram.log")
     try:
-        # 5 MB max per file, keeping 3 backup files (total 20 MB max history per profile)
-        fh = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8')
+        # File sizes and backups controlled by .env
+        fh = RotatingFileHandler(log_file, maxBytes=Config.LOG_MAX_BYTES, backupCount=Config.LOG_BACKUP_COUNT, encoding='utf-8')
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
         logger.addHandler(fh)

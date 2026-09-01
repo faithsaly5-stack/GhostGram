@@ -39,10 +39,10 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
         fd, temp_wav_path = tempfile.mkstemp(suffix=".wav")
         os.close(fd)
         
-        # Run ffmpeg to convert any input format to strict 16kHz mono WAV, capped at 120 seconds max
+        # Run ffmpeg to convert any input format to strict 16kHz mono WAV, capped at timeout
         cmd = [
             FFMPEG_EXE, "-y", "-i", file_path, 
-            "-t", "120", 
+            "-t", str(Config.FFMPEG_TIMEOUT_SECONDS), 
             "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", 
             temp_wav_path
         ]

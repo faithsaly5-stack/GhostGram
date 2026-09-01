@@ -331,8 +331,8 @@ async def handle_purge(event, limit=None, search_only_mine=False):
         async for msg in client.iter_messages(input_chat, **iter_kwargs):
             msg_scan_count += 1
             
-            if msg_scan_count > 3000:
-                logger.info(f"😴 Human Purge: Reached scrolling fatigue limit (3000). Stopping scan.")
+            if msg_scan_count > Config.GHOST_PURGE_SCAN_LIMIT:
+                logger.info(f"😴 Human Purge: Reached scrolling fatigue limit ({Config.GHOST_PURGE_SCAN_LIMIT}). Stopping scan.")
                 break
             
             # Simulate human scrolling / reading through chat history
@@ -753,8 +753,8 @@ async def outgoing_command_dispatcher(event):
     global last_ai_voice_time
     
     if getattr(event, 'voice', None) and voice_manager.voice_changer_active:
-        # Prevent infinite loops from bot-generated voice notes
-        if time.time() - last_ai_voice_time < 15:
+        # Simple rate limiter for voice commands (from Config)
+        if time.time() - last_ai_voice_time < Config.AI_VOICE_COOLDOWN_SECONDS:
             return 
         await handle_voice_changer(event)
         return
@@ -940,7 +940,8 @@ async def global_memory_tracker(event):
     else:
         if event.is_group or event.is_channel:
             last_active = memory_manager.get_owner_last_active_time(chat_id)
-            if time.time() - last_active > 30 * 60:
+            # Check if 30 minutes (from Config) passed since user's last message
+            if time.time() - last_active > Config.AUTO_ENGAGE_INTERVAL_MINUTES * 60:
                 logger.debug(f"[MEMORY] Ignored message in {chat_id} (Owner inactive for 30m).")
                 return # Ignore message (owner is not actively participating)
                 

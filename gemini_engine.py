@@ -47,7 +47,7 @@ class GeminiEngine:
         safe_sys_prompt = control_char_re.sub('', system_prompt)
 
         # 2. Safety cap on payload size
-        MAX_CHARS = 50000
+        MAX_CHARS = Config.GEMINI_MAX_CHARS
         if len(safe_user_msg) > MAX_CHARS:
             safe_user_msg = safe_user_msg[:MAX_CHARS // 2] + "\n\n...[TRUNCATED]...\n\n" + safe_user_msg[-(MAX_CHARS // 2):]
 
@@ -57,8 +57,8 @@ class GeminiEngine:
 
         loop = asyncio.get_running_loop()
         
-        # Give it up to 20 attempts to cascade through models or wait out cooldowns
-        max_attempts = 20
+        # Give it up to configured attempts to cascade through models or wait out cooldowns
+        max_attempts = Config.GEMINI_MAX_ATTEMPTS
 
         for attempt in range(max_attempts):
             model_to_use, api_key = api_tracker.get_best_available_model(self.keys, start_model=start_model)
@@ -81,7 +81,7 @@ class GeminiEngine:
                 import time
                 start_time = time.time()
                 
-                # 25-second strict timeout per attempt
+                # Strict timeout per attempt
                 resp = await asyncio.wait_for(
                     loop.run_in_executor(
                         None,
@@ -89,7 +89,7 @@ class GeminiEngine:
                             model=m, contents=cont, config=conf
                         )
                     ),
-                    timeout=25.0
+                    timeout=Config.GEMINI_TIMEOUT_SECONDS
                 )
                 
                 elapsed_time = time.time() - start_time
@@ -108,7 +108,7 @@ class GeminiEngine:
                 # Force immediate GLOBAL cascade for this model across all keys
                 for k in self.keys:
                     api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120, quiet=True)
-                print(f"⚠️ Key timeout (25s) on model '{model_to_use}'. Forcing immediate GLOBAL cascade to next model for 2 minutes...")
+                print(f"⚠️ Key timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Forcing immediate GLOBAL cascade to next model for 2 minutes...")
                 continue
 
             except Exception as e:

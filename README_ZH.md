@@ -292,6 +292,24 @@ MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
 
 # ==========================================
+# ⚙️ 高级系统调优
+# ==========================================
+# AI 限制与连接
+GEMINI_MAX_CHARS=50000
+GEMINI_MAX_ATTEMPTS=20
+GEMINI_TIMEOUT_SECONDS=25.0
+
+# 系统与媒体
+LOG_MAX_BYTES=5242880
+LOG_BACKUP_COUNT=3
+FFMPEG_TIMEOUT_SECONDS=120
+
+# 行为与自动化
+AUTO_ENGAGE_INTERVAL_MINUTES=30
+GHOST_PURGE_SCAN_LIMIT=3000
+AI_VOICE_COOLDOWN_SECONDS=15
+
+# ==========================================
 # ☁️ 系统与 VPS 自动化部署设置
 # ==========================================
 SESSION_NAME=teleagent_session

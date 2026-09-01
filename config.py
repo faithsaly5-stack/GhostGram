@@ -73,4 +73,19 @@ class Config:
     TYPING_SPEED_CPS = float(os.getenv("TYPING_SPEED_CPS", "18.0"))  # characters typed per second
     MIN_TYPING_DELAY = float(os.getenv("MIN_TYPING_DELAY", "1.5"))   # seconds
     MAX_TYPING_DELAY = float(os.getenv("MAX_TYPING_DELAY", "7.0"))   # seconds
-
+    
+    # --- Advanced System Tuning ---
+    # AI Limits & Connectivity
+    GEMINI_MAX_CHARS = int(os.getenv("GEMINI_MAX_CHARS", "50000"))
+    GEMINI_MAX_ATTEMPTS = int(os.getenv("GEMINI_MAX_ATTEMPTS", "20"))
+    GEMINI_TIMEOUT_SECONDS = float(os.getenv("GEMINI_TIMEOUT_SECONDS", "25.0"))
+    
+    # System & Media
+    LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", "5242880"))
+    LOG_BACKUP_COUNT = int(os.getenv("LOG_BACKUP_COUNT", "3"))
+    FFMPEG_TIMEOUT_SECONDS = int(os.getenv("FFMPEG_TIMEOUT_SECONDS", "120"))
+    
+    # Behavior & Automation
+    AUTO_ENGAGE_INTERVAL_MINUTES = int(os.getenv("AUTO_ENGAGE_INTERVAL_MINUTES", "30"))
+    GHOST_PURGE_SCAN_LIMIT = int(os.getenv("GHOST_PURGE_SCAN_LIMIT", "3000"))
+    AI_VOICE_COOLDOWN_SECONDS = int(os.getenv("AI_VOICE_COOLDOWN_SECONDS", "15"))
