@@ -7,6 +7,7 @@ import imageio_ffmpeg
 from google import genai
 from google.genai import types
 from config import Config
+from logger import logger
 
 # Suppress harmless google-genai AFC deprecation logger warning to keep logs clean
 logging.getLogger("google_genai").setLevel(logging.ERROR)
@@ -62,6 +63,8 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
         return "Error: No text provided."
     if not api_keys:
         return "Error: No API keys provided."
+        
+    logger.debug(f"[MEDIA] TTS started for text length: {len(text)}")
 
     # Define cascade models to failover seamlessly
     models_to_try = [Config.GEMINI_TTS_MODEL]
@@ -149,7 +152,8 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                         except:
                             pass
                     return f"Error: FFMPEG conversion failed.\n{stderr.decode(errors='ignore')}"
-
+                    
+                logger.debug(f"[MEDIA] TTS completed successfully using {model_name}.")
                 return temp_ogg
 
             except Exception as e:
@@ -157,16 +161,17 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 err_str = str(e).lower()
                 
                 if "503" in err_str or "500" in err_str or "unavailable" in err_str or "internal" in err_str or "timeout" in err_str:
-                    print(f"⚠️ Gemini Network Error on TTS ({model_name}) (503/Timeout). Forcing immediate cascade to next model...")
+                    logger.warning(f"⚠️ Gemini Network Error on TTS ({model_name}) (503/Timeout). Forcing immediate cascade to next model...")
                     break  # Break API key loop, go immediately to next model!
                 elif "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
-                    print(f"⏳ Key {key_preview} hit rate limit on TTS ({model_name}). Rotating...")
+                    logger.warning(f"⏳ Key {key_preview} hit rate limit on TTS ({model_name}). Rotating...")
                     continue
                 elif "403" in err_str or "api_key_invalid" in err_str:
-                    print(f"❌ Key {key_preview} is invalid. Rotating...")
+                    logger.warning(f"❌ Key {key_preview} is invalid. Rotating...")
                     continue
                 else:
-                    print(f"⚠️ Unknown error on TTS with key {key_preview} ({model_name}): {e}. Rotating...")
+                    logger.error(f"⚠️ Unknown error on TTS with key {key_preview} ({model_name}): {e}. Rotating...")
                     continue
 
+    logger.error(f"All keys and models exhausted during TTS generation. Last Error: {last_error}")
     return f"Error: All keys and models exhausted during TTS generation. Last Error: {last_error}"

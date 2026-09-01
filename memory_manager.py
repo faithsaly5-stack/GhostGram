@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime, timezone
 from config import Config
 from text import Text
+from logger import logger
 
 class MemoryManager:
     def __init__(self, state_file=Config.MEMORY_STATE_FILE):
@@ -40,7 +41,7 @@ class MemoryManager:
                         self.last_summarized_msg_ids = {int(k): int(v) for k, v in data.get("last_summarized_msg_ids", {}).items()}
                         self.owner_last_active_time = {int(k): float(v) for k, v in data.get("owner_last_active_time", {}).items()}
             except Exception as e:
-                print(f"⚠️ Error loading memory state: {e}")
+                logger.error(f"⚠️ Error loading memory state: {e}", exc_info=True)
                 self.reset_cutoffs = {}
                 self.long_term_memories = {}
                 self.message_counts = {}
@@ -68,8 +69,9 @@ class MemoryManager:
             with open(tmp_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             os.replace(tmp_file, self.state_file)
+            logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
         except Exception as e:
-            print(f"⚠️ Error saving memory state: {e}")
+            logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
 
     def reset_chat_memory(self, chat_id: int):
         """Sets the memory cutoff to now, clears long-term summary, count, and watermarks for this chat."""
@@ -93,7 +95,7 @@ class MemoryManager:
         if hasattr(self, 'virtual_messages'):
             self.virtual_messages.clear()
         self.save_state()
-        print("♻️ Memory Manager has been factory reset.")
+        logger.info("♻️ Memory Manager has been factory reset.")
 
     def get_cutoff_timestamp(self, chat_id: int) -> float:
         return self.reset_cutoffs.get(int(chat_id), 0.0)
@@ -189,7 +191,7 @@ class MemoryManager:
                     messages.append(f"[{time_str}] {name}{reply_info}: {cleaned_content}")
                 
         except Exception as e:
-            print(f"⚠️ Error reading memory for chat {chat_id}: {e}")
+            logger.error(f"⚠️ Error reading memory for chat {chat_id}: {e}", exc_info=True)
 
         if not messages:
             return "گفت‌وگوی قبلی وجود ندارد (حافظه تازه است)."
@@ -228,7 +230,7 @@ class MemoryManager:
             
         async with lock:
             try:
-                print(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
+                logger.info(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
                 cutoff_ts = self.get_cutoff_timestamp(chat_id)
                 last_watermark = self.last_summarized_msg_ids.get(chat_id, 0)
                 

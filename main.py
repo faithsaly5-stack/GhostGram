@@ -16,6 +16,7 @@ from memory_manager import memory_manager
 from human_behavior import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
 from text_processing import normalize_digits
+from logger import logger
 import random
 import time
 
@@ -96,16 +97,16 @@ async def handle_pal_on(event, mode="normal"):
         await event.delete()
     except Exception:
         pass
-    print(f"🔮 Stealth Pal ({mode.upper()} Mode) ACTIVATED for chat {chat_id}")
+    logger.info(f"🔮 Stealth Pal ({mode.upper()} Mode) ACTIVATED for chat {chat_id}")
 
 async def handle_pal_off(event, is_all=False):
     if is_all:
         count = pal_manager.deactivate_all()
-        print(f"💤 Stealth Pal DEACTIVATED globally for all {count} chats")
+        logger.info(f"💤 Stealth Pal DEACTIVATED globally for all {count} chats")
     else:
         chat_id = event.chat_id
         pal_manager.deactivate(chat_id)
-        print(f"💤 Stealth Pal DEACTIVATED for chat {chat_id}")
+        logger.info(f"💤 Stealth Pal DEACTIVATED for chat {chat_id}")
     try:
         await event.delete()
     except Exception:
@@ -135,7 +136,7 @@ async def calculate_dynamic_engage_duration(client, chat_id: int) -> int:
         # Clamp between 2 and 120 minutes
         return max(2, min(target_duration, 120))
     except Exception as e:
-        print(f"⚠️ Error calculating dynamic duration for {chat_id}: {e}")
+        logger.error(f"⚠️ Error calculating dynamic duration for {chat_id}: {e}", exc_info=True)
         return 20 # Safe fallback
 
 async def handle_auto_engage_on(event, duration=20):
@@ -147,16 +148,16 @@ async def handle_auto_engage_on(event, duration=20):
         await event.delete()
     except Exception:
         pass
-    print(f"🕵️ Auto-Engage (Lurker) ACTIVATED for chat {chat_id} with duration {duration}m")
+    logger.info(f"🕵️ Auto-Engage (Lurker) ACTIVATED for chat {chat_id} with duration {duration}m")
 
 async def handle_auto_engage_off(event, is_all=False):
     if is_all:
         count = pal_manager.deactivate_all_engages()
-        print(f"🛑 Auto-Engage DEACTIVATED globally for all {count} chats")
+        logger.info(f"🛑 Auto-Engage DEACTIVATED globally for all {count} chats")
     else:
         chat_id = event.chat_id
         pal_manager.deactivate_auto_engage(chat_id)
-        print(f"🛑 Auto-Engage (Lurker) DEACTIVATED for chat {chat_id}")
+        logger.info(f"🛑 Auto-Engage (Lurker) DEACTIVATED for chat {chat_id}")
     try:
         await event.delete()
     except Exception:
@@ -169,16 +170,16 @@ async def handle_assistant_on(event):
         await event.delete()
     except Exception:
         pass
-    print(f"💼 Universal Assistant Mode ACTIVATED for all DMs (un-muted {chat_id})")
+    logger.info(f"💼 Universal Assistant Mode ACTIVATED for all DMs (un-muted {chat_id})")
 
 async def handle_assistant_off(event, is_all=False):
     chat_id = event.chat_id
     if is_all:
         assistant_manager.deactivate_global()
-        print(f"🛑 Universal Assistant Mode DEACTIVATED globally for all DMs")
+        logger.info(f"🛑 Universal Assistant Mode DEACTIVATED globally for all DMs")
     else:
         assistant_manager.mute_chat(chat_id)
-        print(f"🤫 Assistant MUTED only in chat {chat_id} (All other DMs remain active)")
+        logger.info(f"🤫 Assistant MUTED only in chat {chat_id} (All other DMs remain active)")
     try:
         await event.delete()
     except Exception:
@@ -222,7 +223,7 @@ async def handle_reset_memory(event):
         await event.delete()
     except Exception:
         pass
-    print(f"🧠 Short-term memory RESET for chat {chat_id}")
+    logger.info(f"🧠 Short-term memory RESET for chat {chat_id}")
 
 async def handle_view_memory(event, is_all=False):
     try:
@@ -331,7 +332,7 @@ async def handle_purge(event, limit=None, search_only_mine=False):
             msg_scan_count += 1
             
             if msg_scan_count > 3000:
-                print(f"😴 Human Purge: Reached scrolling fatigue limit (3000). Stopping scan.")
+                logger.info(f"😴 Human Purge: Reached scrolling fatigue limit (3000). Stopping scan.")
                 break
             
             # Simulate human scrolling / reading through chat history
@@ -363,12 +364,12 @@ async def handle_purge(event, limit=None, search_only_mine=False):
                     
                     # 2. Human fatigue / distraction break
                     if delete_streak_count >= random.randint(7, 15):
-                        print(f"🧘‍♂️ Human Purge: Taking a short break after {delete_streak_count} deletes...")
+                        logger.info(f"🧘‍♂️ Human Purge: Taking a short break after {delete_streak_count} deletes...")
                         await asyncio.sleep(random.uniform(4.5, 9.5))
                         delete_streak_count = 0
                     
                 except FloodWaitError as e:
-                    print(f"⏳ FloodWait in Purge. Sleeping for {e.seconds}s...")
+                    logger.info(f"⏳ FloodWait in Purge. Sleeping for {e.seconds}s...")
                     await asyncio.sleep(e.seconds + random.uniform(3.0, 7.0))
                     try:
                         await client.delete_messages(input_chat, [msg.id], revoke=True)
@@ -381,9 +382,9 @@ async def handle_purge(event, limit=None, search_only_mine=False):
                 if limit is not None and deleted_count >= limit:
                     break
             
-        print(f"🧹 Stealth Purged {deleted_count} messages (Ultra-Human Mode) from chat {chat_id}")
+        logger.info(f"🧹 Stealth Purged {deleted_count} messages (Ultra-Human Mode) from chat {chat_id}")
     except Exception as e:
-        print(f"⚠️ Purge error in chat {chat_id}: {e}")
+        logger.error(f"⚠️ Purge error in chat {chat_id}: {e}", exc_info=True)
 
 async def handle_custom_ask(event, user_instruction=""):
     reply_to_id = event.reply_to_msg_id
@@ -422,9 +423,12 @@ async def handle_custom_ask(event, user_instruction=""):
                             os.remove(audio_path)
                         except:
                             pass
-                        if transcribed and not transcribed.startswith("Error"):
-                            target_text = f"[Voice Note] {transcribed}"
-                            memory_manager.add_virtual_message(chat_id, reply_msg.id, target_text)
+                        if transcribed:
+                            if transcribed.startswith("Error"):
+                                logger.warning(f"Voice note transcription failed: {transcribed}")
+                            else:
+                                target_text = f"[Voice Note] {transcribed}"
+                                memory_manager.add_virtual_message(chat_id, reply_msg.id, target_text)
                     try:
                         await msg_wait.delete()
                     except:
@@ -458,7 +462,7 @@ async def handle_custom_ask(event, user_instruction=""):
                 human_typing_time = calculate_human_typing_delay(response)
                 await asyncio.sleep(human_typing_time)
                 await client.send_message(input_chat, response, reply_to=reply_to_id)
-                print(f"⚡ Handled 111 in chat {chat_id}")
+                logger.info(f"⚡ Handled 111 in chat {chat_id}")
 
 async def handle_text_to_speech(event, user_inst):
     try:
@@ -535,12 +539,14 @@ async def handle_text_to_speech(event, user_inst):
             text = ""
                 
     if not text:
-        msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد یا تولید نشد.**\n\n💡 *راهنما:* `809 <متن>` *یا روی یک پیام ریپلای کنید.*")
-        await asyncio.sleep(6)
-        try:
-            await msg.delete()
-        except Exception:
-            pass
+        logger.warning("TTS failed: No text generated.")
+        if event.chat_id == my_info.id:
+            msg = await event.respond("❌ **متنی برای تبدیل به صدا یافت نشد یا تولید نشد.**\n\n💡 *راهنما:* `809 <متن>` *یا روی یک پیام ریپلای کنید.*")
+            await asyncio.sleep(6)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
         return
 
     try:
@@ -549,7 +555,9 @@ async def handle_text_to_speech(event, user_inst):
         ogg_path = await generate_voice_message(text, keys, voice_name=voice_name)
         
         if ogg_path.startswith("Error"):
-            await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
+            logger.error(f"TTS Error: {ogg_path}")
+            if event.chat_id == my_info.id:
+                await event.respond(f"❌ **خطا در ساخت صدا:**\n`{ogg_path}`", reply_to=reply_to_id)
         else:
             global last_ai_voice_time
             import time
@@ -565,7 +573,9 @@ async def handle_text_to_speech(event, user_inst):
             memory_manager.add_virtual_message(chat_id, sent_msg.id, f"[Voice Note] {text}")
             
     except Exception as e:
-        await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`")
+        logger.error(f"❌ **خطای غیرمنتظره در TTS:**\n`{str(e)}`")
+        if event.chat_id == my_info.id:
+            await event.respond(f"❌ **خطای غیرمنتظره در TTS:**\n`{str(e)}`")
     finally:
         import os
         if 'ogg_path' in locals() and ogg_path and not ogg_path.startswith("Error") and os.path.exists(ogg_path):
@@ -590,7 +600,15 @@ async def handle_voice_settings(event, val_str):
             else:
                 msg = await event.respond(f"❌ **شماره صدا نامعتبر است (بین ۱ تا {len(VOICES)}).**")
         except ValueError:
-            msg = await event.respond("❌ **لطفاً فقط یک عدد صحیح وارد کنید.**")
+            logger.warning("Invalid voice number provided.")
+            if event.chat_id == my_info.id:
+                msg = await event.respond("❌ **لطفاً فقط یک عدد صحیح وارد کنید.**")
+                await asyncio.sleep(4)
+                try:
+                    await msg.delete()
+                except Exception:
+                    pass
+            return
             
         await asyncio.sleep(4)
         try:
@@ -621,18 +639,22 @@ async def handle_transcribe(event):
 
     reply_msg = await event.get_reply_message()
     if not reply_msg or not getattr(reply_msg, "media", None):
-        msg = await event.respond("❌ **لطفاً این دستور را روی یک پیام صوتی، آهنگ یا ویدیو ریپلای کنید.**")
-        await asyncio.sleep(4)
-        try:
-            await msg.delete()
-        except Exception:
-            pass
+        logger.warning("STT failed: Not a media message.")
+        if event.chat_id == my_info.id:
+            msg = await event.respond("❌ **لطفاً این دستور را روی یک پیام صوتی، آهنگ یا ویدیو ریپلای کنید.**")
+            await asyncio.sleep(4)
+            try:
+                await msg.delete()
+            except Exception:
+                pass
         return
 
     try:
         file_path = await reply_msg.download_media("temp_transcribe")
         if not file_path:
-            await event.respond("❌ **خطا در دانلود فایل!**", reply_to=reply_msg.id)
+            logger.error("STT failed: Could not download media file.")
+            if event.chat_id == my_info.id:
+                await event.respond("❌ **خطا در دانلود فایل!**", reply_to=reply_msg.id)
             return
             
         from speech_to_text import transcribe_audio_file
@@ -641,7 +663,9 @@ async def handle_transcribe(event):
         transcript = await transcribe_audio_file(file_path, keys)
         
         if transcript.startswith("Error"):
-            await event.respond(f"❌ **خطا در پردازش:**\n`{transcript}`", reply_to=reply_msg.id)
+            logger.error(f"STT Processing Error: {transcript}")
+            if event.chat_id == my_info.id:
+                await event.respond(f"❌ **خطا در پردازش:**\n`{transcript}`", reply_to=reply_msg.id)
         else:
             if not transcript.strip():
                 transcript = "⚠️ هیچ صدایی تشخیص داده نشد یا فایل کاملاً بی‌صدا بود."
@@ -655,7 +679,9 @@ async def handle_transcribe(event):
                     await event.respond(transcript[i:i+chunk_size], reply_to=reply_msg.id)
             
     except Exception as e:
-        await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`", reply_to=reply_msg.id)
+        logger.error(f"Unexpected error in STT command: {e}", exc_info=True)
+        if event.chat_id == my_info.id:
+            await event.respond(f"❌ **خطای غیرمنتظره:**\n`{str(e)}`", reply_to=reply_msg.id)
     finally:
         import os
         if 'file_path' in locals() and file_path and os.path.exists(file_path):
@@ -709,7 +735,7 @@ async def handle_voice_changer(event):
                     except Exception:
                         pass
     except Exception as e:
-        print(f"⚠️ Voice Changer Error: {e}")
+        logger.error(f"⚠️ Voice Changer Error: {e}", exc_info=True)
 
 # ==========================================================
 # 🎯 UNIFIED OUTGOING COMMAND DISPATCHER
@@ -891,6 +917,8 @@ async def global_memory_tracker(event):
     if not event.text and not getattr(event.message, 'voice', None) and not getattr(event.message, 'audio', None):
         return
         
+    logger.debug(f"[MEMORY] Intercepted message in {event.chat_id} (Length: {len(event.text or '')}). Checking if tracked...")
+        
     chat_id = event.chat_id
     
     # Only track if the chat is actively monitored (Pal, Engage, or Assistant)
@@ -900,6 +928,7 @@ async def global_memory_tracker(event):
         assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private)
     )
     if not is_tracked:
+        logger.debug(f"[MEMORY] Chat {chat_id} is not actively tracked. Ignoring.")
         return
         
     global my_info
@@ -912,8 +941,10 @@ async def global_memory_tracker(event):
         if event.is_group or event.is_channel:
             last_active = memory_manager.get_owner_last_active_time(chat_id)
             if time.time() - last_active > 30 * 60:
+                logger.debug(f"[MEMORY] Ignored message in {chat_id} (Owner inactive for 30m).")
                 return # Ignore message (owner is not actively participating)
                 
+    logger.debug(f"[MEMORY] Recording message in {chat_id}...")
     memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 # Concurrency management to prevent API spam and overlapping replies
@@ -950,18 +981,21 @@ def get_chat_lock(chat_id):
 @client.on(events.NewMessage(incoming=True))
 async def incoming_message_handler(event):
     chat_id = event.chat_id
+    logger.debug(f"[LIFECYCLE] New incoming message detected in {chat_id}.")
     
     global my_info
     my_id = my_info.id if my_info else Config.OWNER_ID
     
     # Ignore messages from myself
     if event.out or event.sender_id == my_id:
+        logger.debug(f"[LIFECYCLE] Dropped message in {chat_id} (Sender is self).")
         return
 
     # Ignore messages from other bots to prevent endless AI-to-AI loops
     try:
         sender = await event.get_sender()
         if sender and getattr(sender, 'bot', False):
+            logger.debug(f"[LIFECYCLE] Dropped message in {chat_id} (Sender is a bot).")
             return
     except Exception:
         pass
@@ -973,7 +1007,10 @@ async def incoming_message_handler(event):
         mode = "assistant"
     else:
     # Neither mode is active for this chat
+        logger.debug(f"[LIFECYCLE] Dropped message in {chat_id} (No active mode).")
         return
+        
+    logger.debug(f"[LIFECYCLE] Message accepted for processing in {chat_id} under mode: {mode}.")
     
     # For group chats: only respond if replied to me, or mentioned (text only for mentions)
     incoming_text_raw = event.text or ""
@@ -997,6 +1034,7 @@ async def incoming_message_handler(event):
                 
         # If it's a group, only reply if directly addressed or explicitly mentioned/replied
         if not (is_reply_to_me or is_mentioned):
+            logger.debug(f"[LIFECYCLE] Dropped group message in {chat_id} (Not addressed/mentioned).")
             return
 
     # 🎙️ Audio processing ONLY for DMs or explicitly addressed group messages
@@ -1005,7 +1043,7 @@ async def incoming_message_handler(event):
     if not incoming_text.strip():
         # In Telethon, event itself has .voice, .audio, .video_note, and .document shortcuts
         if getattr(event, 'voice', None) or getattr(event, 'video_note', None) or getattr(event, 'audio', None) or (getattr(event, 'document', None) and getattr(event.document, 'mime_type', '').startswith('audio/')):
-            print(f"🎙️ Intercepted addressed media in chat {chat_id}! Downloading...")
+            logger.info(f"🎙️ Intercepted addressed media in chat {chat_id}! Downloading...")
             import os
             from speech_to_text import transcribe_audio_file
             
@@ -1014,7 +1052,7 @@ async def incoming_message_handler(event):
             audio_path = await event.download_media(file="scratch/")
             
             if audio_path:
-                print(f"🎙️ Downloaded to {audio_path}. Transcribing...")
+                logger.info(f"🎙️ Downloaded to {audio_path}. Transcribing...")
                 transcribed = await transcribe_audio_file(audio_path, Config.GEMINI_API_KEYS)
                 try:
                     os.remove(audio_path)
@@ -1022,12 +1060,12 @@ async def incoming_message_handler(event):
                     pass
                     
                 if transcribed and not transcribed.startswith("Error"):
-                    print(f"🎙️ Transcription success: {transcribed}")
+                    logger.info(f"🎙️ Transcription success: {transcribed}")
                     incoming_text = f"[Voice Note] {transcribed}"
                     # Inject into stealth virtual memory!
                     memory_manager.add_virtual_message(chat_id, event.message.id, incoming_text)
                 else:
-                    print(f"⚠️ Transcription failed: {transcribed}")
+                    logger.warning(f"⚠️ Transcription failed: {transcribed}")
                     return
         else:
             # Might be sticker/photo without caption
@@ -1083,6 +1121,8 @@ async def incoming_message_handler(event):
             ltm = memory_manager.get_long_term_summary(chat_id)
             ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
             
+            logger.debug(f"[LIFECYCLE] Assembling Gemini prompt for chat {chat_id} (Mode: {mode}). History length: {len(history_text)}")
+            
             if mode == "pal":
                 pal_variant = pal_manager.get_mode(chat_id)
                 prompt_input = Prompt.AUTOPILOT_TEMPLATE.format(
@@ -1094,7 +1134,7 @@ async def incoming_message_handler(event):
                     owner_first_name=Config.OWNER_FIRST_NAME
                 )
                 system_prompt = persona_manager.get_prompt(pal_variant)
-                print(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
+                logger.info(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
             else:
                 prompt_input = Prompt.ASSISTANT_TEMPLATE.format(
                     current_time=now_persian,
@@ -1105,16 +1145,21 @@ async def incoming_message_handler(event):
                     owner_first_name=Config.OWNER_FIRST_NAME
                 )
                 system_prompt = persona_manager.get_prompt("assistant")
-                print(f"💼 Personal Assistant thinking & typing for chat {chat_id} (from {sender_name})...")
+                logger.info(f"💼 Personal Assistant thinking & typing for chat {chat_id} (from {sender_name})...")
             
+            
+            start_time = time.time()
+            logger.debug(f"[LIFECYCLE] Prompting Gemini API... (Models: {Config.GEMINI_MODELS})")
             response = await get_response(prompt_input, system_prompt)
+            elapsed = time.time() - start_time
+            logger.debug(f"[LIFECYCLE] Gemini replied in {elapsed:.2f}s. Response length: {len(response)}")
             
             # Re-verify mode wasn't disabled during AI generation
             if mode == "pal" and not pal_manager.is_active(chat_id):
-                print(f"🛑 Dropped reply for chat {chat_id} (Pal was deactivated via 000)")
+                logger.info(f"🛑 Dropped reply for chat {chat_id} (Pal was deactivated via 000)")
                 return
             if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
-                print(f"🛑 Dropped reply for chat {chat_id} (Assistant was muted/deactivated)")
+                logger.info(f"🛑 Dropped reply for chat {chat_id} (Assistant was muted/deactivated)")
                 return
 
             if response and response != Text.ERROR:
@@ -1131,9 +1176,9 @@ async def incoming_message_handler(event):
                 await client.send_message(input_chat, response, reply_to=reply_target)
                 mark_as_replied(chat_id, event.id)
                 if mode == "pal":
-                    print(f"✅ Pal replied naturally in chat {chat_id}")
+                    logger.info(f"✅ Pal replied naturally in chat {chat_id}")
                 else:
-                    print(f"✅ Assistant replied politely in chat {chat_id}")
+                    logger.info(f"✅ Assistant replied politely in chat {chat_id}")
                     
 
 
@@ -1190,6 +1235,7 @@ async def auto_engage_loop():
                         last_mine = recent_my_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                         # If I spoke recently (relative to the configured duration), skip
                         if now_ts - last_mine < (duration_minutes * 60 * 0.75):
+                            logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (I spoke recently).")
                             continue # I already talked recently, skip engaging.
                     
                     # Also, only engage if there is actually some recent conversation!
@@ -1205,6 +1251,7 @@ async def auto_engage_loop():
                     # A chat is dead if no one spoke in 30 mins OR 1.5x the configured duration
                     dead_threshold = max(30 * 60, duration_minutes * 60 * 1.5)
                     if now_ts - last_msg_time > dead_threshold:
+                        logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (Chat is dead).")
                         continue # Chat is dead, don't randomly talk to nobody.
                     
                     if not pal_manager.is_auto_engage_active(chat_id):
@@ -1227,7 +1274,9 @@ async def auto_engage_loop():
                     pal_variant = pal_manager.get_mode(chat_id)
                     system_prompt = persona_manager.get_prompt(pal_variant)
                     
+                    logger.debug(f"[LIFECYCLE] Auto-Engage prompting Gemini for chat {chat_id}...")
                     response = await get_response(prompt_input, system_prompt, is_json=True, start_model="CHEAPEST")
+                    logger.debug(f"[LIFECYCLE] Auto-Engage Gemini response received (Length: {len(response or '')})")
                     if not response or response == Text.ERROR:
                         continue
                         
@@ -1243,7 +1292,7 @@ async def auto_engage_loop():
                                 try:
                                     target_id = int(target_id)
                                 except (ValueError, TypeError):
-                                    print(f"⚠️ Invalid target_id from AI: {target_id}")
+                                    logger.warning(f"⚠️ Invalid target_id from AI: {target_id}")
                                     continue
                                 
                                 # Prevent the AI from replying to its own messages!
@@ -1256,29 +1305,29 @@ async def auto_engage_loop():
                                     pass
                                     
                                 if not target_msg:
-                                    print(f"⚠️ Auto-engage target message ({target_id}) not found or hallucinated. Ignoring!")
+                                    logger.warning(f"⚠️ Auto-engage target message ({target_id}) not found or hallucinated. Ignoring!")
                                     continue
                                     
                                 if target_msg.sender_id == my_id or target_msg.out:
-                                    print(f"⚠️ AI tried to reply to its own message ({target_id}). Ignoring!")
+                                    logger.warning(f"⚠️ AI tried to reply to its own message ({target_id}). Ignoring!")
                                     continue
                                 
                                 # Prevent the AI from replying to other bots!
                                 try:
                                     target_sender = await target_msg.get_sender()
                                     if target_sender and getattr(target_sender, 'bot', False):
-                                        print(f"⚠️ AI tried to reply to a bot ({target_id}). Ignoring!")
+                                        logger.warning(f"⚠️ AI tried to reply to a bot ({target_id}). Ignoring!")
                                         continue
                                 except Exception:
                                     pass
                                 
                                 # Final check before sending auto engage message
                                 if not pal_manager.is_auto_engage_active(chat_id):
-                                    print(f"🛑 Dropped auto-engage in chat {chat_id} (Deactivated via 777 engage off)")
+                                    logger.info(f"🛑 Dropped auto-engage in chat {chat_id} (Deactivated via 777 engage off)")
                                     continue
                                     
                                 if is_already_replied(chat_id, target_id):
-                                    print(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied to target_id {target_id} before)")
+                                    logger.warning(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied to target_id {target_id} before)")
                                     continue
 
                                 human_typing_time = calculate_human_typing_delay(reply_text)
@@ -1291,20 +1340,20 @@ async def auto_engage_loop():
                                             
                                         # Check again after sleep to prevent race conditions with the normal reply handler
                                         if is_already_replied(chat_id, target_id):
-                                            print(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied while typing)")
+                                            logger.warning(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied while typing)")
                                             continue
                                             
                                         await client.send_message(input_chat, reply_text, reply_to=target_id)
                                         mark_as_replied(chat_id, target_id)
-                                        print(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
+                                        logger.info(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
                     except json.JSONDecodeError:
                         pass # Ignore if AI failed to output valid JSON
                         
                 except Exception as e:
-                    print(f"⚠️ Auto-Engage error in chat {chat_id}: {e}")
+                    logger.error(f"⚠️ Auto-Engage error in chat {chat_id}: {e}", exc_info=True)
                     
         except Exception as e:
-            print(f"⚠️ Auto-Engage Loop Error: {e}")
+            logger.error(f"⚠️ Auto-Engage Loop Error: {e}", exc_info=True)
             await asyncio.sleep(60) # Sleep before retrying loop on fatal error
 
 # ==========================================================
@@ -1318,17 +1367,17 @@ def main():
     # Start background loops
     client.loop.create_task(auto_engage_loop())
     
-    print("=" * 50)
-    print(f"👻 GhostGram (روح‌گرام) is ONLINE & READY!")
-    print(f"👤 Logged in as: {my_info.first_name} (@{my_info.username}) [ID: {my_info.id}]")
+    logger.info("=" * 50)
+    logger.info(f"👻 GhostGram (روح‌گرام) is ONLINE & READY!")
+    logger.info(f"👤 Logged in as: {my_info.first_name} (@{my_info.username}) [ID: {my_info.id}]")
     from api_tracker import MODELS_CONFIG
     top_model = MODELS_CONFIG[0]['name'] if MODELS_CONFIG else "Unknown"
-    print(f"🧠 Primary Model: {top_model} (Auto-Cascading enabled)")
-    print(f"📱 Active Pal Chats (777): {pal_manager.get_active_count()}")
-    print(f"🕵️ Auto-Engage Chats (777 engage): {pal_manager.get_auto_engage_count()}")
-    print(f"💼 Assistant Mode (666): {'ON (All DMs)' if assistant_manager.dm_enabled else 'OFF'}")
-    print("🚀 Listening for secret codes (777, 777 engage, 666, 000, 444, 555, 333, 999, 111, 888)...")
-    print("=" * 50)
+    logger.info(f"🧠 Primary Model: {top_model} (Auto-Cascading enabled)")
+    logger.info(f"📱 Active Pal Chats (777): {pal_manager.get_active_count()}")
+    logger.info(f"🕵️ Auto-Engage Chats (777 engage): {pal_manager.get_auto_engage_count()}")
+    logger.info(f"💼 Assistant Mode (666): {'ON (All DMs)' if assistant_manager.dm_enabled else 'OFF'}")
+    logger.info("🚀 Listening for secret codes (777, 777 engage, 666, 000, 444, 555, 333, 999, 111, 888)...")
+    logger.info("=" * 50)
     
     # Block and listen for messages indefinitely
     client.run_until_disconnected()
@@ -1356,7 +1405,7 @@ def master_launcher():
             
             # A profile is valid if it has a .env file
             if os.path.isdir(profile_path) and os.path.exists(env_path):
-                print(f"🚀 [MASTER] Launching PROFILE: {p_name}...")
+                logger.info(f"🚀 [MASTER] Launching PROFILE: {p_name}...")
                 env_copy = os.environ.copy()
                 env_copy["TELEAGENT_PROFILE"] = p_name
                 p = subprocess.Popen([sys.executable, "main.py", "--profile", p_name], env=env_copy)
@@ -1364,23 +1413,24 @@ def master_launcher():
                 
     if not processes:
         if os.getenv("API_ID") and os.getenv("API_HASH"):
-            print("🚀 [MASTER] Cloud Mode Detected! No profiles found, but environment variables exist. Running single bot...")
+            logger.info("🚀 [MASTER] Cloud Mode Detected! No profiles found, but environment variables exist. Running single bot...")
             main()
             return
             
-        print("❌ [MASTER] No profiles found! Please run 'run.bat' or 'python setup.py' to configure a bot.")
+        logger.error("❌ [MASTER] No profiles found! Please run 'run.bat' or 'python setup.py' to configure a bot.")
         return
         
-    print(f"🌟 [MASTER] Running {len(processes)} bot(s) concurrently. Press Ctrl+C to stop all.")
+    logger.info(f"🌟 [MASTER] Running {len(processes)} bot(s) concurrently. Press Ctrl+C to stop all.")
     try:
         for p in processes:
             p.wait()
     except KeyboardInterrupt:
-        print("\n🛑 [MASTER] Shutting down all bots gracefully...")
+        logger.info("\n🛑 [MASTER] Shutting down all bots gracefully...")
         for p in processes:
             p.terminate()
         time.sleep(2)
 
 if __name__ == '__main__':
     master_launcher()
+
 

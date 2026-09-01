@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 from config import Config
+from logger import logger
 
 class PalManager:
     def __init__(self, state_file=Config.PAL_STATE_FILE):
@@ -34,7 +35,7 @@ class PalManager:
                         else:
                             self.auto_engage_chats = {int(k): int(v) for k, v in raw_engage.items()}
             except Exception as e:
-                print(f"⚠️ Error loading Pal state: {e}")
+                logger.error(f"⚠️ Error loading Pal state: {e}")
                 self.active_chats = {}
                 self.auto_engage_chats = {}
         else:
@@ -53,7 +54,7 @@ class PalManager:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             os.replace(tmp_file, self.state_file)
         except Exception as e:
-            print(f"⚠️ Error saving Pal state: {e}")
+            logger.error(f"⚠️ Error saving Pal state: {e}")
 
     def is_active(self, chat_id: int) -> bool:
         return chat_id in self.active_chats
@@ -116,7 +117,7 @@ class PalManager:
         self.active_chats.clear()
         self.auto_engage_chats.clear()
         self.save_state()
-        print("♻️ Pal Manager has been factory reset.")
+        logger.info("♻️ Pal Manager has been factory reset.")
 
     def get_active_count(self) -> int:
         return len(self.active_chats)

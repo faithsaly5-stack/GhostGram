@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 from config import Config
+from logger import logger
 
 class AssistantManager:
     def __init__(self, state_file=Config.ASSISTANT_STATE_FILE):
@@ -27,7 +28,7 @@ class AssistantManager:
                         self.dm_enabled = False
                         self.muted_chats = set()
             except Exception as e:
-                print(f"⚠️ Error loading Assistant state: {e}")
+                logger.error(f"⚠️ Error loading Assistant state: {e}", exc_info=True)
                 self.dm_enabled = False
                 self.active_chats = set()
                 self.muted_chats = set()
@@ -49,7 +50,7 @@ class AssistantManager:
                 json.dump(data, f, indent=2)
             os.replace(tmp_file, self.state_file)
         except Exception as e:
-            print(f"⚠️ Error saving Assistant state: {e}")
+            logger.error(f"⚠️ Error saving Assistant state: {e}", exc_info=True)
 
     def is_active_for_chat(self, chat_id: int, is_private: bool = True) -> bool:
         """Checks if Assistant mode is active and not muted in this chat."""
@@ -92,7 +93,7 @@ class AssistantManager:
         self.muted_chats.clear()
         self.active_chats.clear()
         self.save_state()
-        print("♻️ Assistant Manager has been factory reset.")
+        logger.info("♻️ Assistant Manager has been factory reset.")
 
 
 

@@ -10,6 +10,7 @@ import imageio_ffmpeg
 from google import genai
 from google.genai import types
 from config import Config
+from logger import logger
 
 # Suppress harmless google-genai AFC deprecation logger warning to keep logs clean
 logging.getLogger("google_genai").setLevel(logging.ERROR)
@@ -25,6 +26,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
     Bulletproof speech-to-text engine with API key rotation.
     Converts any audio file to 16kHz Mono 16-bit PCM WAV and transcribes it using Gemini Live.
     """
+    logger.debug(f"[MEDIA] STT started for file: {file_path}")
     if not os.path.exists(file_path):
         return "Error: File not found."
     if not api_keys:
@@ -141,25 +143,27 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                 final_res = " ".join(full_transcription).strip()
                 if not final_res:
                     return f"Error: Empty transcription. Raw: {raw_debug_data[:3]}"
+                logger.debug(f"[MEDIA] STT completed successfully for file: {file_path}")
                 return final_res
 
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
                 if "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
-                    print(f"⏳ Key {key_preview} hit rate limit on live transcribe. Rotating...")
+                    logger.warning(f"⏳ Key {key_preview} hit rate limit on live transcribe. Rotating...")
                     continue
                 elif "403" in err_str or "api_key_invalid" in err_str:
-                    print(f"❌ Key {key_preview} is invalid. Rotating...")
+                    logger.warning(f"❌ Key {key_preview} is invalid. Rotating...")
                     continue
                 else:
-                    print(f"⚠️ Unknown error on live transcribe with key {key_preview}: {e}. Rotating...")
+                    logger.error(f"⚠️ Unknown error on live transcribe with key {key_preview}: {e}. Rotating...")
                     continue
                     
+        logger.error(f"All keys exhausted during STT. Last Error: {last_error}")
         return f"Error: All keys exhausted or failed during transcription. Last Error: {last_error}"
 
     except Exception as e:
-        traceback.print_exc()
+        logger.error(f"Error during audio processing: {e}", exc_info=True)
         return f"Error during audio processing: {str(e)}"
     finally:
         # 3. Cleanup
