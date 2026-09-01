@@ -279,19 +279,28 @@ MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
 
 # ⚙️ Ajustes Avanzados del Sistema
-# Límites de IA y Conectividad
+# 🤖 Límites de IA y Conectividad
+# GEMINI_MAX_CHARS: Máximo de caracteres enviados a la IA por petición.
 GEMINI_MAX_CHARS=50000
+# GEMINI_MAX_ATTEMPTS: Número de veces que el bot intentará cambiar de modelo si uno falla.
 GEMINI_MAX_ATTEMPTS=20
+# GEMINI_TIMEOUT_SECONDS: Tiempo máximo (en segundos) antes de cambiar al siguiente modelo de IA.
 GEMINI_TIMEOUT_SECONDS=25.0
 
-# Sistema y Medios
+# 🗄️ Sistema y Medios
+# LOG_MAX_BYTES: Tamaño máximo del archivo de registro antes de rotar (5242880 = 5MB).
 LOG_MAX_BYTES=5242880
+# LOG_BACKUP_COUNT: Cuántos archivos de registro antiguos mantener.
 LOG_BACKUP_COUNT=3
+# FFMPEG_TIMEOUT_SECONDS: Tiempo máximo de espera para convertir una nota de voz.
 FFMPEG_TIMEOUT_SECONDS=120
 
-# Comportamiento y Automatización
+# ⚡ Comportamiento y Automatización
+# AUTO_ENGAGE_INTERVAL_MINUTES: Minutos de inactividad necesarios antes de que el Ghost Lurker interactúe.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# GHOST_PURGE_SCAN_LIMIT: Número máximo de mensajes a analizar al hacer una purga masiva.
 GHOST_PURGE_SCAN_LIMIT=3000
+# AI_VOICE_COOLDOWN_SECONDS: Enfriamiento anti-spam para comandos de cambio de voz.
 AI_VOICE_COOLDOWN_SECONDS=15
 
 # ☁️ Configuración del Sistema

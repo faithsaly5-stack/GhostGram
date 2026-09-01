@@ -294,19 +294,28 @@ MAX_TYPING_DELAY=7.0
 # ==========================================
 # ⚙️ 高级系统调优
 # ==========================================
-# AI 限制与连接
+# 🤖 AI 限制与连接
+# GEMINI_MAX_CHARS: 每次请求发送给 AI 的最大字符数（防止崩溃）。
 GEMINI_MAX_CHARS=50000
+# GEMINI_MAX_ATTEMPTS: 如果一个模型失败，机器人尝试切换到其他模型的次数。
 GEMINI_MAX_ATTEMPTS=20
+# GEMINI_TIMEOUT_SECONDS: 切换到下一个 AI 模型前的严格超时时间（秒）。
 GEMINI_TIMEOUT_SECONDS=25.0
 
-# 系统与媒体
+# 🗄️ 系统与媒体
+# LOG_MAX_BYTES: 日志文件轮转前的最大大小 (5242880 = 5MB)。
 LOG_MAX_BYTES=5242880
+# LOG_BACKUP_COUNT: 保留的旧日志文件数量。
 LOG_BACKUP_COUNT=3
+# FFMPEG_TIMEOUT_SECONDS: 等待语音笔记转换为文本的最长时间。
 FFMPEG_TIMEOUT_SECONDS=120
 
-# 行为与自动化
+# ⚡ 行为与自动化
+# AUTO_ENGAGE_INTERVAL_MINUTES: Ghost Lurker 参与前所需的用户不活动分钟数。
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# GHOST_PURGE_SCAN_LIMIT: 批量清除消息时向后扫描的最大消息数。
 GHOST_PURGE_SCAN_LIMIT=3000
+# AI_VOICE_COOLDOWN_SECONDS: 变声器命令的防垃圾冷却时间。
 AI_VOICE_COOLDOWN_SECONDS=15
 
 # ==========================================

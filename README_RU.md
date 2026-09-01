@@ -279,19 +279,28 @@ MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
 
 # ⚙️ Расширенные настройки системы
-# Лимиты ИИ и подключение
+# 🤖 Лимиты ИИ и подключение
+# GEMINI_MAX_CHARS: Максимальное количество символов, отправляемых ИИ (предотвращает сбои).
 GEMINI_MAX_CHARS=50000
+# GEMINI_MAX_ATTEMPTS: Количество попыток переключения на другие модели ИИ при сбое.
 GEMINI_MAX_ATTEMPTS=20
+# GEMINI_TIMEOUT_SECONDS: Строгий таймаут (в секундах) перед переключением на следующую модель ИИ.
 GEMINI_TIMEOUT_SECONDS=25.0
 
-# Система и медиа
+# 🗄️ Система и медиа
+# LOG_MAX_BYTES: Максимальный размер файла журнала перед ротацией (5242880 = 5MB).
 LOG_MAX_BYTES=5242880
+# LOG_BACKUP_COUNT: Сколько старых файлов журнала хранить.
 LOG_BACKUP_COUNT=3
+# FFMPEG_TIMEOUT_SECONDS: Максимальное время ожидания конвертации голосового сообщения.
 FFMPEG_TIMEOUT_SECONDS=120
 
-# Поведение и автоматизация
+# ⚡ Поведение и автоматизация
+# AUTO_ENGAGE_INTERVAL_MINUTES: Минуты неактивности пользователя до включения Ghost Lurker.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# GHOST_PURGE_SCAN_LIMIT: Максимальное количество сообщений для сканирования при массовой очистке.
 GHOST_PURGE_SCAN_LIMIT=3000
+# AI_VOICE_COOLDOWN_SECONDS: Анти-спам задержка для команд изменения голоса.
 AI_VOICE_COOLDOWN_SECONDS=15
 
 # ☁️ Системные настройки

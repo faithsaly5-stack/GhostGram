@@ -214,19 +214,28 @@ MIN_TYPING_DELAY=1.5
 MAX_TYPING_DELAY=7.0
 
 # ⚙️ تنظیمات پیشرفته سیستم
-# محدودیت‌های هوش مصنوعی و اتصال
+# 🤖 محدودیت‌های هوش مصنوعی و اتصال
+# GEMINI_MAX_CHARS: حداکثر تعداد کاراکترهای ارسالی به هوش مصنوعی در هر درخواست (جلوگیری از خرابی).
 GEMINI_MAX_CHARS=50000
+# GEMINI_MAX_ATTEMPTS: تعداد دفعاتی که ربات در صورت خرابی یک مدل، مدل‌های دیگر را امتحان می‌کند.
 GEMINI_MAX_ATTEMPTS=20
+# GEMINI_TIMEOUT_SECONDS: محدودیت زمانی (به ثانیه) قبل از تغییر به مدل بعدی هوش مصنوعی.
 GEMINI_TIMEOUT_SECONDS=25.0
 
-# سیستم و رسانه
+# 🗄️ سیستم و رسانه
+# LOG_MAX_BYTES: حداکثر حجم فایل لاگ قبل از ایجاد فایل جدید (5242880 = 5MB).
 LOG_MAX_BYTES=5242880
+# LOG_BACKUP_COUNT: تعداد فایل‌های لاگ قدیمی که باید نگه داشته شوند.
 LOG_BACKUP_COUNT=3
+# FFMPEG_TIMEOUT_SECONDS: حداکثر زمان انتظار برای تبدیل ویس به متن.
 FFMPEG_TIMEOUT_SECONDS=120
 
-# رفتار و اتوماسیون
+# ⚡ رفتار و اتوماسیون
+# AUTO_ENGAGE_INTERVAL_MINUTES: دقایق عدم فعالیت کاربر قبل از اینکه Ghost Lurker درگیر شود.
 AUTO_ENGAGE_INTERVAL_MINUTES=30
+# GHOST_PURGE_SCAN_LIMIT: حداکثر تعداد پیام‌هایی که هنگام پاکسازی گروهی بررسی می‌شوند.
 GHOST_PURGE_SCAN_LIMIT=3000
+# AI_VOICE_COOLDOWN_SECONDS: زمان استراحت (Cooldown) ضد اسپم برای دستورات تغییر صدا.
 AI_VOICE_COOLDOWN_SECONDS=15
 
 # ☁️ تنظیمات سیستم
