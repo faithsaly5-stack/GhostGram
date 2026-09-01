@@ -291,10 +291,21 @@ async def handle_factory_reset(event):
     pal_manager.factory_reset()
     assistant_manager.factory_reset()
     
-    # Nuke all log files for this profile
-    import glob
+    # Rock-solid log deletion: Release file locks, delete, and reattach
     import os
+    import glob
+    import logging
+    from logging.handlers import RotatingFileHandler
     from config import Config
+    from logger import logger
+    
+    # 1. Close and remove existing file handlers to release Windows file locks
+    for handler in logger.handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+            logger.removeHandler(handler)
+            
+    # 2. Safely delete all log files and backups
     log_pattern = os.path.join(Config.PROFILE_DIR, "ghostgram.log*")
     for log_file in glob.glob(log_pattern):
         try:
@@ -302,6 +313,16 @@ async def handle_factory_reset(event):
         except Exception:
             pass
             
+    # 3. Spin up a fresh file handler so the bot can keep logging!
+    try:
+        new_log_file = os.path.join(Config.PROFILE_DIR, "ghostgram.log")
+        fh = RotatingFileHandler(new_log_file, maxBytes=Config.LOG_MAX_BYTES, backupCount=Config.LOG_BACKUP_COUNT, encoding='utf-8')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+    except Exception as e:
+        print(f"Failed to restart file logger after nuke: {e}")
     try:
         await event.delete()
     except Exception:
