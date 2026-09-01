@@ -254,7 +254,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: تعداد دفعاتی که ربات در صورت خرابی یک مدل، مدل‌های دیگر را امتحان می‌کند.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: محدودیت زمانی (به ثانیه) قبل از تغییر به مدل بعدی هوش مصنوعی.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=12.0
 
 # 🗄️ سیستم و رسانه
 # LOG_MAX_BYTES: حداکثر حجم فایل لاگ قبل از ایجاد فایل جدید (5242880 = 5MB).

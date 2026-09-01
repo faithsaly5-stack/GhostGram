@@ -38,21 +38,25 @@ class AssistantManager:
             self.muted_chats = set()
 
     def save_state(self):
-        """Persists assistant state to disk (Async Offloaded)."""
-        import asyncio
+        """Persists assistant state to disk (Debounced to 3 seconds)."""
         import threading
         if not hasattr(self, '_write_lock'):
             self._write_lock = threading.Lock()
+            self._save_timer = None
             
-        data = {
+        self._latest_snapshot = {
             "dm_enabled": self.dm_enabled,
             "active_chats": list(self.active_chats),
             "muted_chats": list(self.muted_chats)
         }
         
-        def _write():
+        if self._save_timer is not None and self._save_timer.is_alive():
+            return
+            
+        def _write_task():
             with self._write_lock:
                 try:
+                    data = getattr(self, '_latest_snapshot', {})
                     tmp_file = f"{self.state_file}.tmp"
                     with open(tmp_file, "w", encoding="utf-8") as f:
                         json.dump(data, f, indent=2)
@@ -60,11 +64,8 @@ class AssistantManager:
                 except Exception as e:
                     logger.error(f"⚠️ Error saving Assistant state: {e}", exc_info=True)
 
-        try:
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(None, _write)
-        except RuntimeError:
-            _write()
+        self._save_timer = threading.Timer(3.0, _write_task)
+        self._save_timer.start()
 
     def is_active_for_chat(self, chat_id: int, is_private: bool = True) -> bool:
         """Checks if Assistant mode is active and not muted in this chat."""

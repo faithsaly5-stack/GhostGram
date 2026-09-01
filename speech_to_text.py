@@ -143,7 +143,7 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
                 final_res = " ".join(full_transcription).strip()
                 if not final_res:
                     return f"Error: Empty transcription. Raw: {raw_debug_data[:3]}"
-                logger.debug(f"[MEDIA] STT completed successfully for file: {file_path}")
+                pass
                 return final_res
 
             except Exception as e:

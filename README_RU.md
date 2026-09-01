@@ -319,7 +319,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Количество попыток переключения на другие модели ИИ при сбое.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Строгий таймаут (в секундах) перед переключением на следующую модель ИИ.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=12.0
 
 # 🗄️ Система и медиа
 # LOG_MAX_BYTES: Максимальный размер файла журнала перед ротацией (5242880 = 5MB).

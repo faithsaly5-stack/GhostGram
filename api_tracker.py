@@ -69,18 +69,21 @@ class APIUsageTracker:
         return {}
 
     def _save(self):
-        import asyncio
-        import os
         import copy
         import threading
         if not hasattr(self, '_write_lock'):
             self._write_lock = threading.Lock()
+            self._save_timer = None
             
-        data = copy.deepcopy(self.usage_data)
+        self._latest_snapshot = copy.deepcopy(self.usage_data)
         
-        def _write():
+        if self._save_timer is not None and self._save_timer.is_alive():
+            return
+            
+        def _write_task():
             with self._write_lock:
                 try:
+                    data = getattr(self, '_latest_snapshot', {})
                     tmp_file = f"{self.filename}.tmp"
                     with open(tmp_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
@@ -88,11 +91,8 @@ class APIUsageTracker:
                 except Exception:
                     pass
 
-        try:
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(None, _write)
-        except RuntimeError:
-            _write()
+        self._save_timer = threading.Timer(3.0, _write_task)
+        self._save_timer.start()
 
     def _get_today_str(self):
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")

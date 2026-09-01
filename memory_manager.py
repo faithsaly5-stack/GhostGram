@@ -56,13 +56,14 @@ class MemoryManager:
 
 
     def save_state(self):
-        """Atomically persists all memory states and watermarks to disk (Async Offloaded)."""
+        """Atomically persists all memory states and watermarks to disk (Debounced to 3 seconds)."""
         import threading
         if not hasattr(self, '_write_lock'):
             self._write_lock = threading.Lock()
+            self._save_timer = None
             
         # 1. Snapshot the dictionaries synchronously to prevent race conditions during write
-        data = {
+        self._latest_snapshot = {
             "reset_cutoffs": self.reset_cutoffs.copy(),
             "long_term_memories": self.long_term_memories.copy(),
             "message_counts": self.message_counts.copy(),
@@ -70,24 +71,23 @@ class MemoryManager:
             "owner_last_active_time": self.owner_last_active_time.copy()
         }
         
-        def _write():
+        # If a save is already scheduled within the next 3 seconds, let it naturally pick up the latest snapshot
+        if self._save_timer is not None and self._save_timer.is_alive():
+            return
+            
+        def _write_task():
             with self._write_lock:
                 try:
+                    data = getattr(self, '_latest_snapshot', {})
                     tmp_file = f"{self.state_file}.tmp"
                     with open(tmp_file, "w", encoding="utf-8") as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
                     os.replace(tmp_file, self.state_file)
-                    logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
                 except Exception as e:
                     logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
 
-        # 2. Fire and forget in a background thread so the event loop never stutters
-        try:
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(None, _write)
-        except RuntimeError:
-            # Fallback if no event loop is running (e.g. during sync initialization)
-            _write()
+        self._save_timer = threading.Timer(3.0, _write_task)
+        self._save_timer.start()
 
     def reset_chat_memory(self, chat_id: int):
         """Sets the memory cutoff to now, clears long-term summary, count, and watermarks for this chat."""

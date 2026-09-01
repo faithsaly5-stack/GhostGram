@@ -319,7 +319,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Número de veces que el bot intentará cambiar de modelo si uno falla.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Tiempo máximo (en segundos) antes de cambiar al siguiente modelo de IA.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=12.0
 
 # 🗄️ Sistema y Medios
 # LOG_MAX_BYTES: Tamaño máximo del archivo de registro antes de rotar (5242880 = 5MB).

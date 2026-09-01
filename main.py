@@ -932,7 +932,7 @@ async def global_memory_tracker(event):
     if not event.text and not getattr(event.message, 'voice', None) and not getattr(event.message, 'audio', None):
         return
         
-    logger.debug(f"[MEMORY] Intercepted message in {event.chat_id} (Length: {len(event.text or '')}). Checking if tracked...")
+    pass
         
     chat_id = event.chat_id
     
@@ -960,7 +960,7 @@ async def global_memory_tracker(event):
                 logger.debug(f"[MEMORY] Ignored message in {chat_id} (Owner inactive for 30m).")
                 return # Ignore message (owner is not actively participating)
                 
-    logger.debug(f"[MEMORY] Recording message in {chat_id}...")
+    pass
     memory_manager.record_message_and_check_summary(client, chat_id, gemini, format_sender_name, my_id)
 
 # Concurrency management to prevent API spam and overlapping replies
