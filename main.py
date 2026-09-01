@@ -291,12 +291,23 @@ async def handle_factory_reset(event):
     pal_manager.factory_reset()
     assistant_manager.factory_reset()
     
+    # Nuke all log files for this profile
+    import glob
+    import os
+    from config import Config
+    log_pattern = os.path.join(Config.PROFILE_DIR, "ghostgram.log*")
+    for log_file in glob.glob(log_pattern):
+        try:
+            os.remove(log_file)
+        except Exception:
+            pass
+            
     try:
         await event.delete()
     except Exception:
         pass
         
-    msg = await event.respond("♻️ **سیستم با موفقیت ریست کارخانه شد!**\n\n✅ وضعیت تمام کلیدهای API صفر شد.\n✅ تمام چت‌های فعال غیرفعال شدند.\n✅ حافظه‌های بلندمدت و کوتاه‌مدت تمام گروه‌ها پاک شد.")
+    msg = await event.respond("♻️ **سیستم با موفقیت ریست کارخانه شد!**\n\n✅ وضعیت تمام کلیدهای API صفر شد.\n✅ تمام چت‌های فعال غیرفعال شدند.\n✅ حافظه‌های بلندمدت و کوتاه‌مدت تمام گروه‌ها پاک شد.\n✅ تمامی لاگ‌های سیستم با موفقیت حذف شدند.")
     await asyncio.sleep(5)
     try:
         await msg.delete()
