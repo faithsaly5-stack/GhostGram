@@ -219,8 +219,6 @@ SSH_PORT=22
     print("• Local Run (Terminal): Run 'python main.py'")
     print("• 24/7 VPS Deployment: Double-click 'deploy.bat'")
     print("=" * 60 + "\n")
-    
-    input("Press Enter to exit setup...")
 
 if __name__ == "__main__":
     try:

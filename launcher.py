@@ -55,6 +55,11 @@ def main():
         if result.returncode != 0 or not os.path.exists(env_file):
             print("\n[ERROR] Setup was cancelled or failed.")
             sys.exit(1)
+            
+        print("\n🎉 Setup is fully complete! You are ready to go.")
+        start_now = input("Do you want to start GhostGram now? (Y/n): ").strip().lower()
+        if start_now == 'n':
+            sys.exit(0)
     else:
         print(f"[2/3] Configuration file ({env_file}) found.")
 

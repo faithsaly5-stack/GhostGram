@@ -230,7 +230,7 @@ class MemoryManager:
             
         async with lock:
             try:
-                        logger.info(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
+                logger.info(f"🧠 Consolidating Long-Term Memory for chat {chat_id} (Watermarked 30-msg batch)...")
                 cutoff_ts = self.get_cutoff_timestamp(chat_id)
                 last_watermark = self.last_summarized_msg_ids.get(chat_id, 0)
                 
