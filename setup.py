@@ -97,6 +97,17 @@ GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-previe
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
+# 🧠 Memory & Processing Tuning
+SHORT_TERM_MEMORY_LIMIT=30
+LONG_TERM_SUMMARY_INTERVAL=30
+MAX_LONG_TERM_SUMMARY_CHARS=600
+MAX_MESSAGE_SEGMENT_CHARS=200
+
+# ⚡ Human Simulation Engine (Ghost Engine 2.0)
+TYPING_SPEED_CPS=18.0
+MIN_TYPING_DELAY=1.5
+MAX_TYPING_DELAY=7.0
+
 SESSION_STRING={session_string}
 """
 
