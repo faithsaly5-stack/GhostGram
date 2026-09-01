@@ -38,19 +38,28 @@ class AssistantManager:
             self.muted_chats = set()
 
     def save_state(self):
-        """Persists assistant state to disk atomically."""
+        """Persists assistant state to disk (Async Offloaded)."""
+        import asyncio
+        data = {
+            "dm_enabled": self.dm_enabled,
+            "active_chats": list(self.active_chats),
+            "muted_chats": list(self.muted_chats)
+        }
+        
+        def _write():
+            try:
+                tmp_file = f"{self.state_file}.tmp"
+                with open(tmp_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+                os.replace(tmp_file, self.state_file)
+            except Exception as e:
+                logger.error(f"⚠️ Error saving Assistant state: {e}", exc_info=True)
+
         try:
-            data = {
-                "dm_enabled": self.dm_enabled,
-                "active_chats": list(self.active_chats),
-                "muted_chats": list(self.muted_chats)
-            }
-            tmp_file = f"{self.state_file}.tmp"
-            with open(tmp_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-            os.replace(tmp_file, self.state_file)
-        except Exception as e:
-            logger.error(f"⚠️ Error saving Assistant state: {e}", exc_info=True)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, _write)
+        except RuntimeError:
+            _write()
 
     def is_active_for_chat(self, chat_id: int, is_private: bool = True) -> bool:
         """Checks if Assistant mode is active and not muted in this chat."""

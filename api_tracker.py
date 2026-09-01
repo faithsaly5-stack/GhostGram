@@ -69,11 +69,25 @@ class APIUsageTracker:
         return {}
 
     def _save(self):
+        import asyncio
+        import os
+        import copy
+        data = copy.deepcopy(self.usage_data)
+        
+        def _write():
+            try:
+                tmp_file = f"{self.filename}.tmp"
+                with open(tmp_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2)
+                os.replace(tmp_file, self.filename)
+            except Exception:
+                pass
+
         try:
-            with open(self.filename, 'w', encoding='utf-8') as f:
-                json.dump(self.usage_data, f, indent=2)
-        except Exception:
-            pass
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, _write)
+        except RuntimeError:
+            _write()
 
     def _get_today_str(self):
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")

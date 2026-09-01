@@ -30,15 +30,28 @@ class VoiceManager:
         return {}
 
     def save(self):
+        import asyncio
+        data = {
+            "voice_index": self.current_index,
+            "voice_changer_active": self.voice_changer_active
+        }
+        
+        def _write():
+            try:
+                tmp_file = f"{self.state_file}.tmp"
+                with open(tmp_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f)
+                os.replace(tmp_file, self.state_file)
+            except Exception:
+                pass
+
         try:
-            with open(self.state_file, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "voice_index": self.current_index,
-                    "voice_changer_active": self.voice_changer_active
-                }, f)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, _write)
             return True
-        except Exception:
-            return False
+        except RuntimeError:
+            _write()
+            return True
 
     def set_voice(self, index: int):
         if 1 <= index <= len(self.voices):

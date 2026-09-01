@@ -56,22 +56,33 @@ class MemoryManager:
 
 
     def save_state(self):
-        """Atomically persists all memory states and watermarks to disk to prevent corruption."""
+        """Atomically persists all memory states and watermarks to disk (Async Offloaded)."""
+        # 1. Snapshot the dictionaries synchronously to prevent race conditions during write
+        data = {
+            "reset_cutoffs": self.reset_cutoffs.copy(),
+            "long_term_memories": self.long_term_memories.copy(),
+            "message_counts": self.message_counts.copy(),
+            "last_summarized_msg_ids": self.last_summarized_msg_ids.copy(),
+            "owner_last_active_time": self.owner_last_active_time.copy()
+        }
+        
+        def _write():
+            try:
+                tmp_file = f"{self.state_file}.tmp"
+                with open(tmp_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                os.replace(tmp_file, self.state_file)
+                logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
+            except Exception as e:
+                logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
+
+        # 2. Fire and forget in a background thread so the event loop never stutters
         try:
-            data = {
-                "reset_cutoffs": self.reset_cutoffs,
-                "long_term_memories": self.long_term_memories,
-                "message_counts": self.message_counts,
-                "last_summarized_msg_ids": self.last_summarized_msg_ids,
-                "owner_last_active_time": self.owner_last_active_time
-            }
-            tmp_file = f"{self.state_file}.tmp"
-            with open(tmp_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            os.replace(tmp_file, self.state_file)
-            logger.debug(f"[MEMORY] State successfully saved to {self.state_file}")
-        except Exception as e:
-            logger.error(f"⚠️ Error saving memory state: {e}", exc_info=True)
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, _write)
+        except RuntimeError:
+            # Fallback if no event loop is running (e.g. during sync initialization)
+            _write()
 
     def reset_chat_memory(self, chat_id: int):
         """Sets the memory cutoff to now, clears long-term summary, count, and watermarks for this chat."""
