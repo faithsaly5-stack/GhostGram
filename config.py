@@ -83,7 +83,7 @@ class Config:
     # AI Limits & Connectivity
     GEMINI_MAX_CHARS = int(os.getenv("GEMINI_MAX_CHARS", "50000"))
     GEMINI_MAX_ATTEMPTS = int(os.getenv("GEMINI_MAX_ATTEMPTS", "20"))
-    GEMINI_TIMEOUT_SECONDS = float(os.getenv("GEMINI_TIMEOUT_SECONDS", "12.0"))
+    GEMINI_TIMEOUT_SECONDS = float(os.getenv("GEMINI_TIMEOUT_SECONDS", "25.0"))
     
     # System & Media
     LOG_MAX_BYTES = int(os.getenv("LOG_MAX_BYTES", "5242880"))

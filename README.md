@@ -309,8 +309,8 @@ GEMINI_MAX_CHARS=50000
 # Unit: Retry Count (e.g., 20 = tries up to 20 times across all available keys)
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
-# Unit: Seconds (e.g., 12.0 = skips to the backup key if no response in 12s)
-GEMINI_TIMEOUT_SECONDS=12.0
+# Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
+GEMINI_TIMEOUT_SECONDS=25.0
 
 # 🗄️ System & Media
 # LOG_MAX_BYTES: How large the background log file can get before it creates a new one.
