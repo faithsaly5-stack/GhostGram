@@ -53,7 +53,7 @@ def convert_to_wav(audio_data: bytes, mime_type: str) -> bytes:
     )
     return header + audio_data
 
-async def generate_voice_message(text: str, api_keys: list[str], voice_name: str = "Aoede") -> str:
+async def generate_voice_message(text: str, api_keys: list[str], voice_name: str = None) -> str:
     """
     Bulletproof text-to-speech engine with Model Cascade and API key rotation.
     Converts text to an OGG Opus voice message compatible with Telegram.
@@ -64,10 +64,18 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
     if not api_keys:
         return "Error: No API keys provided."
         
-    logger.debug(f"[MEDIA] TTS started for text length: {len(text)}")
+    if not voice_name:
+        try:
+            from voice_manager import voice_manager
+            voice_name = voice_manager.get_current_voice()
+        except Exception:
+            idx = max(0, Config.TTS_DEFAULT_VOICE_INDEX - 1)
+            voice_name = Config.TTS_VOICES[idx] if idx < len(Config.TTS_VOICES) else "Aoede"
 
-    # Define cascade models to failover seamlessly
-    models_to_try = [Config.GEMINI_TTS_MODEL]
+    logger.debug(f"[MEDIA] TTS started for text length: {len(text)} (Voice: {voice_name})")
+
+    # Define cascade models to failover seamlessly directly from .env
+    models_to_try = Config.GEMINI_TTS_MODELS if hasattr(Config, "GEMINI_TTS_MODELS") and Config.GEMINI_TTS_MODELS else [Config.GEMINI_TTS_MODEL]
 
     last_error = None
 

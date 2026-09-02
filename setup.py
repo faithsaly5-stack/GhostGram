@@ -94,6 +94,8 @@ GEMINI_API_KEYS={gemini_key}
 GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500,gemini-2.5-flash-lite:10:20"
 
 # 🎤 Voice/Audio Models Configuration
+# GEMINI_TTS_MODELS: Comma-separated list of TTS models to cascade across if primary fails.
+GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
