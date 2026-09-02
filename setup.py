@@ -2,15 +2,7 @@ import os
 import sys
 import time
 
-PROFILE = "default"
-if "--profile" in sys.argv:
-    try:
-        idx = sys.argv.index("--profile")
-        PROFILE = sys.argv[idx+1]
-    except IndexError:
-        pass
-
-TARGET_ENV_FILE = f".env.{PROFILE}" if PROFILE != "default" else ".env"
+from config import PROFILE, PROFILE_DIR, TARGET_ENV_FILE
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -67,10 +59,7 @@ def main():
     print("If you want to log in normally via Telegram code, just press Enter.")
     session_string = input("SESSION_STRING (leave blank for normal login): ").strip()
 
-    import os
     import shutil
-    from config import TARGET_ENV_FILE, PROFILE_DIR
-
     print(f"\n💾 Saving configuration to {TARGET_ENV_FILE}...")
     
     env_content = f"""API_ID={api_id}
