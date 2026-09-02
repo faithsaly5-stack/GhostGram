@@ -68,10 +68,6 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
 
     # Define cascade models to failover seamlessly
     models_to_try = [Config.GEMINI_TTS_MODEL]
-    if Config.GEMINI_TTS_MODEL == "gemini-3.1-flash-tts-preview":
-        models_to_try.append("gemini-2.5-flash-tts")
-    elif Config.GEMINI_TTS_MODEL == "gemini-2.5-flash-tts":
-        models_to_try.append("gemini-3.1-flash-tts-preview")
 
     last_error = None
 
