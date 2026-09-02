@@ -1,5 +1,6 @@
 import os
 import glob
+import re
 from config import Config
 
 class PersonaManager:
@@ -43,9 +44,14 @@ class PersonaManager:
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read().strip()
                 
-                # Prepend master rules to variants (assistant is completely separate)
-                if persona_name != "assistant":
+                is_standalone = persona_name == "assistant" or "[STANDALONE]" in content.upper()
+                
+                # Prepend master rules to variants
+                if not is_standalone:
                     content = self.personas["normal"] + "\n\n" + content
+                else:
+                    # Remove the standalone tag if present so it doesn't leak into the prompt
+                    content = re.sub(r'(?i)\[STANDALONE\]\s*', '', content).strip()
                     
                 self.personas[persona_name] = content
             except Exception as e:
