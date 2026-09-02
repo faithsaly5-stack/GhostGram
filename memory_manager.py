@@ -183,7 +183,10 @@ class MemoryManager:
                 if msg_ts <= cutoff_ts:
                     break
                 
-                sender = await msg.get_sender()
+                try:
+                    sender = await msg.get_sender()
+                except Exception:
+                    sender = None
                 if sender and getattr(sender, 'bot', False):
                     continue
                 name = await format_sender_fn(sender, my_id)

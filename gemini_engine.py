@@ -130,7 +130,7 @@ class GeminiEngine:
                     if "per day" in err_str or "daily" in err_str:
                         api_tracker.record_daily_exhausted(api_key, model_to_use)
                     else:
-                        api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=25)
+                        api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=Config.GEMINI_RPM_COOLDOWN_SECONDS)
                 elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
                     api_tracker.record_invalid_key(api_key)
                 elif "400" in err_str:

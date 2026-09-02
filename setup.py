@@ -144,6 +144,9 @@ GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
 # Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
 GEMINI_TIMEOUT_SECONDS=25.0
+# GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
+# Unit: Seconds (e.g., 15)
+GEMINI_RPM_COOLDOWN_SECONDS=15
 
 # 🗄️ System & Media
 # LOG_MAX_BYTES: How large the background log file can get before it creates a new one.

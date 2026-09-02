@@ -251,8 +251,11 @@ class APIUsageTracker:
             self.usage_data[api_key] = key_data
             self._save()
 
-    def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = 15, quiet: bool = False):
+    def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = None, quiet: bool = False):
         """Temporary 429 / RPM cooldown for a specific model on this key."""
+        if cooldown_seconds is None:
+            from config import Config
+            cooldown_seconds = getattr(Config, 'GEMINI_RPM_COOLDOWN_SECONDS', 15)
         with self._lock:
             self._init_key_model_dicts(api_key)
             if not quiet:
