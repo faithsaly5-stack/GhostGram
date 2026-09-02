@@ -206,7 +206,7 @@ class MemoryManager:
                 
                 cleaned_content = self.truncate_segment(text, self.max_segment_chars)
                 
-                if include_id:
+                if include_id and name != Text.ME_LABEL:
                     messages.append(f"(ID: {msg.id}) [{time_str}] {name}{reply_info}: {cleaned_content}")
                 else:
                     messages.append(f"[{time_str}] {name}{reply_info}: {cleaned_content}")

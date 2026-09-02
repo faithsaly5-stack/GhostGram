@@ -1322,6 +1322,9 @@ async def auto_engage_loop():
 
                     # Provide the chat context for AI to formulate response
                     history_text = await get_recent_chat_history(chat_id, limit=Config.SHORT_TERM_MEMORY_LIMIT, include_id=True)
+                    valid_ids = re.findall(r'\(ID:\s*(\d+)\)', history_text)
+                    valid_ids_str = ", ".join(valid_ids) if valid_ids else "هیچکدام"
+                    
                     now_persian = get_current_persian_datetime()
                     ltm = memory_manager.get_long_term_summary(chat_id)
                     ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
@@ -1330,6 +1333,7 @@ async def auto_engage_loop():
                         current_time=now_persian,
                         long_term_context=ltm_context,
                         history_text=history_text,
+                        valid_ids_str=valid_ids_str,
                         duration_minutes=duration_minutes,
                         owner_first_name=Config.OWNER_FIRST_NAME
                     )
