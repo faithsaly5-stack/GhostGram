@@ -108,7 +108,7 @@
 ---
 
 ## 🚀 企业级可扩展性与防封禁机制
-- **API 密钥轮换:** 在您的 `.env` 文件中加载无限制的 Gemini API 密钥。如果一个密钥触发频率限制（429 报错），引擎会立即无缝切换到下一个密钥，绝不丢失消息。
+- **API密钥轮换与冷却 (Cooldown):** 在您的 `.env` 中加载无限制的 Gemini API 密钥。如果一个密钥达到其速率限制 (429 Quota)，引擎会立即轮换到下一个密钥。它还使用 `GEMINI_RPM_COOLDOWN_SECONDS` 在本地暂停操作以严格遵守 API 配额。
 - **模型自动级联:** 机器人具有智能故障转移路由。如果您的主要 AI 模型被 Google 服务器过载，它将自动级联到您的辅助备用模型，确保零停机时间。
 - **防封禁 FloodWait 保护:** 像幽灵清理（999）这样的后台任务具有数学“人类疲劳”模拟功能。它在批量删除之间进行有计划的微小休息，并默默处理 Telegram 的 FloodWait 陷阱，从而彻底规避账号封禁风险。
 
@@ -141,6 +141,9 @@ GhostGram 自带 13+ 种精心打磨的预设人设文件（位于 `personas/` �
 - `assistant.txt`: 礼貌高效的商务与个人助理。
 
 > **✨ 创建自定人设：** 只需在 `personas/` 文件夹内新建文本文件（例如 `coder.txt`），即可通过 `777 coder` 随时调用！
+
+### 独立角色 (隔离身份)
+如果您想创建一个完全脱离您主要身份的角色（这意味着它不会继承 `normal.txt` 中的任何规则、您的名字或简介），只需在其 `.txt` 文件中的任何位置添加 `[STANDALONE]` 标签即可。引擎会立即将其识别为完全隔离，并从最终提示中删除该标签。
 
 ---
 
@@ -272,8 +275,8 @@ OWNER_INTERESTS=音乐、科技、摄影、阅读
 # 🤖 GOOGLE GEMINI API 引擎设置
 # ==========================================
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
-GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🎙️ 媒体与音频设置
@@ -335,6 +338,9 @@ GEMINI_MAX_CHARS=50000
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: 切换到下一个 AI 模型前的严格超时时间（秒）。
 GEMINI_TIMEOUT_SECONDS=25.0
+# GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
+# Unit: Seconds (e.g., 15)
+GEMINI_RPM_COOLDOWN_SECONDS=15
 
 # 🗄️ 系统与媒体
 # LOG_MAX_BYTES: 日志文件轮转前的最大大小 (5242880 = 5MB)。

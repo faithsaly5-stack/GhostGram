@@ -107,7 +107,7 @@
 ---
 
 ## 🚀 Escalabilidad de Grado Empresarial y Anti-Ban
-- **Rotación de Claves API:** Cargue claves API de Gemini ilimitadas en su `.env`. Si una clave alcanza su límite (Cuota 429), el motor rota de forma instantánea y fluida a la siguiente clave sin perder el mensaje.
+- **Rotación de Claves API y Enfriamiento:** Carga claves API de Gemini ilimitadas en tu `.env`. Si una clave alcanza su límite de cuota (429), el motor rota instantáneamente a la siguiente. También utiliza `GEMINI_RPM_COOLDOWN_SECONDS` para pausar operaciones localmente y evadir baneos.
 - **Modelos en Cascada Automática:** El bot cuenta con enrutamiento inteligente de conmutación por error. Si su modelo de IA principal está sobrecargado por Google, se transfiere automáticamente a sus modelos de respaldo secundarios para garantizar un tiempo de inactividad cero.
 - **Protección Anti-Ban FloodWait:** Tareas en segundo plano como Ghost Purge (999) cuentan con una simulación matemática de "fatiga humana". Toma micro-descansos calculados entre eliminaciones masivas y maneja las trampas FloodWait de Telegram silenciosamente para evadir por completo los bloqueos de cuenta.
 
@@ -139,6 +139,9 @@ GhostGram incluye más de 13 personalidades listas para usar en la carpeta `pers
 - `assistant.txt`: Educado, resolutivo y formal para asuntos profesionales.
 
 > **✨ Crea tu propia personalidad:** Solo añade un archivo `.txt` en la carpeta `personas/` (ej: `gamer.txt`) y úsalo con `777 gamer`.
+
+### Personas Independientes (Identidad Aislada)
+Si deseas crear una persona que esté completamente separada de tu identidad principal (es decir, que no herede reglas, tu nombre ni tu biografía de `normal.txt`), simplemente agrega la etiqueta `[STANDALONE]` en cualquier parte de su archivo `.txt`. El motor lo reconocerá instantáneamente como completamente aislado y eliminará la etiqueta del prompt final.
 
 ---
 
@@ -263,8 +266,8 @@ OWNER_INTERESTS=Música, Tecnología, Ciencia
 
 # 🤖 Configuración del Motor de IA
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
-GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🎙️ Ajustes de Medios y Audio
@@ -320,6 +323,9 @@ GEMINI_MAX_CHARS=50000
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Tiempo máximo (en segundos) antes de cambiar al siguiente modelo de IA.
 GEMINI_TIMEOUT_SECONDS=25.0
+# GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
+# Unit: Seconds (e.g., 15)
+GEMINI_RPM_COOLDOWN_SECONDS=15
 
 # 🗄️ Sistema y Medios
 # LOG_MAX_BYTES: Tamaño máximo del archivo de registro antes de rotar (5242880 = 5MB).
