@@ -1292,8 +1292,23 @@ async def auto_engage_loop():
                         continue
                     
                     # Prevent auto-engaging if the very last message in the chat was sent by me
-                    if latest_msgs[0].out or latest_msgs[0].sender_id == my_id:
+                    latest_msg = latest_msgs[0]
+                    if latest_msg.out or latest_msg.sender_id == my_id:
                         continue
+                        
+                    # 🚀 EARLY EXIT: Don't burn API tokens if we already replied to this message
+                    if is_already_replied(chat_id, latest_msg.id):
+                        logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (Latest message already replied to).")
+                        continue
+                        
+                    # 🚀 EARLY EXIT: Don't burn API tokens auto-engaging with other bots
+                    try:
+                        latest_sender = await latest_msg.get_sender()
+                        if latest_sender and getattr(latest_sender, 'bot', False):
+                            logger.debug(f"[LIFECYCLE] Auto-Engage skipped in {chat_id} (Latest message is from a bot).")
+                            continue
+                    except Exception:
+                        pass
                         
                     last_msg_time = latest_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                     # A chat is dead if no one spoke in 30 mins OR 1.5x the configured duration

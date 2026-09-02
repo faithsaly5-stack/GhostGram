@@ -184,6 +184,8 @@ class MemoryManager:
                     break
                 
                 sender = await msg.get_sender()
+                if sender and getattr(sender, 'bot', False):
+                    continue
                 name = await format_sender_fn(sender, my_id)
                 time_str = msg.date.strftime("%H:%M")
                 
