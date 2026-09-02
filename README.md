@@ -151,8 +151,8 @@ GhostGram features advanced security layers that neutralize malicious attempts b
 ---
 
 ## 🚀 Enterprise-Grade Scalability & Anti-Ban
-- **API Key Rotation:** Load unlimited Gemini API keys in your `.env`. If one key hits its rate limit (429 Quota), the engine instantly and seamlessly rotates to the next key without dropping the message.
-- **Auto-Cascading Models:** The bot features intelligent failover routing. If your primary AI model is overloaded by Google, it automatically cascades to your secondary backup models to guarantee zero downtime.
+- **API Key Rotation & Cooldown:** Load unlimited Gemini API keys in your `.env`. If one key hits its rate limit (429 Quota), the engine instantly rotates to the next key. It also utilizes `GEMINI_RPM_COOLDOWN_SECONDS` to pause operations locally and respect API quotas to perfectly evade bans.
+- **Auto-Cascading Models:** The bot features intelligent failover routing for both Text and TTS models. If your primary AI model is overloaded by Google, it automatically cascades to your secondary backup models (configured via `GEMINI_MODELS` and `GEMINI_TTS_MODELS`) to guarantee zero downtime.
 - **Anti-Ban FloodWait Protection:** Background tasks like Ghost Purge (999) feature mathematical "human fatigue" simulation. It takes calculated micro-breaks between bulk deletions and handles Telegram's FloodWait traps silently to completely evade account bans.
 
 ---
@@ -183,6 +183,9 @@ Activated globally with `666`, Assistant Mode turns your account into a polite p
 Add custom `.txt` files to `personas/` to unlock instant runtime personality switching:
 - `personas/hacker.txt` -> Activate in chat with `777 hacker`
 - `personas/sarcastic.txt` -> Activate in chat with `777 sarcastic`
+
+### 4. Standalone Personas (Isolated Identity)
+If you want to create a persona that is completely detached from your main identity (meaning it won't inherit any rules, your name, or your bio from `normal.txt`), simply add the `[STANDALONE]` tag anywhere in its `.txt` file. The engine will instantly recognize it as completely isolated and strip the tag from the final prompt.
 
 ---
 
@@ -238,8 +241,8 @@ OWNER_INTERESTS=موسیقی، کتاب، تکنولوژی و گفتگو
 
 # 🤖 AI Engine Settings
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20"
-GEMINI_TTS_MODEL="gemini-3.1-flash-tts-preview"
+GEMINI_MODELS="gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
 # 🎙️ Media & Audio Settings
@@ -311,6 +314,9 @@ GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
 # Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
 GEMINI_TIMEOUT_SECONDS=25.0
+# GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
+# Unit: Seconds (e.g., 15)
+GEMINI_RPM_COOLDOWN_SECONDS=15
 
 # 🗄️ System & Media
 # LOG_MAX_BYTES: How large the background log file can get before it creates a new one.
