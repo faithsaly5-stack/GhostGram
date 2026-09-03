@@ -97,6 +97,7 @@
 | `810` | Chat actual | **Ajustes de voz**: Lista 30 voces diferentes para seleccionar tu favorita. |
 | `811` | Global | **Cambiador de voz (Stealth)**: Reemplaza secretamente tus notas de voz con una voz de IA generada a partir de tu transcripción. |
 | `303` | Chat actual | **Ver memoria**: Muestra resúmenes de memoria a largo plazo guardados para este chat (agrega `all` para todos). |
+| `333` | Chat actual | **Reiniciar memoria**: Borra el historial de memoria a corto y largo plazo de este chat. |
 | `555` | Chat actual | **Panel de Estado** (informe breve que se borra en 4s). |
 | `999 [límite]` | Chat actual | **Ghost Purge** (elimina tus mensajes, escanea hasta 3000). |
 | `998 [límite]` | Chat actual | **Smart Ghost Purge** (más rápido, solo busca tus mensajes). |
@@ -266,7 +267,7 @@ OWNER_INTERESTS=Música, Tecnología, Ciencia
 
 # 🤖 Configuración del Motor de IA
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500"
 GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
@@ -322,7 +323,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Número de veces que el bot intentará cambiar de modelo si uno falla.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Tiempo máximo (en segundos) antes de cambiar al siguiente modelo de IA.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=35.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

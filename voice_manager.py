@@ -73,6 +73,10 @@ class VoiceManager:
         idx = index - 1
         if 0 <= idx < len(self.voices):
             return self.voices[idx]
-        return None
+    def factory_reset(self):
+        """Resets voice index to default and deactivates voice changer."""
+        self.current_index = self.default_index
+        self.voice_changer_active = False
+        self.save()
 
 voice_manager = VoiceManager()

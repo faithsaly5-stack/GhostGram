@@ -98,6 +98,7 @@
 | `810` | 当前会话 | **语音设置**: 从 30 种不同声音中选择并保存您最喜欢的语音。 |
 | `811` | 全局生效 | **AI 变声器 (隐身)**: 拦截您发送的语音记录，自动删除并用 AI 语音无缝替换。 |
 | `303` | 当前会话 | **查看记忆**: 显示此聊天的长期记忆摘要（添加 `all` 查看所有）。 |
+| `333` | 当前会话 | **重置记忆**: 清除此聊天的所有短期和长期记忆历史。 |
 | `555` | 当前会话 | **查看状态面板**（4秒后自动销毁）。 |
 | `999 [数量]` | 当前会话 | **幽灵清理**（撤回自己发送的消息，最多回溯 3000 条）。 |
 | `998 [数量]` | 当前会话 | **智能幽灵清理**（更快，仅搜索并撤回自己发送的消息）。 |
@@ -275,7 +276,7 @@ OWNER_INTERESTS=音乐、科技、摄影、阅读
 # 🤖 GOOGLE GEMINI API 引擎设置
 # ==========================================
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500"
 GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
@@ -337,7 +338,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: 如果一个模型失败，机器人尝试切换到其他模型的次数。
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: 切换到下一个 AI 模型前的严格超时时间（秒）。
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=35.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

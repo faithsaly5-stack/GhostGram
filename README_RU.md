@@ -97,6 +97,7 @@
 | `810` | Текущий чат | **Настройки голоса**: Выберите свой любимый голос из 30 вариантов. |
 | `811` | Все чаты | **Изменитель голоса (Stealth)**: Незаметно заменяет ваши голосовые сообщения на голос ИИ. |
 | `303` | Текущий чат | **Просмотр памяти**: Показывает сохраненную долгосрочную память для этого чата (добавьте `all` для всех). |
+| `333` | Текущий чат | **Сброс памяти**: Очищает краткосрочную и долгосрочную память для этого чата. |
 | `555` | Текущий чат | **Панель статуса** (краткий отчет, удаляется через 4 сек). |
 | `999 [лимит]` | Текущий чат | **Ghost Purge** (удалить N своих сообщений, сканируя до 3000). |
 | `998 [лимит]` | Текущий чат | **Smart Ghost Purge** (быстрее, поиск только ваших сообщений). |
@@ -266,7 +267,7 @@ OWNER_INTERESTS=Технологии, музыка, литература
 
 # 🤖 Настройки ИИ-движка
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500"
 GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
@@ -322,7 +323,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Количество попыток переключения на другие модели ИИ при сбое.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Строгий таймаут (в секундах) перед переключением на следующую модель ИИ.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=35.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

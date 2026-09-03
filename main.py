@@ -286,10 +286,12 @@ async def handle_view_memory(event, is_all=False):
 
 async def handle_factory_reset(event):
     from api_tracker import api_tracker
+    from voice_manager import voice_manager
     api_tracker.factory_reset()
     memory_manager.factory_reset()
     pal_manager.factory_reset()
     assistant_manager.factory_reset()
+    voice_manager.factory_reset()
     
     # Rock-solid log deletion: Release file locks, delete, and reattach
     import os
@@ -306,7 +308,7 @@ async def handle_factory_reset(event):
             logger.removeHandler(handler)
             
     # 2. Safely delete all log files and backups
-    log_pattern = os.path.join(Config.PROFILE_DIR, "ghostgram.log*")
+    log_pattern = os.path.join(Config.PROFILE_DIR, "*.log*")
     for log_file in glob.glob(log_pattern):
         try:
             os.remove(log_file)

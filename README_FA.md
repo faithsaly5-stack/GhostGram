@@ -205,7 +205,7 @@ OWNER_INTERESTS=موسیقی، کتاب، تکنولوژی و گفتگو
 
 # 🤖 تنظیمات موتور هوش مصنوعی
 GEMINI_API_KEYS=your_key_1,your_key_2
-GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500"
 GEMINI_TTS_MODELS="gemini-3.1-flash-tts-preview"
 GEMINI_STT_MODEL="models/gemini-3.5-transcribe-live"
 
@@ -261,7 +261,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: تعداد دفعاتی که ربات در صورت خرابی یک مدل، مدل‌های دیگر را امتحان می‌کند.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: محدودیت زمانی (به ثانیه) قبل از تغییر به مدل بعدی هوش مصنوعی.
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=35.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15
