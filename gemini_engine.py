@@ -25,7 +25,7 @@ class GeminiEngine:
         with self._client_lock:
             c = self._clients.get(api_key)
             if c is None:
-                c = genai.Client(api_key=api_key, http_options={'timeout': Config.GEMINI_TIMEOUT_SECONDS})
+                c = genai.Client(api_key=api_key, http_options={'timeout': int(Config.GEMINI_TIMEOUT_SECONDS * 1000)})
                 self._clients[api_key] = c
             return c
 
@@ -153,7 +153,7 @@ class GeminiEngine:
                     return Text.ERROR
                 elif "404" in err_str:
                     api_tracker.record_dead_model(model_to_use)
-                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "ssl" in err_str:
+                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "504" in err_str or "ssl" in err_str:
                     for k in self.keys:
                         api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
                     print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down model for 45s across all keys...")
