@@ -31,7 +31,7 @@ class GeminiEngine:
 
 
 
-    async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False, start_model: str = None) -> str:
+    async def get_response(self, user_message: str, system_prompt: str, is_json: bool = False, start_model: str = None, clean_text: bool = True) -> str:
         """
         Asynchronously fetches a response from Gemini.
         GUARANTEE POLICY: Persistently cascades through the smartest available models
@@ -97,9 +97,13 @@ class GeminiEngine:
 
                 # Success! Record usage and return formatted text
                 api_tracker.record_success(api_key, model_to_use)
-                raw_text = (resp.text or "").strip()
+                raw_text = resp.text or ""
 
+                # Use JSON text explicitly if required, bypass text processing for internal context
                 if is_json:
+                    return raw_text
+                
+                if not clean_text:
                     return raw_text
 
                 return clean_outbound_text(raw_text)
@@ -127,7 +131,7 @@ class GeminiEngine:
 
                 # 3. Standard API Errors
                 if "429" in err_str or "resource_exhausted" in err_str or "quota" in err_str:
-                    if "per day" in err_str or "daily" in err_str:
+                    if "per day" in err_str or "daily" in err_str or "per-day" in err_str or "per_day" in err_str:
                         api_tracker.record_daily_exhausted(api_key, model_to_use)
                     else:
                         api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=Config.GEMINI_RPM_COOLDOWN_SECONDS)
@@ -137,8 +141,7 @@ class GeminiEngine:
                     print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt is fundamentally flawed or rejected by Google. Aborting to save keys!\n🔍 Reason: {e}")
                     return Text.ERROR
                 elif "404" in err_str:
-                    print(f"❌ NOT FOUND (404): Model '{model_to_use}' is invalid or deprecated! Disabling model for this key.")
-                    api_tracker.record_daily_exhausted(api_key, model_to_use) # Effectively disables it for the day
+                    api_tracker.record_dead_model(model_to_use)
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
                     # Force immediate GLOBAL cascade for this model across all keys
                     for k in self.keys:

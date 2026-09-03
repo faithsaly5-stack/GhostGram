@@ -44,6 +44,9 @@ class APIUsageTracker:
         self.rpm_timestamps = {}
         # Permanently invalid keys (400/403 bad keys): set of api_keys
         self.invalid_keys = set()
+        self.dead_models = set()
+        self.last_used_key_index = {}
+        self.last_used_timestamp = {}
         
     def _init_key_model_dicts(self, api_key: str):
         if api_key not in self.cooldowns:
@@ -172,8 +175,18 @@ class APIUsageTracker:
                         
             for cfg in MODELS_CONFIG[start_idx:]:
                 model_name = cfg["name"]
-                for key in api_keys:
+                if model_name in self.dead_models:
+                    continue
+                    
+                last_idx = self.last_used_key_index.get(model_name, -1)
+                num_keys = len(api_keys)
+                
+                for i in range(1, num_keys + 1):
+                    curr_idx = (last_idx + i) % num_keys
+                    key = api_keys[curr_idx]
+                    
                     if self.is_model_key_available(key, model_name):
+                        self.last_used_key_index[model_name] = curr_idx
                         # Optimistic RPM Booking: Claim the slot instantly to prevent concurrent 'thundering herd' 429s
                         import time
                         now = time.time()
@@ -234,6 +247,7 @@ class APIUsageTracker:
         with self._lock:
             self._init_key_model_dicts(api_key)
             now = time.time()
+            self.last_used_timestamp[model_name] = now
             self.consecutive_failures[api_key][model_name] = 0
             if model_name in self.cooldowns[api_key]:
                 del self.cooldowns[api_key][model_name]
@@ -308,11 +322,20 @@ class APIUsageTracker:
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
             print(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled completely for this session.")
 
+    def record_dead_model(self, model_name: str):
+        """Blacklists a model globally (e.g. 404 Not Found) to prevent 404 storms on all keys."""
+        with self._lock:
+            self.dead_models.add(model_name)
+            print(f"❌ MODEL 404 STORM PREVENTED: '{model_name}' is permanently dead. Blacklisting from rotation.")
+
     def factory_reset(self):
         """Globally resets all API keys, quotas, rate limits, and bans."""
         with self._lock:
             self.usage_data.clear()
             self.invalid_keys.clear()
+            self.dead_models.clear()
+            self.last_used_key_index.clear()
+            self.last_used_timestamp.clear()
             self.rpm_timestamps.clear()
             self.cooldowns.clear()
             self.consecutive_failures.clear()
@@ -340,7 +363,24 @@ class APIUsageTracker:
                 dead_previews = [f"`{k[:6]}...`" if len(k) > 10 else f"`{k}`" for k in dead_keys_in_config]
                 report.append(f"❌ کلیدهای مسدود (403): {dead_keys} ({', '.join(dead_previews)})")
                 
-            report.append("\n**گزارش مجموع مصرف امروز:**")
+            # Count keys currently on cooldown (429)
+            import time
+            now = time.time()
+            cooling_down_count = 0
+            for key, model_cds in self.cooldowns.items():
+                for model, (ts, reason) in model_cds.items():
+                    if ts > now:
+                        cooling_down_count += 1
+                        break
+                        
+            if cooling_down_count > 0:
+                report.append(f"⏳ کلیدهای در حال استراحت (429 Rate Limit): {cooling_down_count}")
+                
+            if self.dead_models:
+                dead_models_str = ", ".join([f"`{m}`" for m in self.dead_models])
+                report.append(f"⚠️ مدل‌های منسوخ/یافت‌نشده (404): {dead_models_str}")
+                
+            report.append("\n**گزارش سهمیه و مصرف امروز:**")
             
             # Aggregate usage by model
             model_usage = {} # model_name -> count
@@ -357,18 +397,28 @@ class APIUsageTracker:
                             model_keys_used[model] = set()
                         model_keys_used[model].add(key)
                         
-            if not model_usage:
-                report.append("🟢 کاملاً آزاد (بدون مصرف امروز برای هیچ مدلی)")
-            else:
-                for cfg in MODELS_CONFIG:
-                    model = cfg["name"]
-                    if model in model_usage:
-                        used = model_usage[model]
-                        keys_used_count = len(model_keys_used[model])
-                        total_limit = cfg["rpd"] * healthy_keys if healthy_keys > 0 else 0
-                        
-                        report.append(f"🤖 `{model}`:")
-                        report.append(f"   └ مصرف: {used} / {total_limit} درخواست (توسط {keys_used_count} کلید)")
+            for cfg in MODELS_CONFIG:
+                model = cfg["name"]
+                used = model_usage.get(model, 0)
+                keys_used_count = len(model_keys_used.get(model, set()))
+                total_limit = cfg["rpd"] * healthy_keys if healthy_keys > 0 else 0
+                
+                last_used = self.last_used_timestamp.get(model, 0)
+                time_str = ""
+                if last_used > 0:
+                    diff = int(now - last_used)
+                    if diff < 60:
+                        time_str = f" (آخرین استفاده: {diff} ثانیه پیش)"
+                    elif diff < 3600:
+                        time_str = f" (آخرین استفاده: {diff // 60} دقیقه پیش)"
+                    else:
+                        time_str = f" (آخرین استفاده: {diff // 3600} ساعت پیش)"
+                
+                report.append(f"🤖 `{model}`:")
+                if used == 0:
+                    report.append(f"   └ مصرف: 0 / {total_limit} (بدون مصرف)")
+                else:
+                    report.append(f"   └ مصرف: {used} / {total_limit} درخواست (توسط {keys_used_count} کلید){time_str}")
             
             report.append("\n💡 *سهمیه‌ها هر روز ساعت 00:00 به وقت UTC ریست می‌شوند.*")
             return "\n".join(report)

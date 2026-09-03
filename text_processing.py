@@ -77,7 +77,8 @@ def clean_outbound_text(raw_text: str) -> str:
         # Limit consecutive newlines without destroying code indentation
         clean_text = re.sub(r'\n\s*\n\s*\n+', '\n\n', clean_text).strip()
         
-        clean_text = clean_text.rstrip('.…۔')
+        # Strip trailing periods, ellipses, Persian full stops, and any trailing whitespace (casual Telegram style)
+        clean_text = re.sub(r'[\s.…۔]+$', '', clean_text).strip()
         
         # Safety net: If the AI only sent dots and we stripped them all, return a default string
         if not clean_text:

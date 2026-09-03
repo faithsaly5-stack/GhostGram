@@ -40,3 +40,6 @@ teleagent_deploy_config.json
 publish.py
 publish_github.bat
 prepare_github.bat
+
+# Temporary/Scratch Files
+scratch/

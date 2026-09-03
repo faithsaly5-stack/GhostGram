@@ -149,7 +149,10 @@ async def transcribe_audio_file(file_path: str, api_keys: list[str], lang_code: 
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
-                if "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
+                if "404" in err_str:
+                    logger.error(f"❌ NOT FOUND (404): Model '{MODEL}' is invalid!")
+                    return f"Error: STT Model '{MODEL}' is invalid or deprecated."
+                elif "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
                     logger.warning(f"⏳ Key {key_preview} hit rate limit on live transcribe. Rotating...")
                     continue
                 elif "403" in err_str or "api_key_invalid" in err_str:

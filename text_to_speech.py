@@ -167,6 +167,9 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 if "503" in err_str or "500" in err_str or "unavailable" in err_str or "internal" in err_str or "timeout" in err_str:
                     logger.warning(f"⚠️ Gemini Network Error on TTS ({model_name}) (503/Timeout). Forcing immediate cascade to next model...")
                     break  # Break API key loop, go immediately to next model!
+                elif "404" in err_str:
+                    logger.warning(f"❌ NOT FOUND (404): Model '{model_name}' is invalid! Forcing immediate cascade to next model...")
+                    break
                 elif "429" in err_str or "quota" in err_str or "resource_exhausted" in err_str:
                     logger.warning(f"⏳ Key {key_preview} hit rate limit on TTS ({model_name}). Rotating...")
                     continue

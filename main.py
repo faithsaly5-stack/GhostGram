@@ -15,7 +15,7 @@ from assistant_manager import assistant_manager
 from memory_manager import memory_manager
 from human_behavior import ContinuousTyping, calculate_human_typing_delay
 from time_utils import get_current_persian_datetime
-from text_processing import normalize_digits
+from text_processing import normalize_digits, clean_outbound_text
 from logger import logger
 import random
 import time
@@ -1355,6 +1355,8 @@ async def auto_engage_loop():
                             data = json.loads(json_match.group(0))
                             target_id = data.get("selected_id")
                             reply_text = data.get("reply_text")
+                            if reply_text:
+                                reply_text = clean_outbound_text(reply_text)
                             
                             if target_id is not None and str(target_id).lower() != "null" and reply_text:
                                 try:

@@ -56,7 +56,7 @@ set "PAYLOAD=teleagent_deploy.zip"
 if exist "!PAYLOAD!" del /f /q "!PAYLOAD!"
 
 echo [1/3] Compressing files locally...
-tar -a -c -f "!PAYLOAD!" --exclude=*.json --exclude=*.session --exclude=*.session-journal *.py requirements.txt profiles
+tar -a -c -f "!PAYLOAD!" --exclude=*.json --exclude=*.session --exclude=*.session-journal --exclude=scratch *.py requirements.txt profiles
 if !ERRORLEVEL! NEQ 0 (
     echo [ERROR] Failed to compress files.
     goto :end
