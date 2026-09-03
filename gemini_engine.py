@@ -59,8 +59,15 @@ class GeminiEngine:
         
         # Give it up to configured attempts to cascade through models or wait out cooldowns
         max_attempts = Config.GEMINI_MAX_ATTEMPTS
+        import time
+        overall_start_time = time.time()
 
         for attempt in range(max_attempts):
+            elapsed_overall = time.time() - overall_start_time
+            if elapsed_overall >= 90.0 and start_model != "CHEAPEST":
+                print(f"⚠️ 90-second SLA threshold reached! Downgrading to CHEAPEST models to guarantee response...")
+                start_model = "CHEAPEST"
+
             model_to_use, api_key = api_tracker.get_best_available_model(self.keys, start_model=start_model)
             
             if not api_key:
