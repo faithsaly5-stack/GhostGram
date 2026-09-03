@@ -64,8 +64,8 @@ class GeminiEngine:
 
         for attempt in range(max_attempts):
             elapsed_overall = time.time() - overall_start_time
-            if elapsed_overall >= 90.0 and start_model != "CHEAPEST":
-                print(f"⚠️ 90-second SLA threshold reached! Downgrading to CHEAPEST models to guarantee response...")
+            if elapsed_overall >= Config.GEMINI_SLA_TIMEOUT_SECONDS and start_model != "CHEAPEST":
+                print(f"⚠️ {Config.GEMINI_SLA_TIMEOUT_SECONDS}-second SLA threshold reached! Downgrading to CHEAPEST models to guarantee response...")
                 start_model = "CHEAPEST"
 
             model_to_use, api_key = api_tracker.get_best_available_model(self.keys, start_model=start_model)

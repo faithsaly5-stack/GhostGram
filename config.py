@@ -85,6 +85,7 @@ class Config:
     GEMINI_MAX_CHARS = int(os.getenv("GEMINI_MAX_CHARS", "50000"))
     GEMINI_MAX_ATTEMPTS = int(os.getenv("GEMINI_MAX_ATTEMPTS", "20"))
     GEMINI_TIMEOUT_SECONDS = float(os.getenv("GEMINI_TIMEOUT_SECONDS", "35.0"))
+    GEMINI_SLA_TIMEOUT_SECONDS = float(os.getenv("GEMINI_SLA_TIMEOUT_SECONDS", "90.0"))
     GEMINI_RPM_COOLDOWN_SECONDS = int(os.getenv("GEMINI_RPM_COOLDOWN_SECONDS", "15"))
     
     # System & Media
