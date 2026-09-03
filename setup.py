@@ -80,7 +80,7 @@ GEMINI_API_KEYS={gemini_key}
 # 🧠 Gemini Models Cascade Configuration
 # Format: model_name:rpm:rpd,model_name2:rpm:rpd
 # To disable a model, simply remove it from this comma-separated list!
-GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500,gemini-2.5-flash-lite:10:20"
+GEMINI_MODELS="gemini-3.8-flash:5:20,gemini-3.7-flash:5:20,gemini-3.6-flash:5:20,gemini-3.5-flash:5:20,gemini-3-flash-preview:5:20,gemini-2.5-flash:5:20,gemini-3.5-flash-lite:15:500,gemini-3.1-flash-lite:15:500"
 
 # 🎤 Voice/Audio Models Configuration
 # GEMINI_TTS_MODELS: Comma-separated list of TTS models to cascade across if primary fails.
@@ -131,7 +131,7 @@ GEMINI_MAX_CHARS=50000
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
 # Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
-GEMINI_TIMEOUT_SECONDS=25.0
+GEMINI_TIMEOUT_SECONDS=35.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

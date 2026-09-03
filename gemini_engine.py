@@ -109,10 +109,9 @@ class GeminiEngine:
                 return clean_outbound_text(raw_text)
 
             except asyncio.TimeoutError:
-                # Force immediate GLOBAL cascade for this model across all keys
-                for k in self.keys:
-                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120, quiet=True)
-                print(f"⚠️ Key timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Forcing immediate GLOBAL cascade to next model for 2 minutes...")
+                # Cool down this specific key for 30s to allow trying another key on this model, or cascading if all keys are busy
+                api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=30)
+                print(f"⚠️ Key timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Switching to next available key/model...")
                 continue
 
             except Exception as e:
@@ -125,8 +124,8 @@ class GeminiEngine:
                     
                 # 2. Fatal Geographic / Policy Bans
                 if "unsupported user location" in err_str or "location is not supported" in err_str:
-                    print(f"🌍 GEO-RESTRICTION: Google Gemini is blocked in this server's region!")
-                    api_tracker.record_invalid_key(api_key)
+                    print(f"🌍 GEO-RESTRICTION: Google Gemini connection issue (VPN/location). Cooling down key for 60s...")
+                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=60)
                     continue
 
                 # 3. Standard API Errors
@@ -135,18 +134,20 @@ class GeminiEngine:
                         api_tracker.record_daily_exhausted(api_key, model_to_use)
                     else:
                         api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=Config.GEMINI_RPM_COOLDOWN_SECONDS)
-                elif "api_key_invalid" in err_str or "permission_denied" in err_str or "403" in err_str:
+                elif "api_key_invalid" in err_str or "api key not valid" in err_str:
                     api_tracker.record_invalid_key(api_key)
+                elif "permission_denied" in err_str or "403" in err_str:
+                    # Transient 403 or project permission hiccup - cool down key temporarily instead of permanent ban
+                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=60)
+                    print(f"⚠️ 403 / Permission error on {model_to_use} for key. Cooling down key for 60s...")
                 elif "400" in err_str:
                     print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt is fundamentally flawed or rejected by Google. Aborting to save keys!\n🔍 Reason: {e}")
                     return Text.ERROR
                 elif "404" in err_str:
                     api_tracker.record_dead_model(model_to_use)
-                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str:
-                    # Force immediate GLOBAL cascade for this model across all keys
-                    for k in self.keys:
-                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=120, quiet=True)
-                    print(f"⚠️ Gemini Network Error on {model_to_use} (503/Timeout). Forcing immediate GLOBAL cascade to next model for 2 minutes...")
+                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "ssl" in err_str:
+                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=20)
+                    print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down key for 20s and trying next...")
                 else:
                     # 4. Unknown Errors (Catch-All)
                     api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)

@@ -360,7 +360,7 @@ class APIUsageTracker:
             report.append(f"✅ کلیدهای سالم: {healthy_keys} از {len(total_configured_keys)}")
             
             if dead_keys > 0:
-                dead_previews = [f"`{k[:6]}...`" if len(k) > 10 else f"`{k}`" for k in dead_keys_in_config]
+                dead_previews = [f"`{k[:6]}...{k[-4:]}`" if len(k) > 10 else f"`{k}`" for k in dead_keys_in_config]
                 report.append(f"❌ کلیدهای مسدود (403): {dead_keys} ({', '.join(dead_previews)})")
                 
             # Count keys currently on cooldown (429)
@@ -368,13 +368,15 @@ class APIUsageTracker:
             now = time.time()
             cooling_down_count = 0
             for key, model_cds in self.cooldowns.items():
+                if key in self.invalid_keys:
+                    continue
                 for model, (ts, reason) in model_cds.items():
                     if ts > now:
                         cooling_down_count += 1
                         break
                         
             if cooling_down_count > 0:
-                report.append(f"⏳ کلیدهای در حال استراحت (429 Rate Limit): {cooling_down_count}")
+                report.append(f"⏳ کلیدهای در حال استراحت موقت: {cooling_down_count}")
                 
             if self.dead_models:
                 dead_models_str = ", ".join([f"`{m}`" for m in self.dead_models])
