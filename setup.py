@@ -127,8 +127,8 @@ MAX_VOICE_LISTEN_DELAY_SECONDS=25.0
 # Unit: Characters (e.g., 50000 = about 10,000 words)
 GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: How many times the bot tries switching API keys if one gets rate-limited.
-# Unit: Retry Count (e.g., 20 = tries up to 20 times across all available keys)
-GEMINI_MAX_ATTEMPTS=20
+# Unit: Retry Count (e.g., 150 = allows full rotation across all keys & cascading models)
+GEMINI_MAX_ATTEMPTS=150
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
 # Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
 GEMINI_TIMEOUT_SECONDS=25.0

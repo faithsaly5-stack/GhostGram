@@ -57,8 +57,9 @@ class GeminiEngine:
 
         loop = asyncio.get_running_loop()
         
-        # Give it up to configured attempts to cascade through models or wait out cooldowns
-        max_attempts = Config.GEMINI_MAX_ATTEMPTS
+        # Give it enough attempts to cascade through all models and keys without premature abort
+        from api_tracker import MODELS_CONFIG
+        max_attempts = max(Config.GEMINI_MAX_ATTEMPTS, len(self.keys) * len(MODELS_CONFIG) + 25)
         import time
         overall_start_time = time.time()
 
@@ -153,15 +154,17 @@ class GeminiEngine:
                 elif "api_key_invalid" in err_str or "api key not valid" in err_str:
                     api_tracker.record_invalid_key(api_key)
                 elif "permission_denied" in err_str or "403" in err_str:
-                    # Transient 403 or project permission hiccup - cool down key temporarily instead of permanent ban
-                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=60)
-                    print(f"⚠️ 403 / Permission error on {model_to_use} for key. Cooling down key for 60s...")
+                    # Permission denied applies to the key across all Gemini models - cool down for 5 minutes
+                    for m in MODELS_CONFIG:
+                        api_tracker.record_rate_limit(api_key, m["name"], cooldown_seconds=300, quiet=True)
+                    key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
+                    print(f"⚠️ 403 / Permission error for key {key_preview}. Cooling down key for 5m across all models...")
                 elif "400" in err_str:
                     print(f"❌ BAD REQUEST (400) on {model_to_use}: The prompt is fundamentally flawed or rejected by Google. Aborting to save keys!\n🔍 Reason: {e}")
                     return Text.ERROR
                 elif "404" in err_str:
                     api_tracker.record_dead_model(model_to_use)
-                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "504" in err_str or "ssl" in err_str:
+                elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "504" in err_str or "499" in err_str or "cancelled" in err_str or "ssl" in err_str:
                     is_quarantined, tier, duration_seconds = api_tracker.record_global_model_failure(model_to_use, self.keys)
                     if is_quarantined:
                         if tier == 1:
