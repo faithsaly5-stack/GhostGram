@@ -130,14 +130,14 @@ GEMINI_MAX_CHARS=50000
 # Unit: Retry Count (e.g., 150 = allows full rotation across all keys & cascading models)
 GEMINI_MAX_ATTEMPTS=150
 # GEMINI_TIMEOUT_SECONDS: How long to wait for the AI to reply before giving up and trying another key.
-# Unit: Seconds (e.g., 25.0 = strict 25-second timeout)
-GEMINI_TIMEOUT_SECONDS=25.0
+# Unit: Seconds (e.g., 10.0 = strict 10-second timeout)
+GEMINI_TIMEOUT_SECONDS=10.0
 # GEMINI_SLA_TIMEOUT_SECONDS: Maximum time before forcing a fallback to the cheapest model to guarantee a response.
-# Unit: Seconds (e.g., 90.0)
-GEMINI_SLA_TIMEOUT_SECONDS=90.0
+# Unit: Seconds (e.g., 45.0)
+GEMINI_SLA_TIMEOUT_SECONDS=45.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
-# Unit: Seconds (e.g., 15)
-GEMINI_RPM_COOLDOWN_SECONDS=15
+# Unit: Seconds (e.g., 60)
+GEMINI_RPM_COOLDOWN_SECONDS=60
 
 # 🗄️ System & Media
 # LOG_MAX_BYTES: How large the background log file can get before it creates a new one.

@@ -428,7 +428,6 @@ async def handle_custom_ask(event, user_instruction=""):
         await event.delete()
     except Exception:
         pass
-    
 
     history_text = await get_recent_chat_history(chat_id)
     target_text = ""
@@ -491,8 +490,7 @@ async def handle_custom_ask(event, user_instruction=""):
             pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
             response = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
             if response and response != Text.ERROR:
-                human_typing_time = calculate_human_typing_delay(response)
-                await asyncio.sleep(human_typing_time)
+                # 111 is an explicit admin command. Skip human typing delay for snappy responses!
                 await client.send_message(input_chat, response, reply_to=reply_to_id)
                 logger.info(f"⚡ Handled 111 in chat {chat_id}")
 

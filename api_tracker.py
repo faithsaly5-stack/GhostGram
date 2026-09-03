@@ -4,6 +4,7 @@ import time
 import threading
 from datetime import datetime, timezone
 from config import Config
+from logger import logger
 
 MODELS_CONFIG = []
 models_env = Config.GEMINI_MODELS
@@ -23,7 +24,7 @@ for line in raw_lines:
         })
 
 if not MODELS_CONFIG:
-    print("❌ CRITICAL ERROR: No models defined in GEMINI_MODELS inside .env! Please check your .env file.")
+    logger.info("❌ CRITICAL ERROR: No models defined in GEMINI_MODELS inside .env! Please check your .env file.")
     import sys
     sys.exit(1)
 
@@ -32,17 +33,10 @@ class APIUsageTracker:
         self.filename = filename or getattr(Config, "API_USAGE_FILE", "api_usage.json")
         self._lock = threading.RLock()
         
-        # Persistent daily count
-        self.usage_data = self._load()
-        
         # In-memory tracking
-        # cooldowns: api_key -> {model_name -> (timestamp_until, reason_str)}
         self.cooldowns = {}
-        # consecutive transient failures: api_key -> {model_name -> int}
         self.consecutive_failures = {}
-        # RPM timestamps: api_key -> {model_name -> list of float timestamps (last 60s)}
         self.rpm_timestamps = {}
-        # Permanently invalid keys (400/403 bad keys): set of api_keys
         self.invalid_keys = set()
         self.dead_models = set()
         self.last_used_key_index = {}
@@ -50,6 +44,9 @@ class APIUsageTracker:
         self.global_model_failures = {}
         self.model_penalty_tier = {}
         self.model_penalty_reset_time = {}
+
+        # Persistent daily count
+        self.usage_data = self._load()
         
     def _init_key_model_dicts(self, api_key: str):
         if api_key not in self.cooldowns:
@@ -64,9 +61,14 @@ class APIUsageTracker:
             try:
                 with open(self.filename, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                    # Load invalid_keys metadata if present
+                    if "__metadata__" in data and "invalid_keys" in data["__metadata__"]:
+                        self.invalid_keys = set(data["__metadata__"]["invalid_keys"])
                     # Migration from old schema {"date": "...", "count": N}
                     today = self._get_today_str()
                     for key, val in data.items():
+                        if key == "__metadata__":
+                            continue
                         if "count" in val and "models" not in val:
                             data[key] = {"date": today, "models": {}}
                     return data
@@ -82,6 +84,10 @@ class APIUsageTracker:
             self._save_timer = None
             
         self._latest_snapshot = copy.deepcopy(self.usage_data)
+        if self.invalid_keys:
+            self._latest_snapshot["__metadata__"] = {
+                "invalid_keys": list(self.invalid_keys)
+            }
         
         if self._save_timer is not None and self._save_timer.is_alive():
             return
@@ -148,10 +154,11 @@ class APIUsageTracker:
             models_data = key_data.get("models", {})
             return models_data.get(model_name, 0) < cfg["rpd"]
             
-    def get_best_available_model(self, api_keys: list[str], start_model: str = None):
+    def get_best_available_model(self, api_keys: list[str], start_model: str = None, excluded_models: set = None):
         """
         Iterates through the sorted MODELS_CONFIG (smartest first).
         If start_model is specified, skips smarter models and starts from that one.
+        If excluded_models is specified, skips any model in that set for rapid cascading.
         For each model, checks all API keys.
         Returns the first (model_name, api_key) that is available.
         Returns (None, None) if completely exhausted/rate-limited.
@@ -180,6 +187,8 @@ class APIUsageTracker:
                 model_name = cfg["name"]
                 if model_name in self.dead_models:
                     continue
+                if excluded_models and model_name in excluded_models:
+                    continue
                     
                 last_idx = self.last_used_key_index.get(model_name, -1)
                 num_keys = len(api_keys)
@@ -187,6 +196,9 @@ class APIUsageTracker:
                 for i in range(1, num_keys + 1):
                     curr_idx = (last_idx + i) % num_keys
                     key = api_keys[curr_idx]
+                    
+                    if key in self.invalid_keys:
+                        continue
                     
                     if self.is_model_key_available(key, model_name):
                         self.last_used_key_index[model_name] = curr_idx
@@ -270,16 +282,24 @@ class APIUsageTracker:
             self.usage_data[api_key] = key_data
             self._save()
 
+    def release_rpm_slot(self, api_key: str, model_name: str):
+        """Releases the most recent optimistically booked RPM slot if a request failed before reaching the API."""
+        with self._lock:
+            if api_key in self.rpm_timestamps and model_name in self.rpm_timestamps[api_key]:
+                if self.rpm_timestamps[api_key][model_name]:
+                    self.rpm_timestamps[api_key][model_name].pop()
+
     def record_rate_limit(self, api_key: str, model_name: str, cooldown_seconds: int = None, quiet: bool = False):
         """Temporary 429 / RPM cooldown for a specific model on this key."""
         if cooldown_seconds is None:
             from config import Config
-            cooldown_seconds = getattr(Config, 'GEMINI_RPM_COOLDOWN_SECONDS', 15)
+            cooldown_seconds = getattr(Config, 'GEMINI_RPM_COOLDOWN_SECONDS', 60)
         with self._lock:
             self._init_key_model_dicts(api_key)
             if not quiet:
                 key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-                print(f"⏳ Key {key_preview} reached RPM limit on {model_name}. Cooling down for {cooldown_seconds}s...")
+                logger.info(f"⏳ Key {key_preview} reached RPM limit on '{model_name}'. Cooling down for {cooldown_seconds}s...")
+            
             self.cooldowns[api_key][model_name] = (time.time() + cooldown_seconds, "RATE_LIMIT")
 
     def record_network_error(self, api_key: str, model_name: str, is_unknown: bool = False):
@@ -291,10 +311,10 @@ class APIUsageTracker:
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
 
             if fails >= 10 and is_unknown:
-                print(f"🛑 Key {key_preview} had 10 consecutive unknown errors on {model_name}. Quarantining this model for 5 minutes.")
+                logger.info(f"🛑 Key {key_preview} had 10 consecutive unknown errors on {model_name}. Quarantining this model for 5 minutes.")
                 self.cooldowns[api_key][model_name] = (time.time() + 300, "QUARANTINE_UNKNOWN_ERROR")
             elif fails >= 5:
-                print(f"⚠️ Key {key_preview} had {fails} consecutive network errors on {model_name}. Resting this model for 30s.")
+                logger.info(f"⚠️ Key {key_preview} had {fails} consecutive network errors on {model_name}. Resting this model for 30s.")
                 self.cooldowns[api_key][model_name] = (time.time() + 30, "NETWORK_FAILURES")
             else:
                 self.cooldowns[api_key][model_name] = (time.time() + 3, "TRANSIENT_RETRY")
@@ -360,35 +380,37 @@ class APIUsageTracker:
         """Marks key as daily exhausted for a specific model."""
         with self._lock:
             self._init_key_model_dicts(api_key)
-            cfg = self.get_model_config(model_name)
-            limit = cfg["rpd"] if cfg else 0
             
             today = self._get_today_str()
             key_data = self.usage_data.get(api_key, {})
             if key_data.get("date") != today:
                 key_data = {"date": today, "models": {}}
             models_data = key_data.get("models", {})
-            models_data[model_name] = limit
-            key_data["models"] = models_data
             
+            cfg = self.get_model_config(model_name)
+            max_rpd = cfg.get("rpd", 999999) if cfg else 999999
+            models_data[model_name] = max_rpd
+                
+            key_data["models"] = models_data
             self.usage_data[api_key] = key_data
             self._save()
             
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"🚫 Key {key_preview} reached daily quota on {model_name}. Pausing this model until tomorrow (UTC).")
+            logger.info(f"🚫 Key {key_preview} reached daily quota on '{model_name}'. Pausing this model on this key until tomorrow (UTC).")
 
     def record_invalid_key(self, api_key: str):
         """Marks key as entirely invalid (bad API key, 400/403). Applies globally to all models."""
         with self._lock:
             self.invalid_keys.add(api_key)
+            self._save()
             key_preview = f"{api_key[:6]}...{api_key[-4:]}" if len(api_key) > 10 else api_key
-            print(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled completely for this session.")
+            logger.info(f"❌ Key {key_preview} is INVALID or REVOKED. Disabled completely.")
 
     def record_dead_model(self, model_name: str):
         """Blacklists a model globally (e.g. 404 Not Found) to prevent 404 storms on all keys."""
         with self._lock:
             self.dead_models.add(model_name)
-            print(f"❌ MODEL 404 STORM PREVENTED: '{model_name}' is permanently dead. Blacklisting from rotation.")
+            logger.info(f"❌ MODEL 404 STORM PREVENTED: '{model_name}' is permanently dead. Blacklisting from rotation.")
 
     def factory_reset(self):
         """Globally resets all API keys, quotas, rate limits, and bans."""
@@ -405,7 +427,7 @@ class APIUsageTracker:
             self.model_penalty_tier.clear()
             self.model_penalty_reset_time.clear()
             self._save()
-            print("♻️ API Tracker has been factory reset.")
+            logger.info("♻️ API Tracker has been factory reset.")
 
     def get_stats_report(self) -> str:
         """Generates a human-readable Telegram report of all API keys aggregated by model."""

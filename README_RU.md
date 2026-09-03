@@ -323,7 +323,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Количество попыток переключения на другие модели ИИ при сбое.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Строгий таймаут (в секундах) перед переключением на следующую модель ИИ.
-GEMINI_TIMEOUT_SECONDS=35.0
+GEMINI_TIMEOUT_SECONDS=10.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

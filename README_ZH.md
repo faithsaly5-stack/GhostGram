@@ -338,7 +338,7 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: 如果一个模型失败，机器人尝试切换到其他模型的次数。
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: 切换到下一个 AI 模型前的严格超时时间（秒）。
-GEMINI_TIMEOUT_SECONDS=35.0
+GEMINI_TIMEOUT_SECONDS=10.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15

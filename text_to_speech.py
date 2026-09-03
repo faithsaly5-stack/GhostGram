@@ -3,6 +3,7 @@ import asyncio
 import tempfile
 import struct
 import logging
+import random
 import imageio_ffmpeg
 from google import genai
 from google.genai import types
@@ -78,6 +79,8 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
     models_to_try = Config.GEMINI_TTS_MODELS if hasattr(Config, "GEMINI_TTS_MODELS") and Config.GEMINI_TTS_MODELS else [Config.GEMINI_TTS_MODEL]
 
     last_error = None
+    consecutive_errors = 0
+    last_failed_key = None
 
     for model_name in models_to_try:
         for attempt in range(len(api_keys)):
@@ -163,6 +166,17 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
             except Exception as e:
                 last_error = e
                 err_str = str(e).lower()
+                
+                if api_key != last_failed_key:
+                    consecutive_errors = 0
+                    backoff = random.uniform(0.3, 0.7)
+                else:
+                    consecutive_errors += 1
+                    backoff = min(8.0, (1.5 ** consecutive_errors)) + random.uniform(0.1, 0.5)
+                
+                last_failed_key = api_key
+                logger.debug(f"⏳ TTS Smart Backoff: Waiting {backoff:.2f}s before next attempt...")
+                await asyncio.sleep(backoff)
                 
                 if "503" in err_str or "500" in err_str or "unavailable" in err_str or "internal" in err_str or "timeout" in err_str:
                     logger.warning(f"⚠️ Gemini Network Error on TTS ({model_name}) (503/Timeout). Forcing immediate cascade to next model...")
