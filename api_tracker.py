@@ -254,6 +254,8 @@ class APIUsageTracker:
             self.consecutive_failures[api_key][model_name] = 0
             if model_name in self.cooldowns[api_key]:
                 del self.cooldowns[api_key][model_name]
+            if model_name in self.global_model_failures:
+                self.global_model_failures[model_name] = []
 
             # Update Daily persistent count
             today = self._get_today_str()
@@ -297,12 +299,15 @@ class APIUsageTracker:
             else:
                 self.cooldowns[api_key][model_name] = (time.time() + 3, "TRANSIENT_RETRY")
 
-    def record_global_model_failure(self, model_name: str, keys: list[str]) -> tuple[bool, int, float]:
+    def record_global_model_failure(self, model_name: str, keys: list[str] = None) -> tuple[bool, int, float]:
         """
         Circuit Breaker: Tracks cascading failures for a model across all keys.
         If a model fails 5 times within a 5-minute window, it's quarantined.
         Returns a tuple: (is_quarantined, tier, duration_seconds)
         """
+        if keys is None:
+            from config import Config
+            keys = Config.GEMINI_API_KEYS
         with self._lock:
             now = time.time()
             if model_name not in self.global_model_failures:
@@ -396,6 +401,9 @@ class APIUsageTracker:
             self.rpm_timestamps.clear()
             self.cooldowns.clear()
             self.consecutive_failures.clear()
+            self.global_model_failures.clear()
+            self.model_penalty_tier.clear()
+            self.model_penalty_reset_time.clear()
             self._save()
             print("♻️ API Tracker has been factory reset.")
 
@@ -435,6 +443,20 @@ class APIUsageTracker:
             if cooling_down_count > 0:
                 report.append(f"⏳ کلیدهای در حال استراحت موقت: {cooling_down_count}")
                 
+            quarantined = []
+            for cfg in MODELS_CONFIG:
+                m = cfg["name"]
+                for k in total_configured_keys:
+                    if k in self.cooldowns and m in self.cooldowns[k]:
+                        exp_ts, reason = self.cooldowns[k][m]
+                        if reason == "CIRCUIT_BREAKER" and exp_ts > now:
+                            rem_min = max(1, int((exp_ts - now) / 60))
+                            tier = self.model_penalty_tier.get(m, 1)
+                            quarantined.append(f"`{m}` (سطح {tier} - {rem_min} دقیقه باقی‌مانده)")
+                            break
+            if quarantined:
+                report.append(f"🛑 مدل‌های در قرنطینه مدار (Circuit Breaker):\n   └ " + ", ".join(quarantined))
+
             if self.dead_models:
                 dead_models_str = ", ".join([f"`{m}`" for m in self.dead_models])
                 report.append(f"⚠️ مدل‌های منسوخ/یافت‌نشده (404): {dead_models_str}")
