@@ -429,9 +429,7 @@ async def handle_custom_ask(event, user_instruction=""):
     except Exception:
         pass
     
-    if not user_instruction and not reply_to_id:
-        return
-    
+
     history_text = await get_recent_chat_history(chat_id)
     target_text = ""
     sender_name = "مخاطب"

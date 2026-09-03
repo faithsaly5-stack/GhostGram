@@ -25,7 +25,7 @@ class GeminiEngine:
         with self._client_lock:
             c = self._clients.get(api_key)
             if c is None:
-                c = genai.Client(api_key=api_key)
+                c = genai.Client(api_key=api_key, http_options={'timeout': Config.GEMINI_TIMEOUT_SECONDS})
                 self._clients[api_key] = c
             return c
 
@@ -109,9 +109,10 @@ class GeminiEngine:
                 return clean_outbound_text(raw_text)
 
             except asyncio.TimeoutError:
-                # Cool down this specific key for 30s to allow trying another key on this model, or cascading if all keys are busy
-                api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=30)
-                print(f"⚠️ Key timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Switching to next available key/model...")
+                # Cool down this specific model across ALL keys globally for 45s to avoid 503 cascades
+                for k in self.keys:
+                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
+                print(f"⚠️ Global Timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Cooling model down for 45s across all keys...")
                 continue
 
             except Exception as e:
@@ -146,8 +147,9 @@ class GeminiEngine:
                 elif "404" in err_str:
                     api_tracker.record_dead_model(model_to_use)
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "ssl" in err_str:
-                    api_tracker.record_rate_limit(api_key, model_to_use, cooldown_seconds=20)
-                    print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down key for 20s and trying next...")
+                    for k in self.keys:
+                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
+                    print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down model for 45s across all keys...")
                 else:
                     # 4. Unknown Errors (Catch-All)
                     api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)
