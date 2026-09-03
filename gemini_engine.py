@@ -116,10 +116,18 @@ class GeminiEngine:
                 return clean_outbound_text(raw_text)
 
             except asyncio.TimeoutError:
-                # Cool down this specific model across ALL keys globally for 45s to avoid 503 cascades
-                for k in self.keys:
-                    api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
-                print(f"⚠️ Global Timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Cooling model down for 45s across all keys...")
+                is_quarantined, tier, duration_seconds = api_tracker.record_global_model_failure(model_to_use, self.keys)
+                if is_quarantined:
+                    if tier == 1:
+                        print(f"🛑 CIRCUIT BREAKER TRIPPED (Tier 1): Model '{model_to_use}' failed 5 times in 5 minutes. Quarantined for {duration_seconds/60:.1f} minutes!")
+                    elif tier == 2:
+                        print(f"🛑 CIRCUIT BREAKER ESCALATED (Tier 2): Model '{model_to_use}' Quarantined for {duration_seconds/3600:.1f} hours!")
+                    else:
+                        print(f"💀 CIRCUIT BREAKER MAXIMUM (Tier {tier}): Model '{model_to_use}' Quarantined for {duration_seconds/3600:.1f} hours!")
+                else:
+                    for k in self.keys:
+                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
+                    print(f"⚠️ Global Timeout ({Config.GEMINI_TIMEOUT_SECONDS}s) on model '{model_to_use}'. Cooling model down for 45s across all keys...")
                 continue
 
             except Exception as e:
@@ -154,9 +162,18 @@ class GeminiEngine:
                 elif "404" in err_str:
                     api_tracker.record_dead_model(model_to_use)
                 elif "timeout" in err_str or "connection" in err_str or "500" in err_str or "503" in err_str or "504" in err_str or "ssl" in err_str:
-                    for k in self.keys:
-                        api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
-                    print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down model for 45s across all keys...")
+                    is_quarantined, tier, duration_seconds = api_tracker.record_global_model_failure(model_to_use, self.keys)
+                    if is_quarantined:
+                        if tier == 1:
+                            print(f"🛑 CIRCUIT BREAKER TRIPPED (Tier 1): Model '{model_to_use}' failed 5 times in 5 minutes. Quarantined for {duration_seconds/60:.1f} minutes!")
+                        elif tier == 2:
+                            print(f"🛑 CIRCUIT BREAKER ESCALATED (Tier 2): Model '{model_to_use}' Quarantined for {duration_seconds/3600:.1f} hours!")
+                        else:
+                            print(f"💀 CIRCUIT BREAKER MAXIMUM (Tier {tier}): Model '{model_to_use}' Quarantined for {duration_seconds/3600:.1f} hours!")
+                    else:
+                        for k in self.keys:
+                            api_tracker.record_rate_limit(k, model_to_use, cooldown_seconds=45, quiet=True)
+                        print(f"⚠️ Gemini Network/Server Error on {model_to_use} ({type(e).__name__}). Cooling down model for 45s across all keys...")
                 else:
                     # 4. Unknown Errors (Catch-All)
                     api_tracker.record_network_error(api_key, model_to_use, is_unknown=True)

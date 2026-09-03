@@ -47,6 +47,9 @@ class APIUsageTracker:
         self.dead_models = set()
         self.last_used_key_index = {}
         self.last_used_timestamp = {}
+        self.global_model_failures = {}
+        self.model_penalty_tier = {}
+        self.model_penalty_reset_time = {}
         
     def _init_key_model_dicts(self, api_key: str):
         if api_key not in self.cooldowns:
@@ -293,6 +296,60 @@ class APIUsageTracker:
                 self.cooldowns[api_key][model_name] = (time.time() + 30, "NETWORK_FAILURES")
             else:
                 self.cooldowns[api_key][model_name] = (time.time() + 3, "TRANSIENT_RETRY")
+
+    def record_global_model_failure(self, model_name: str, keys: list[str]) -> tuple[bool, int, float]:
+        """
+        Circuit Breaker: Tracks cascading failures for a model across all keys.
+        If a model fails 5 times within a 5-minute window, it's quarantined.
+        Returns a tuple: (is_quarantined, tier, duration_seconds)
+        """
+        with self._lock:
+            now = time.time()
+            if model_name not in self.global_model_failures:
+                self.global_model_failures[model_name] = []
+            if model_name not in self.model_penalty_tier:
+                self.model_penalty_tier[model_name] = 0
+                self.model_penalty_reset_time[model_name] = 0.0
+            
+            # Check forgiveness: if we passed the reset time, reset tier to 0
+            if now > self.model_penalty_reset_time[model_name]:
+                self.model_penalty_tier[model_name] = 0
+            
+            # Add current failure timestamp
+            self.global_model_failures[model_name].append(now)
+            
+            # Scrub timestamps older than 5 minutes (300 seconds)
+            self.global_model_failures[model_name] = [
+                ts for ts in self.global_model_failures[model_name] if now - ts <= 300.0
+            ]
+            
+            # Check if threshold is met (5 failures)
+            if len(self.global_model_failures[model_name]) >= 5:
+                # Trip the Circuit Breaker! Increment tier.
+                self.model_penalty_tier[model_name] += 1
+                tier = self.model_penalty_tier[model_name]
+                
+                # Determine ban duration based on tier
+                if tier == 1:
+                    duration_seconds = 600.0    # 10 minutes
+                elif tier == 2:
+                    duration_seconds = 7200.0   # 2 hours
+                else:
+                    duration_seconds = 43200.0  # 12 hours
+                
+                # Ban the model globally
+                for api_key in keys:
+                    self._init_key_model_dicts(api_key)
+                    self.cooldowns[api_key][model_name] = (now + duration_seconds, "CIRCUIT_BREAKER")
+                
+                # Set forgiveness timer: 1 hour after the ban expires
+                self.model_penalty_reset_time[model_name] = now + duration_seconds + 3600.0
+                
+                # Clear the failure history to start fresh after quarantine
+                self.global_model_failures[model_name] = []
+                return True, tier, duration_seconds
+            
+            return False, 0, 0.0
 
     def record_daily_exhausted(self, api_key: str, model_name: str):
         """Marks key as daily exhausted for a specific model."""
