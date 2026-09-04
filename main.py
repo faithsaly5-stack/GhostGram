@@ -900,7 +900,6 @@ async def outgoing_command_dispatcher(event):
         except Exception:
             pass
         return
-        return
 
     # 8. PAL OFF (000 [all])
     m_pal_off = re.match(r'^000(?:\s+(all))?$', norm_lower)
@@ -1065,10 +1064,13 @@ async def incoming_message_handler(event):
     
     if event.is_group or event.is_channel:
         if event.is_reply:
-            reply_msg = await event.get_reply_message()
-            if reply_msg:
-                if reply_msg.out or reply_msg.sender_id == my_id or getattr(reply_msg.from_id, 'user_id', None) == my_id:
-                    is_reply_to_me = True
+            try:
+                reply_msg = await event.get_reply_message()
+                if reply_msg:
+                    if reply_msg.out or reply_msg.sender_id == my_id or getattr(reply_msg.from_id, 'user_id', None) == my_id:
+                        is_reply_to_me = True
+            except Exception:
+                pass
         
         raw_lower = incoming_text_raw.lower()
         if my_info and my_info.username and f"@{my_info.username.lower()}" in raw_lower:
@@ -1158,73 +1160,79 @@ async def incoming_message_handler(event):
             pass
 
         # Start continuous typing immediately at the top of the chat (DMs and groups)
-        async with ContinuousTyping(client, input_chat):
-            # Gather history, long-term memory, and sender info
-            sender = await event.get_sender()
-            sender_name = await format_sender_name(sender, my_id)
-            history_text = await get_recent_chat_history(chat_id)
-            now_persian = get_current_persian_datetime()
-            ltm = memory_manager.get_long_term_summary(chat_id)
-            ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
-            
-            logger.debug(f"[LIFECYCLE] Assembling Gemini prompt for chat {chat_id} (Mode: {mode}). History length: {len(history_text)}")
-            
-            if mode == "pal":
-                pal_variant = pal_manager.get_mode(chat_id)
-                prompt_input = Prompt.AUTOPILOT_TEMPLATE.format(
-                    current_time=now_persian,
-                    long_term_context=ltm_context,
-                    history_text=history_text,
-                    sender=sender_name,
-                    target_text=incoming_text,
-                    owner_first_name=Config.OWNER_FIRST_NAME
-                )
-                system_prompt = persona_manager.get_prompt(pal_variant)
-                logger.info(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
-            else:
-                prompt_input = Prompt.ASSISTANT_TEMPLATE.format(
-                    current_time=now_persian,
-                    long_term_context=ltm_context,
-                    history_text=history_text,
-                    sender=sender_name,
-                    target_text=incoming_text,
-                    owner_first_name=Config.OWNER_FIRST_NAME
-                )
-                system_prompt = persona_manager.get_prompt("assistant")
-                logger.info(f"💼 Personal Assistant thinking & typing for chat {chat_id} (from {sender_name})...")
-            
-            
-            start_time = time.time()
-            logger.debug(f"[LIFECYCLE] Prompting Gemini API... (Models: {Config.GEMINI_MODELS})")
-            response = await get_response(prompt_input, system_prompt)
-            elapsed = time.time() - start_time
-            logger.debug(f"[LIFECYCLE] Gemini replied in {elapsed:.2f}s. Response length: {len(response)}")
-            
-            # Re-verify mode wasn't disabled during AI generation
-            if mode == "pal" and not pal_manager.is_active(chat_id):
-                logger.info(f"🛑 Dropped reply for chat {chat_id} (Pal was deactivated via 000)")
-                return
-            if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
-                logger.info(f"🛑 Dropped reply for chat {chat_id} (Assistant was muted/deactivated)")
-                return
-
-            if response and response != Text.ERROR:
-                human_typing_time = calculate_human_typing_delay(response)
-                await asyncio.sleep(human_typing_time)
+        try:
+            async with ContinuousTyping(client, input_chat):
+                # Gather history, long-term memory, and sender info
+                try:
+                    sender = await event.get_sender()
+                except Exception:
+                    sender = None
+                sender_name = await format_sender_name(sender, my_id)
+                history_text = await get_recent_chat_history(chat_id)
+                now_persian = get_current_persian_datetime()
+                ltm = memory_manager.get_long_term_summary(chat_id)
+                ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
                 
-                # Final check before actual message dispatch
+                logger.debug(f"[LIFECYCLE] Assembling Gemini prompt for chat {chat_id} (Mode: {mode}). History length: {len(history_text)}")
+                
+                if mode == "pal":
+                    pal_variant = pal_manager.get_mode(chat_id)
+                    prompt_input = Prompt.AUTOPILOT_TEMPLATE.format(
+                        current_time=now_persian,
+                        long_term_context=ltm_context,
+                        history_text=history_text,
+                        sender=sender_name,
+                        target_text=incoming_text,
+                        owner_first_name=Config.OWNER_FIRST_NAME
+                    )
+                    system_prompt = persona_manager.get_prompt(pal_variant)
+                    logger.info(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
+                else:
+                    prompt_input = Prompt.ASSISTANT_TEMPLATE.format(
+                        current_time=now_persian,
+                        long_term_context=ltm_context,
+                        history_text=history_text,
+                        sender=sender_name,
+                        target_text=incoming_text,
+                        owner_first_name=Config.OWNER_FIRST_NAME
+                    )
+                    system_prompt = persona_manager.get_prompt("assistant")
+                    logger.info(f"💼 Personal Assistant thinking & typing for chat {chat_id} (from {sender_name})...")
+                
+                
+                start_time = time.time()
+                logger.debug(f"[LIFECYCLE] Prompting Gemini API... (Models: {Config.GEMINI_MODELS})")
+                response = await get_response(prompt_input, system_prompt)
+                elapsed = time.time() - start_time
+                logger.debug(f"[LIFECYCLE] Gemini replied in {elapsed:.2f}s. Response length: {len(response)}")
+                
+                # Re-verify mode wasn't disabled during AI generation
                 if mode == "pal" and not pal_manager.is_active(chat_id):
+                    logger.info(f"🛑 Dropped reply for chat {chat_id} (Pal was deactivated via 000)")
                     return
                 if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
+                    logger.info(f"🛑 Dropped reply for chat {chat_id} (Assistant was muted/deactivated)")
                     return
 
-                reply_target = event.id if (event.is_group or event.is_channel) else None
-                await client.send_message(input_chat, response, reply_to=reply_target)
-                mark_as_replied(chat_id, event.id)
-                if mode == "pal":
-                    logger.info(f"✅ Pal replied naturally in chat {chat_id}")
-                else:
-                    logger.info(f"✅ Assistant replied politely in chat {chat_id}")
+                if response and response != Text.ERROR:
+                    human_typing_time = calculate_human_typing_delay(response)
+                    await asyncio.sleep(human_typing_time)
+                    
+                    # Final check before actual message dispatch
+                    if mode == "pal" and not pal_manager.is_active(chat_id):
+                        return
+                    if mode == "assistant" and not assistant_manager.is_active_for_chat(chat_id, is_private=event.is_private):
+                        return
+
+                    reply_target = event.id if (event.is_group or event.is_channel) else None
+                    await client.send_message(input_chat, response, reply_to=reply_target)
+                    mark_as_replied(chat_id, event.id)
+                    if mode == "pal":
+                        logger.info(f"✅ Pal replied naturally in chat {chat_id}")
+                    else:
+                        logger.info(f"✅ Assistant replied politely in chat {chat_id}")
+        except Exception as e:
+            logger.error(f"⚠️ Error in incoming_message_handler execution for chat {chat_id}: {e}", exc_info=True)
                     
 
 

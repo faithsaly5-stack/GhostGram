@@ -153,6 +153,7 @@ GhostGram features advanced security layers that neutralize malicious attempts b
 ## 🚀 Enterprise-Grade Scalability & Anti-Ban
 - **API Key Rotation & Cooldown:** Load unlimited Gemini API keys in your `.env`. If one key hits its rate limit (429 Quota), the engine instantly rotates to the next key. It also utilizes `GEMINI_RPM_COOLDOWN_SECONDS` to pause operations locally and respect API quotas to perfectly evade bans.
 - **Auto-Cascading Models:** The bot features intelligent failover routing for both Text and TTS models. If your primary AI model is overloaded by Google, it automatically cascades to your secondary backup models (configured via `GEMINI_MODELS` and `GEMINI_TTS_MODELS`) to guarantee zero downtime.
+- **Fault-Tolerant Architecture:** Gracefully handles unexpected network drops, Telegram API anomalies (like missing sender data or `None` message chunks), and edge cases without crashing, ensuring the bot remains online 24/7.
 - **Anti-Ban FloodWait Protection:** Background tasks like Ghost Purge (999) feature mathematical "human fatigue" simulation. It takes calculated micro-breaks between bulk deletions and handles Telegram's FloodWait traps silently to completely evade account bans.
 
 ---

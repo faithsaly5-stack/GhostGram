@@ -117,12 +117,14 @@ async def generate_voice_message(text: str, api_keys: list[str], voice_name: str
                 )
 
                 async for chunk in response_stream:
-                    if chunk.parts is None:
+                    if not getattr(chunk, "parts", None):
                         continue
-                    if chunk.parts[0].inline_data and chunk.parts[0].inline_data.data:
-                        inline_data = chunk.parts[0].inline_data
-                        full_audio += inline_data.data
-                        mime_type = inline_data.mime_type
+                    for part in chunk.parts:
+                        inline_data = getattr(part, "inline_data", None)
+                        if inline_data and getattr(inline_data, "data", None):
+                            full_audio += inline_data.data
+                            if getattr(inline_data, "mime_type", None):
+                                mime_type = inline_data.mime_type
 
                 if not full_audio:
                     raise Exception("No audio data returned from the API.")

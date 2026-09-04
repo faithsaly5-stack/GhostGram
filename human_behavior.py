@@ -8,14 +8,26 @@ from config import Config
 # ==========================================================
 _chat_latest_msg = {}
 _chat_typing_status = {}
+MAX_BEHAVIOR_TRACKER_ENTRIES = 3000
 
 def update_latest_message(chat_id: int, sender_id: int, msg_id: int):
     """Tracks the latest message ID for a specific user to debounce rapid spam."""
+    if len(_chat_latest_msg) > MAX_BEHAVIOR_TRACKER_ENTRIES:
+        # Prune oldest entries to guarantee strictly bounded memory
+        keys_to_prune = list(_chat_latest_msg.keys())[:MAX_BEHAVIOR_TRACKER_ENTRIES // 4]
+        for k in keys_to_prune:
+            _chat_latest_msg.pop(k, None)
+            
     user_key = (chat_id, sender_id) if sender_id else (chat_id, "unknown")
     _chat_latest_msg[user_key] = msg_id
 
 def update_typing_status(chat_id: int, user_id: int = None):
     """Updates the last known time a user was seen actively typing."""
+    if len(_chat_typing_status) > MAX_BEHAVIOR_TRACKER_ENTRIES:
+        keys_to_prune = list(_chat_typing_status.keys())[:MAX_BEHAVIOR_TRACKER_ENTRIES // 4]
+        for k in keys_to_prune:
+            _chat_typing_status.pop(k, None)
+            
     t = time.time()
     if chat_id:
         _chat_typing_status[chat_id] = t

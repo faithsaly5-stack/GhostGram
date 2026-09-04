@@ -120,6 +120,12 @@ class GeminiEngine:
 
                 raw_text = resp.text or ""
                 if not raw_text.strip():
+                    if hasattr(resp, "candidates") and resp.candidates:
+                        candidate = resp.candidates[0]
+                        finish_reason = str(getattr(candidate, "finish_reason", "")).upper()
+                        if "SAFETY" in finish_reason or "BLOCK" in finish_reason:
+                            logger.info(f"🛑 SAFETY BLOCK: The prompt violated Google's safety policy (finish_reason={finish_reason}). Aborting.")
+                            return Text.ERROR
                     logger.info(f"⚠️ Empty response received from {model_to_use} (Key {api_key[:6]}...). Retrying next candidate...")
                     continue
 

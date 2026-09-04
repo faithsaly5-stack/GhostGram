@@ -276,12 +276,12 @@ class MemoryManager:
                 
                 # If no new messages above watermark or cutoff, skip
                 if not fetched_msgs:
-                    print(f"ℹ️ No new unsummarized messages for chat {chat_id}.")
+                    logger.debug(f"[MEMORY] No new unsummarized messages for chat {chat_id}.")
                     return
                 
                 # Sliding Window: Keep the 30 newest messages untouched in short-term memory
                 if len(fetched_msgs) <= self.memory_limit:
-                    print(f"ℹ️ Not enough messages to summarize (sliding window of {self.memory_limit}).")
+                    logger.debug(f"[MEMORY] Not enough messages to summarize in {chat_id} (sliding window of {self.memory_limit}).")
                     return
                 
                 msgs_to_summarize = fetched_msgs[self.memory_limit:]
@@ -293,7 +293,10 @@ class MemoryManager:
                 formatted_lines = []
                 for msg_tuple in reversed(msgs_to_summarize):
                     msg, text = msg_tuple
-                    sender = await msg.get_sender()
+                    try:
+                        sender = await msg.get_sender()
+                    except Exception:
+                        sender = None
                     name = await format_sender_fn(sender, my_id)
                     time_str = msg.date.strftime("%H:%M")
                     cleaned_content = self.truncate_segment(text, self.max_segment_chars)
@@ -354,10 +357,10 @@ class MemoryManager:
                     self.long_term_memories[chat_id] = new_summary
                     self.last_summarized_msg_ids[chat_id] = newest_msg_id
                     self.save_state()
-                    print(f"✅ Long-Term Memory updated for chat {chat_id} (Watermark: {newest_msg_id}, {len(new_summary)} chars):\n{new_summary}")
+                    logger.info(f"✅ Long-Term Memory updated for chat {chat_id} (Watermark: {newest_msg_id}, {len(new_summary)} chars):\n{new_summary}")
                     
             except Exception as e:
-                print(f"⚠️ Error during long-term memory summarization: {e}")
+                logger.error(f"⚠️ Error during long-term memory summarization in chat {chat_id}: {e}", exc_info=True)
 
 # Global singleton instance
 memory_manager = MemoryManager()

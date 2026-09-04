@@ -18,9 +18,9 @@ for line in raw_lines:
     parts = line.split(':')
     if len(parts) >= 3:
         MODELS_CONFIG.append({
-            "name": parts[0].strip(),
-            "rpm": int(parts[1].strip()),
-            "rpd": int(parts[2].strip())
+            "name": parts[0].strip().strip('"\''),
+            "rpm": int(parts[1].strip().strip('"\'')),
+            "rpd": int(parts[2].strip().strip('"\''))
         })
 
 if not MODELS_CONFIG:
@@ -249,11 +249,14 @@ class APIUsageTracker:
                         rem = self.cooldowns[k][model_name][0] - now
                         if rem > 0:
                             waits.append(rem)
-                    elif model_name in self.rpm_timestamps[k] and len(self.rpm_timestamps[k][model_name]) >= cfg["rpm"]:
-                        oldest = min(self.rpm_timestamps[k][model_name])
-                        rem = 60 - (now - oldest)
-                        if rem > 0:
-                            waits.append(rem)
+                    elif model_name in self.rpm_timestamps[k]:
+                        recent_rpm = [ts for ts in self.rpm_timestamps[k][model_name] if now - ts < 60]
+                        self.rpm_timestamps[k][model_name] = recent_rpm
+                        if len(recent_rpm) >= cfg["rpm"]:
+                            oldest = min(recent_rpm)
+                            rem = 60 - (now - oldest)
+                            if rem > 0:
+                                waits.append(rem)
             
             return min(waits) if waits else 4.0
 

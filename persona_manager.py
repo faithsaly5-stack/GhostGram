@@ -13,8 +13,20 @@ class PersonaManager:
         """Loads personas from the .txt files in the personas directory.
         Dynamically prepends normal.txt to all variant personas."""
         if not os.path.exists(self.dir_path):
-            os.makedirs(self.dir_path)
-            # Create a default normal.txt if folder was just created
+            os.makedirs(self.dir_path, exist_ok=True)
+
+        existing_files = glob.glob(os.path.join(self.dir_path, "*.txt"))
+        if not existing_files and os.path.exists("personas") and os.path.abspath(self.dir_path) != os.path.abspath("personas"):
+            import shutil
+            for p in glob.glob(os.path.join("personas", "*.txt")):
+                try:
+                    shutil.copy2(p, self.dir_path)
+                except Exception:
+                    pass
+            existing_files = glob.glob(os.path.join(self.dir_path, "*.txt"))
+
+        if not existing_files:
+            # Create a default normal.txt if folder was just created and no templates exist
             with open(os.path.join(self.dir_path, "normal.txt"), "w", encoding="utf-8") as f:
                 f.write("تو خودت «{owner_first_name} {owner_last_name}» هستی...")
 
