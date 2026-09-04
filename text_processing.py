@@ -64,11 +64,11 @@ def clean_outbound_text(raw_text: str) -> str:
         # Security: Strip ALL emojis before sending, as requested.
         clean_text = emoji.replace_emoji(clean_text, replace='')
         
-        # Strip HTML tags
-        clean_text = re.sub(r'<[^>]+>', '', clean_text)
+        # Strip real HTML tags (e.g. <p>, <br/>, </div>, <span ...>), without breaking math like '3 < 5 and 10 > 7'
+        clean_text = re.sub(r'</?[a-zA-Z][^>]*>', '', clean_text)
         
-        # Strip Arabic/Persian diacritics (Harakat)
-        clean_text = re.sub(r'[\u064B-\u065F\u0670]', '', clean_text)
+        # Strip Arabic/Persian diacritics (Harakat: Fatha, Damma, Kasra, Tanwin, Shadda, Sukun, Superscript Alef)
+        clean_text = re.sub(r'[\u064B-\u0652\u0670]', '', clean_text)
         
         # Security: Prevent Prompt Injection from triggering our own command handlers.
         # If the AI's response starts with one of our command prefixes, we prepend an 

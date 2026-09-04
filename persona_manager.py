@@ -76,8 +76,10 @@ class PersonaManager:
         raw_prompt = self.personas.get(command_name, self.personas.get("normal", "تو خودت «{owner_name}» هستی..."))
         
         # Inject all identity configurations from .env
+        owner_full_name = f"{Config.OWNER_FIRST_NAME} {Config.OWNER_LAST_NAME}".strip() or Config.OWNER_FIRST_NAME
         prompt = (
             raw_prompt
+            .replace("{owner_name}", owner_full_name)
             .replace("{owner_first_name}", Config.OWNER_FIRST_NAME)
             .replace("{owner_last_name}", Config.OWNER_LAST_NAME)
             .replace("{owner_bio}", Config.OWNER_BIO)

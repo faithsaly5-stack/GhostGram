@@ -493,7 +493,7 @@ class APIUsageTracker:
             model_keys_used = {} # model_name -> set of keys that used it today
             
             for key, data in self.usage_data.items():
-                if key in self.invalid_keys:
+                if key == "__metadata__" or key in self.invalid_keys:
                     continue
                 if data.get("date") == today:
                     models_data = data.get("models", {})

@@ -35,15 +35,16 @@ class Config:
     @staticmethod
     def _load_keys():
         keys = [k.strip() for k in os.getenv("GEMINI_API_KEYS", "").split(",") if k.strip()]
-        if os.path.exists("apis.txt"):
-            try:
-                with open("apis.txt", "r", encoding="utf-8") as f:
-                    file_keys = [line.strip() for line in f if line.strip() and not line.startswith("#")]
-                    for k in file_keys:
-                        if k not in keys:
-                            keys.append(k)
-            except Exception:
-                pass
+        for fpath in [os.path.join(PROFILE_DIR, "apis.txt"), "apis.txt"]:
+            if os.path.exists(fpath):
+                try:
+                    with open(fpath, "r", encoding="utf-8") as f:
+                        file_keys = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+                        for k in file_keys:
+                            if k not in keys:
+                                keys.append(k)
+                except Exception:
+                    pass
         return keys
 
     GEMINI_API_KEYS = _load_keys()

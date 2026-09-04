@@ -491,7 +491,14 @@ async def handle_custom_ask(event, user_instruction=""):
             response = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
             if response and response != Text.ERROR:
                 # 111 is an explicit admin command. Skip human typing delay for snappy responses!
-                await client.send_message(input_chat, response, reply_to=reply_to_id)
+                try:
+                    await client.send_message(input_chat, response, reply_to=reply_to_id)
+                except Exception as send_err:
+                    logger.warning(f"⚠️ send_message failed with formatting; retrying plain text: {send_err}")
+                    try:
+                        await client.send_message(input_chat, response, reply_to=reply_to_id, parse_mode=None)
+                    except Exception:
+                        await client.send_message(input_chat, response, reply_to=None, parse_mode=None)
                 logger.info(f"⚡ Handled 111 in chat {chat_id}")
 
 async def handle_text_to_speech(event, user_inst):
@@ -1057,6 +1064,11 @@ async def incoming_message_handler(event):
         
     logger.debug(f"[LIFECYCLE] Message accepted for processing in {chat_id} under mode: {mode}.")
     
+    # Drop pure broadcast channels (userbots cannot/should not reply to channel posts)
+    if event.is_channel and not event.is_group:
+        logger.debug(f"[LIFECYCLE] Dropped broadcast channel message in {chat_id}.")
+        return
+
     # For group chats: only respond if replied to me, or mentioned (text only for mentions)
     incoming_text_raw = event.text or ""
     is_reply_to_me = False
@@ -1225,7 +1237,14 @@ async def incoming_message_handler(event):
                         return
 
                     reply_target = event.id if (event.is_group or event.is_channel) else None
-                    await client.send_message(input_chat, response, reply_to=reply_target)
+                    try:
+                        await client.send_message(input_chat, response, reply_to=reply_target)
+                    except Exception as send_err:
+                        logger.warning(f"⚠️ send_message failed with formatting; retrying plain text: {send_err}")
+                        try:
+                            await client.send_message(input_chat, response, reply_to=reply_target, parse_mode=None)
+                        except Exception:
+                            await client.send_message(input_chat, response, reply_to=None, parse_mode=None)
                     mark_as_replied(chat_id, event.id)
                     if mode == "pal":
                         logger.info(f"✅ Pal replied naturally in chat {chat_id}")
@@ -1285,7 +1304,7 @@ async def auto_engage_loop():
 
                     # Check if I have sent a message recently to avoid talking too much
                     recent_my_msgs = await client.get_messages(chat_id, limit=Config.SHORT_TERM_MEMORY_LIMIT, from_user="me")
-                    if recent_my_msgs:
+                    if recent_my_msgs and recent_my_msgs[0]:
                         last_mine = recent_my_msgs[0].date.replace(tzinfo=timezone.utc).timestamp()
                         # If I spoke recently (relative to the configured duration), skip
                         if now - last_mine < (duration_minutes * 60 * 0.75):
@@ -1294,7 +1313,7 @@ async def auto_engage_loop():
                     
                     # Also, only engage if there is actually some recent conversation!
                     latest_msgs = await client.get_messages(chat_id, limit=1)
-                    if not latest_msgs:
+                    if not latest_msgs or not latest_msgs[0]:
                         continue
                     
                     # Prevent auto-engaging if the very last message in the chat was sent by me
@@ -1419,7 +1438,14 @@ async def auto_engage_loop():
                                             logger.warning(f"⚠️ Dropped auto-engage in chat {chat_id} (Already replied while typing)")
                                             continue
                                             
-                                        await client.send_message(input_chat, reply_text, reply_to=target_id)
+                                        try:
+                                            await client.send_message(input_chat, reply_text, reply_to=target_id)
+                                        except Exception as send_err:
+                                            logger.warning(f"⚠️ auto-engage send_message failed; retrying plain text: {send_err}")
+                                            try:
+                                                await client.send_message(input_chat, reply_text, reply_to=target_id, parse_mode=None)
+                                            except Exception:
+                                                await client.send_message(input_chat, reply_text, reply_to=None, parse_mode=None)
                                         mark_as_replied(chat_id, target_id)
                                         logger.info(f"🕵️ Auto-Engaged naturally in chat {chat_id}")
                     except json.JSONDecodeError:
