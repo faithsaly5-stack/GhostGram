@@ -323,7 +323,9 @@ GEMINI_MAX_CHARS=50000
 # GEMINI_MAX_ATTEMPTS: Número de veces que el bot intentará cambiar de modelo si uno falla.
 GEMINI_MAX_ATTEMPTS=20
 # GEMINI_TIMEOUT_SECONDS: Tiempo máximo (en segundos) antes de cambiar al siguiente modelo de IA.
-GEMINI_TIMEOUT_SECONDS=10.0
+GEMINI_TIMEOUT_SECONDS=35.0
+# GEMINI_SLA_TIMEOUT_SECONDS: Tiempo máximo antes de forzar el uso del modelo más barato para garantizar una respuesta.
+GEMINI_SLA_TIMEOUT_SECONDS=70.0
 # GEMINI_RPM_COOLDOWN_SECONDS: How long an API key cools down when hitting Google's requests-per-minute limit.
 # Unit: Seconds (e.g., 15)
 GEMINI_RPM_COOLDOWN_SECONDS=15
