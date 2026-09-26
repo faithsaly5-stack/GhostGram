@@ -93,6 +93,8 @@ async def handle_help(event):
 
 async def handle_pal_on(event, mode="normal"):
     chat_id = event.chat_id
+    if mode != "normal" and mode not in persona_manager.get_all_persona_names():
+        logger.warning(f"⚠️ Persona '{mode}' not found! Registered personas: {persona_manager.get_all_persona_names()}")
     pal_manager.activate(chat_id, mode=mode)
     try:
         await event.delete()
@@ -475,20 +477,32 @@ async def handle_custom_ask(event, user_instruction=""):
     ltm = memory_manager.get_long_term_summary(chat_id)
     ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
     
-    prompt_input = Prompt.ASK_TEMPLATE.format(
-        current_time=now_persian,
-        long_term_context=ltm_context,
-        history_text=history_text,
-        sender=sender_name,
-        target_text=target_text or "گفت‌وگوی جاری",
-        user_instruction=user_instruction or "پاسخ طبیعی، خودمونی و مناسب بده.",
-        owner_first_name=Config.OWNER_FIRST_NAME
-    )
+    pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
+    is_standalone = persona_manager.is_standalone(pal_variant)
+    
+    if is_standalone:
+        prompt_input = Prompt.ASK_STANDALONE_TEMPLATE.format(
+            current_time=now_persian,
+            long_term_context=ltm_context,
+            history_text=history_text,
+            sender=sender_name,
+            target_text=target_text or "گفت‌وگوی جاری",
+            user_instruction=user_instruction or "پاسخ طبیعی، خودمونی و متناسب با نقشت بده."
+        )
+    else:
+        prompt_input = Prompt.ASK_TEMPLATE.format(
+            current_time=now_persian,
+            long_term_context=ltm_context,
+            history_text=history_text,
+            sender=sender_name,
+            target_text=target_text or "گفت‌وگوی جاری",
+            user_instruction=user_instruction or "پاسخ طبیعی، خودمونی و مناسب بده.",
+            owner_first_name=Config.OWNER_FIRST_NAME
+        )
     
     input_chat = await event.get_input_chat()
     async with global_ai_lock:
         async with ContinuousTyping(client, input_chat):
-            pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
             response = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
             if response and response != Text.ERROR:
                 # 111 is an explicit admin command. Skip human typing delay for snappy responses!
@@ -559,19 +573,31 @@ async def handle_text_to_speech(event, user_inst):
     ltm = memory_manager.get_long_term_summary(chat_id)
     ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
     
-    prompt_input = Prompt.ASK_TEMPLATE.format(
-        current_time=now_persian,
-        long_term_context=ltm_context,
-        history_text=history_text,
-        sender=sender_name,
-        target_text=target_text or "گفت‌وگوی جاری",
-        user_instruction=user_inst or "پاسخ طبیعی، خودمونی و مناسب بده.",
-        owner_first_name=Config.OWNER_FIRST_NAME
-    )
+    pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
+    is_standalone = persona_manager.is_standalone(pal_variant)
+    
+    if is_standalone:
+        prompt_input = Prompt.ASK_STANDALONE_TEMPLATE.format(
+            current_time=now_persian,
+            long_term_context=ltm_context,
+            history_text=history_text,
+            sender=sender_name,
+            target_text=target_text or "گفت‌وگوی جاری",
+            user_instruction=user_inst or "پاسخ طبیعی، خودمونی و متناسب با نقشت بده."
+        )
+    else:
+        prompt_input = Prompt.ASK_TEMPLATE.format(
+            current_time=now_persian,
+            long_term_context=ltm_context,
+            history_text=history_text,
+            sender=sender_name,
+            target_text=target_text or "گفت‌وگوی جاری",
+            user_instruction=user_inst or "پاسخ طبیعی، خودمونی و مناسب بده.",
+            owner_first_name=Config.OWNER_FIRST_NAME
+        )
     
     input_chat = await event.get_input_chat()
     async with global_ai_lock:
-        pal_variant = pal_manager.get_mode(chat_id) if pal_manager.is_active(chat_id) else "normal"
         text = await get_response(prompt_input, persona_manager.get_prompt(pal_variant))
         if text == Text.ERROR:
             text = ""
@@ -1190,14 +1216,34 @@ async def incoming_message_handler(event):
                 
                 if mode == "pal":
                     pal_variant = pal_manager.get_mode(chat_id)
-                    prompt_input = Prompt.AUTOPILOT_TEMPLATE.format(
-                        current_time=now_persian,
-                        long_term_context=ltm_context,
-                        history_text=history_text,
-                        sender=sender_name,
-                        target_text=incoming_text,
-                        owner_first_name=Config.OWNER_FIRST_NAME
-                    )
+                    is_standalone = persona_manager.is_standalone(pal_variant)
+                    
+                    if pal_variant == "assistant":
+                        prompt_input = Prompt.ASSISTANT_TEMPLATE.format(
+                            current_time=now_persian,
+                            long_term_context=ltm_context,
+                            history_text=history_text,
+                            sender=sender_name,
+                            target_text=incoming_text,
+                            owner_first_name=Config.OWNER_FIRST_NAME
+                        )
+                    elif is_standalone:
+                        prompt_input = Prompt.AUTOPILOT_STANDALONE_TEMPLATE.format(
+                            current_time=now_persian,
+                            long_term_context=ltm_context,
+                            history_text=history_text,
+                            sender=sender_name,
+                            target_text=incoming_text
+                        )
+                    else:
+                        prompt_input = Prompt.AUTOPILOT_TEMPLATE.format(
+                            current_time=now_persian,
+                            long_term_context=ltm_context,
+                            history_text=history_text,
+                            sender=sender_name,
+                            target_text=incoming_text,
+                            owner_first_name=Config.OWNER_FIRST_NAME
+                        )
                     system_prompt = persona_manager.get_prompt(pal_variant)
                     logger.info(f"🤖 Pal Autopilot ({pal_variant.upper()}) thinking & typing for chat {chat_id} (from {sender_name})...")
                 else:
@@ -1372,16 +1418,26 @@ async def auto_engage_loop():
                     ltm = memory_manager.get_long_term_summary(chat_id)
                     ltm_context = f"\n[خلاصه سوابق مهم قبلی]:\n{ltm}\n" if ltm else ""
                     
-                    prompt_input = Prompt.AUTO_ENGAGE_TEMPLATE.format(
-                        current_time=now_persian,
-                        long_term_context=ltm_context,
-                        history_text=history_text_for_ai,
-                        duration_minutes=duration_minutes,
-                        owner_first_name=Config.OWNER_FIRST_NAME
-                    )
-                    
                     # Dynamically get the active persona instead of assuming 'normal'
                     pal_variant = pal_manager.get_mode(chat_id)
+                    is_standalone = persona_manager.is_standalone(pal_variant)
+                    
+                    if is_standalone:
+                        prompt_input = Prompt.AUTO_ENGAGE_STANDALONE_TEMPLATE.format(
+                            current_time=now_persian,
+                            long_term_context=ltm_context,
+                            history_text=history_text_for_ai,
+                            duration_minutes=duration_minutes
+                        )
+                    else:
+                        prompt_input = Prompt.AUTO_ENGAGE_TEMPLATE.format(
+                            current_time=now_persian,
+                            long_term_context=ltm_context,
+                            history_text=history_text_for_ai,
+                            duration_minutes=duration_minutes,
+                            owner_first_name=Config.OWNER_FIRST_NAME
+                        )
+                    
                     system_prompt = persona_manager.get_prompt(pal_variant)
                     
                     dynamic_context = await dynamic_prompt_manager.generate_dynamic_context(history_text_for_ai)
